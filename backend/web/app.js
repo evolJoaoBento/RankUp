@@ -774,14 +774,14 @@ async function vPractice() {
         <div class="row">
           <label class="fld"><span class="label">Nº de perguntas</span><select id="gCount" style="max-width:130px">${[3,5,8].map(n=>`<option ${n===3?"selected":""}>${n}</option>`).join("")}</select></label>
           <label class="fld"><span class="label">Dificuldade</span><select id="gDiff" style="max-width:130px">${[[1,"Fácil"],[2,"Médio"],[3,"Difícil"]].map(([v,t])=>`<option value="${v}" ${v===2?"selected":""}>${t}</option>`).join("")}</select></label>
-          <label class="fld"><span class="label">Conceito</span><select id="gConcept" style="max-width:200px"></select></label>
+          <label class="fld"><span class="label">Tema</span><select id="gConcept" style="max-width:200px"></select></label>
         </div>
         <div class="row"><button class="btn btn--sm" id="gGo">Gerar</button><button class="btn btn--ghost btn--sm" id="gCancel">Cancelar</button></div></div>`;
       $("#gCancel").onclick = () => { f.innerHTML = ""; f.dataset.mode = ""; };
       (async () => {
         let cs = [];
         try { cs = (await api(`/subjects/${SUBJECT}/graph`)).concepts; } catch {}
-        $("#gConcept").innerHTML = `<option value="">conceito automático</option>` + cs.map((c) => `<option value="${c.key}">${esc(c.name)}</option>`).join("");
+        $("#gConcept").innerHTML = `<option value="">tema automático</option>` + cs.map((c) => `<option value="${c.key}">${esc(c.name)}</option>`).join("");
       })();
       $("#gGo").onclick = async () => {
         const topic = $("#gTopic").value.trim();
@@ -1328,6 +1328,7 @@ async function vProfile() {
   const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
   v.innerHTML = `<div class="view__head"><h1>Meu perfil</h1><p>${esc(USER.display_name)} · ${esc(subjName)}</p></div>
     <div class="card" id="pg">…</div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:10px">Histórico de duelos</h3><div id="dhist">…</div></div>
     <div class="card"><h3 style="font-size:16px;margin-bottom:10px">Uso da IA</h3><div id="us">…</div></div>
     <div class="card">
       <h3 style="font-size:16px;margin-bottom:4px">Segurança</h3>
@@ -1359,17 +1360,31 @@ async function vProfile() {
     $("#pg").innerHTML = `
       <div class="rankrow">${rankLogo(p.rank, 72, USER.background)}<span class="rankbadge" style="color:${RANK_COLORS[p.rank] || "var(--ink)"}">${p.rank}</span></div>
       <div class="bar"><div class="bar__f" style="width:${rankFill(p.xp)}%"></div></div>
-      <div class="stat"><div><span class="label">EP</span><b>${p.xp}</b></div><div><span class="label">Streak</span><b style="display:inline-flex;align-items:center;gap:4px">${p.streak}${icon("flame", 15)}</b></div></div>
+      <div class="stat"><div><span class="label">EP</span><b>${p.xp}</b></div><div><span class="label">Streak</span><b style="display:inline-flex;align-items:center;gap:4px">${p.streak}${icon("flame", 15)}</b></div><div><span class="label">Rating duelos</span><b id="pgElo">—</b></div><div><span class="label">V / D / E</span><b id="pgWdl">—</b></div></div>
       <h3 style="margin:18px 0 6px;font-size:16px">Fundo do emblema</h3>
       <p class="muted" style="font-size:13px;margin-bottom:8px">Desbloqueias mais cores ao subir de rank.</p>
       <div class="bg-pick" id="bgPick">${sw("", !USER.background)}${unlocked.map((n) => sw(n, USER.background === n)).join("")}</div>
-      <h3 style="margin:18px 0 8px;font-size:16px">Conceitos a melhorar</h3>
+      <h3 style="margin:18px 0 8px;font-size:16px">Temas a melhorar</h3>
       ${(p.weak_concepts || []).length
-        ? `<table><tr><th>Conceito</th><th>Mestria</th></tr>` +
+        ? `<table><tr><th>Tema</th><th>Mestria</th></tr>` +
           p.weak_concepts.map((w) => `<tr><td>${conceptName(w.concept_id)}</td><td>${(w.mastery * 100).toFixed(0)}%</td></tr>`).join("") + `</table>`
         : `<p class="muted">Ainda sem dados — faz uns exercícios na Prática.</p>`}`;
     $("#bgPick").querySelectorAll(".bg-sw").forEach((b) => (b.onclick = () => setMyBackground(b.dataset.bg)));
+    try {
+      const r = await api(`/duels/rating`);
+      if ($("#pgElo")) $("#pgElo").textContent = r.rating;
+      if ($("#pgWdl")) $("#pgWdl").textContent = `${r.wins} / ${r.losses} / ${r.draws}`;
+    } catch {}
   } catch (e) { $("#pg").innerHTML = `<p class="err">${e.message}</p>`; }
+  try {
+    const ds = (await api("/duels")).filter((d) => d.status === "complete" || d.status === "forfeited").slice(0, 10);
+    $("#dhist").innerHTML = ds.length
+      ? `<table><tr><th>Oponente</th><th>Resultado</th><th>Pontos</th><th>Modo</th></tr>` + ds.map((d) => {
+          const res = d.is_draw ? `<span class="badge-pend">Empate</span>` : d.won ? `<span class="badge-ok">Vitória</span>` : `<span class="badge-no">Derrota</span>`;
+          return `<tr><td>${esc(d.opponent_name)}</td><td>${res}</td><td>${d.my_points}–${d.opp_points}</td><td class="muted">${d.ranked ? "Ranked" : "Amigável"}</td></tr>`;
+        }).join("") + `</table>`
+      : `<p class="muted">Ainda sem duelos concluídos — desafia um amigo nos Duelos.</p>`;
+  } catch (e) { $("#dhist").innerHTML = `<p class="muted">—</p>`; }
   try {
     const u = await api("/me/usage");
     $("#us").innerHTML = `<div class="stat">

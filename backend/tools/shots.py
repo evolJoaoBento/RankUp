@@ -25,7 +25,12 @@ async def main(views: list[str]) -> None:
         await page.wait_for_selector("#app", state="visible", timeout=10000)
         await page.wait_for_timeout(900)
         for v in views:
-            await page.click(f'.nav__i[data-v="{v}"]')
+            if v == "profile":  # not in the nav — reached via the account rail
+                await page.click("#rail")
+                await page.wait_for_timeout(400)
+                await page.click("#umProfileBtn")
+            else:
+                await page.click(f'.nav__i[data-v="{v}"]')
             await page.wait_for_timeout(1400)
             shot = OUT / f"{v}.png"
             await page.screenshot(path=str(shot))
