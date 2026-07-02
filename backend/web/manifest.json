@@ -1,0 +1,13 @@
+{
+  "name": "RankUp",
+  "short_name": "RankUp",
+  "description": "Aprende a sério. Ranks que se conquistam.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f8fa",
+  "theme_color": "#3f93b8",
+  "lang": "pt-PT",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

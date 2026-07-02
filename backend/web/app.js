@@ -1058,13 +1058,23 @@ async function startFlashcards(testId, title) {
       <button class="btn btn--ghost btn--sm" id="fcExit">← Voltar</button>
     </div>
     <div class="fc-wrap">
-      <div class="fc-bar"><span id="fcProg"></span><span id="fcScore"></span></div>
+      <div class="fc-bar"><span id="fcProg"></span><span class="muted" style="font-size:12.5px">← → navegar · espaço virar</span><span id="fcScore"></span></div>
       <div id="fcStage"></div>
       <div class="fc-nav"><button class="btn btn--ghost btn--sm" id="fcPrev">Anterior</button><button class="btn btn--sm" id="fcNext">Próxima →</button></div>
     </div>`;
   $("#fcExit").onclick = () => go("practice");
   $("#fcPrev").onclick = () => { if (_fc.i > 0) { _fc.i--; renderCard(); } };
   $("#fcNext").onclick = () => { if (_fc.i < _fc.cards.length - 1) { _fc.i++; renderCard(); } else toast("Última carta"); };
+  // keyboard: arrows navigate, space/enter flips (single listener, rebound per deck)
+  if (window._fcKeys) document.removeEventListener("keydown", window._fcKeys);
+  window._fcKeys = (e) => {
+    if (!_fc || !$("#fcStage")) return;
+    if (e.target.matches("input,textarea,select")) return;
+    if (e.key === "ArrowLeft") $("#fcPrev")?.click();
+    else if (e.key === "ArrowRight") $("#fcNext")?.click();
+    else if (e.key === " " || e.key === "Enter") { e.preventDefault(); $("#fcCard")?.classList.toggle("is-flipped"); }
+  };
+  document.addEventListener("keydown", window._fcKeys);
   renderCard();
 }
 
