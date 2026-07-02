@@ -1,0 +1,115 @@
+from __future__ import annotations
+
+import uuid
+
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from mecateca.contexts.identity import service as identity_service
+from mecateca.contexts.identity.models import User
+from mecateca.contexts.social.models import Friendship
+from mecateca.shared.errors import AppError, Conflict, NotFound
+
+
+async def _between(db: AsyncSession, a: uuid.UUID, b: uuid.UUID) -> Friendship | None:
+    return (
+        await db.execute(
+            select(Friendship).where(
+                or_(
+                    (Friendship.requester_id == a) & (Friendship.addressee_id == b),
+                    (Friendship.requester_id == b) & (Friendship.addressee_id == a),
+                )
+            )
+        )
+    ).scalar_one_or_none()
+
+
+async def are_friends(db: AsyncSession, a: uuid.UUID, b: uuid.UUID) -> bool:
+    f = await _between(db, a, b)
+    return f is not None and f.status == "accepted"
+
+
+async def send_request(db: AsyncSession, me: User, identifier: str) -> Friendship:
+    target = await identity_service.get_by_identifier(db, identifier)
+    if target is None:
+        raise NotFound("utilizador não encontrado")
+    if target.id == me.id:
+        raise AppError("não te podes adicionar a ti próprio")
+    existing = await _between(db, me.id, target.id)
+    if existing is not None:
+        if existing.status == "accepted":
+            raise Conflict("já são amigos")
+        # a pending request the other way around -> accept it
+        if existing.addressee_id == me.id:
+            existing.status = "accepted"
+            await db.flush()
+            return existing
+        raise Conflict("pedido já enviado")
+    f = Friendship(requester_id=me.id, addressee_id=target.id, status="pending")
+    db.add(f)
+    await db.flush()
+    return f
+
+
+async def accept(db: AsyncSession, me: User, req_id: uuid.UUID) -> Friendship:
+    f = await db.get(Friendship, req_id)
+    if f is None or f.addressee_id != me.id or f.status != "pending":
+        raise NotFound("pedido não encontrado")
+    f.status = "accepted"
+    await db.flush()
+    return f
+
+
+async def decline(db: AsyncSession, me: User, req_id: uuid.UUID) -> None:
+    f = await db.get(Friendship, req_id)
+    if f is None or f.addressee_id != me.id or f.status != "pending":
+        raise NotFound("pedido não encontrado")
+    await db.delete(f)
+    await db.flush()
+
+
+async def remove_friend(db: AsyncSession, me: User, other_id: uuid.UUID) -> None:
+    f = await _between(db, me.id, other_id)
+    if f is None:
+        raise NotFound("não são amigos")
+    await db.delete(f)
+    await db.flush()
+
+
+async def _users(db: AsyncSession, ids: list[uuid.UUID]) -> dict[uuid.UUID, User]:
+    ids = [i for i in set(ids) if i]
+    if not ids:
+        return {}
+    rows = (await db.execute(select(User).where(User.id.in_(ids)))).scalars()
+    return {u.id: u for u in rows}
+
+
+async def overview(db: AsyncSession, me: User) -> dict:
+    rows = list(
+        (
+            await db.execute(
+                select(Friendship).where(
+                    or_(Friendship.requester_id == me.id, Friendship.addressee_id == me.id)
+                )
+            )
+        ).scalars()
+    )
+    other_ids = [r.requester_id if r.addressee_id == me.id else r.addressee_id for r in rows]
+    users = await _users(db, other_ids)
+
+    friends, incoming, outgoing = [], [], []
+    for r in rows:
+        other_id = r.requester_id if r.addressee_id == me.id else r.addressee_id
+        u = users.get(other_id)
+        if u is None:
+            continue
+        if r.status == "accepted":
+            friends.append({"user_id": u.id, "display_name": u.display_name, "username": u.username})
+        elif r.addressee_id == me.id:
+            incoming.append({"id": r.id, "user_id": u.id, "display_name": u.display_name,
+                             "username": u.username, "direction": "incoming"})
+        else:
+            outgoing.append({"id": r.id, "user_id": u.id, "display_name": u.display_name,
+                             "username": u.username, "direction": "outgoing"})
+    friends.sort(key=lambda f: f["display_name"].lower())
+    return {"friends": friends, "incoming": incoming, "outgoing": outgoing}

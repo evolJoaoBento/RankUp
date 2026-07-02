@@ -1,0 +1,113 @@
+subject:
+  key: philosophy
+  name: Filosofia
+  version: 1.0.0
+  locale: pt-PT
+  progression_profile: standard
+
+pack_schema_version: "1"
+
+concepts:
+  - key: epistemologia.crenca-vs-conhecimento
+    name: Crença vs. Conhecimento
+    summary: A diferença entre acreditar em algo e saber algo.
+    difficulty: 1
+    objectives:
+      - Distinguir crença de conhecimento
+      - Dar exemplos de cada
+    tutor:
+      strategy: socratic
+      seed_questions:
+        - "Podes acreditar em algo que é falso? E saber algo falso?"
+
+  - key: epistemologia.cvj
+    name: Crença Verdadeira Justificada
+    summary: A análise tripartida clássica do conhecimento (Platão, Teeteto).
+    difficulty: 2
+    prerequisites: [epistemologia.crenca-vs-conhecimento]
+    objectives:
+      - Explicar as três condições da CVJ
+      - Reconhecer porque cada condição é necessária
+    misconceptions:
+      - id: cvj-ignora-justificacao
+        text: Achar que crença verdadeira basta, ignorando a justificação.
+    tutor:
+      strategy: socratic
+      seed_questions:
+        - "O que falta a uma crença verdadeira para se tornar conhecimento?"
+
+  - key: epistemologia.gettier
+    name: Problemas de Gettier
+    summary: Casos onde há crença verdadeira justificada mas intuitivamente não há conhecimento.
+    difficulty: 3
+    prerequisites: [epistemologia.cvj]
+    objectives:
+      - Explicar a estrutura de um caso de Gettier
+      - Mostrar porque desafia a CVJ
+    misconceptions:
+      - id: gettier-sorte
+        text: Não perceber que o papel da sorte epistémica é central.
+    tutor:
+      strategy: socratic
+      seed_questions:
+        - "Se chegas à verdade por sorte, apesar de justificado, é conhecimento?"
+
+  - key: etica.utilitarismo
+    name: Utilitarismo
+    summary: A ação correta maximiza o bem-estar agregado.
+    difficulty: 2
+    objectives:
+      - Enunciar o princípio da utilidade
+      - Identificar uma objeção comum
+
+rubrics:
+  - key: reasoning-default
+    criteria:
+      - { key: understanding, weight: 0.4, descriptor: "Identifica o conceito central" }
+      - { key: reasoning, weight: 0.4, descriptor: "Justifica com raciocínio próprio" }
+      - { key: application, weight: 0.2, descriptor: "Aplica a um caso novo" }
+
+question_templates:
+  - key: cvj-mcq-1
+    concept: epistemologia.cvj
+    kind: mcq
+    difficulty: 2
+    source: static
+    payload:
+      stem: "Quais são as três condições da análise clássica do conhecimento (CVJ)?"
+      options:
+        - "Crença, coerência, certeza"
+        - "Crença, verdade, justificação"
+        - "Verdade, utilidade, consenso"
+        - "Perceção, memória, intuição"
+      answer_index: 1
+      why: "A análise tripartida exige crença, verdade e justificação."
+
+  - key: belief-mcq-1
+    concept: epistemologia.crenca-vs-conhecimento
+    kind: mcq
+    difficulty: 1
+    source: static
+    payload:
+      stem: "Pode existir conhecimento de algo falso?"
+      options: ["Sim", "Não"]
+      answer_index: 1
+      why: "Conhecimento implica verdade; não se pode saber algo falso."
+
+  - key: gettier-reason-1
+    concept: epistemologia.gettier
+    kind: reasoning
+    difficulty: 3
+    source: static
+    rubric: reasoning-default
+    payload:
+      prompt: "Descreve um caso em que alguém tem crença verdadeira justificada mas dirias que NÃO tem conhecimento. Explica porquê."
+
+  - key: util-reason-1
+    concept: etica.utilitarismo
+    kind: reasoning
+    difficulty: 2
+    source: static
+    rubric: reasoning-default
+    payload:
+      prompt: "Apresenta uma objeção ao utilitarismo e explica porque é um problema para a teoria."

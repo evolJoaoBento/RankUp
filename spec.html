@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MecaTeca — Backend Spec (v1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#faf7f0; --bg2:#f3ede1; --panel:#fffdf8; --panel2:#f6f0e4;
+  --line:#e6dcc8; --ink:#221d18; --muted:#7a7064;
+  --gold:#b3893f; --gold-soft:#d8b774; --celest:#4f86b8; --violet:#7d6fb8;
+  --green:#3f8f5d; --red:#bd5a72; --amber:#c79a2f;
+  --code-bg:#1e1b16; --code-ink:#ece4d3; --code-dim:#9a8f78;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+a{color:var(--gold);text-decoration:none}
+code,pre,.mono{font-family:'JetBrains Mono',monospace}
+
+/* layout */
+.wrap{display:grid;grid-template-columns:260px 1fr;max-width:1240px;margin:0 auto;min-height:100vh}
+.side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:30px 22px;border-right:1px solid var(--line);background:var(--bg2)}
+.main{padding:46px 56px 120px;max-width:920px}
+@media(max-width:880px){.wrap{grid-template-columns:1fr}.side{display:none}.main{padding:32px 22px 80px}}
+
+/* sidebar */
+.brand{font-family:'Fraunces';font-weight:600;font-size:20px;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.brand small{font-family:'Inter';font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.toc{list-style:none;margin-top:22px;font-size:13.5px}
+.toc li{margin:2px 0}
+.toc a{color:var(--muted);display:block;padding:5px 10px;border-radius:8px;border-left:2px solid transparent}
+.toc a:hover{color:var(--ink);background:var(--panel)}
+.toc a.active{color:var(--gold);border-left-color:var(--gold);background:var(--panel);font-weight:600}
+
+/* hero */
+.doc-hero{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:34px}
+.doc-hero h1{font-size:clamp(30px,5vw,44px)}
+.doc-hero p{color:var(--muted);font-size:17px;margin-top:12px;max-width:640px}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.pill{font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
+.pill--gold{color:#fff;background:linear-gradient(110deg,var(--gold),var(--gold-soft));border-color:transparent}
+
+/* sections */
+section{margin:0 0 56px;scroll-margin-top:24px}
+.kick{display:block;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px}
+section>h2{font-size:27px;margin-bottom:8px}
+section>p{color:var(--muted);margin:10px 0}
+section p strong, li strong{color:var(--ink)}
+h3{font-size:19px;margin:26px 0 10px}
+h4{font-size:16px;margin:18px 0 8px}
+ul,ol{margin:10px 0 10px 22px}
+li{margin:5px 0}
+
+/* code */
+pre{background:var(--code-bg);color:var(--code-ink);border-radius:var(--r);padding:18px 20px;overflow-x:auto;font-size:13px;line-height:1.55;margin:14px 0;border:1px solid #2c281f}
+pre .c{color:var(--code-dim)}            /* comment */
+pre .k{color:#e8c06a}                    /* keyword/gold */
+pre .s{color:#9cc79a}                    /* string/green */
+p code,li code,td code{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--ink)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel2);font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+
+/* callout */
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;padding:14px 18px;margin:16px 0;font-size:14.5px}
+.note--green{border-left-color:var(--green)}
+.note--violet{border-left-color:var(--violet)}
+
+/* diagram: layered stack */
+.stack{margin:18px 0}
+.layer{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:0 auto;text-align:center;box-shadow:0 8px 24px -20px rgba(60,45,20,.5)}
+.layer b{font-family:'Fraunces';font-weight:600}
+.layer small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.layer--w1{max-width:96%} .layer--w2{max-width:82%} .layer--w3{max-width:68%}
+.arrow{text-align:center;color:var(--gold);font-size:20px;line-height:1.1;margin:3px 0}
+.arrow small{display:block;font-family:'Inter';font-size:11px;color:var(--muted)}
+
+/* context pills */
+.ctxgrid{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.ctx{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px}
+.ctx .mono{font-size:12.5px}
+.ctx.now{border-color:var(--green)}
+.ctx.soon{opacity:.7;border-style:dashed}
+.dot{width:8px;height:8px;border-radius:50%}
+.dot.g{background:var(--green)} .dot.s{background:var(--amber)}
+
+/* seam cards */
+.seams{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+@media(max-width:760px){.seams{grid-template-columns:1fr}}
+.seam{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.seam .n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:linear-gradient(110deg,var(--gold),var(--gold-soft));color:#fff;font-weight:700;font-size:14px;margin-bottom:10px}
+.seam h4{margin:0 0 6px;font-size:16px}
+.seam p{color:var(--muted);font-size:13.5px;margin:0}
+
+/* flow chips (horizontal) */
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:18px 0}
+.flow .node{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center}
+.flow .node b{font-family:'Fraunces'} .flow .node small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.flow .ar{display:grid;place-items:center;color:var(--gold);font-size:22px;flex:0 0 auto}
+@media(max-width:680px){.flow{flex-direction:column}.flow .ar{transform:rotate(90deg)}}
+
+/* method badges */
+.ep{display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono';font-size:13px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.m{font-weight:600;font-size:11px;padding:2px 8px;border-radius:6px;color:#fff;flex:0 0 56px;text-align:center}
+.m.get{background:var(--green)} .m.post{background:var(--celest)}
+.ep .path{color:var(--ink)} .ep .desc{color:var(--muted);margin-left:auto;font-family:'Inter';font-size:12.5px}
+.epgroup{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 18px;margin:12px 0}
+.epgroup h4{margin:8px 0 4px}
+
+/* build steps */
+.steps{counter-reset:s;margin:18px 0}
+.step{position:relative;padding:14px 16px 14px 56px;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.step::before{counter-increment:s;content:counter(s);position:absolute;left:14px;top:14px;width:28px;height:28px;border-radius:50%;background:linear-gradient(110deg,var(--gold),var(--gold-soft));color:#fff;font-weight:700;display:grid;place-items:center;font-size:14px;font-family:'JetBrains Mono'}
+.step b{font-family:'Fraunces'}
+.step small{color:var(--muted)}
+
+/* decisions */
+.dec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
+.dec .q{flex:1}.dec .q b{font-family:'Fraunces'}
+.pick{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--green);border:1px solid var(--green);border-radius:999px;padding:3px 10px;white-space:nowrap}
+
+.foot{border-top:1px solid var(--line);margin-top:40px;padding-top:20px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- SIDEBAR -->
+<aside class="side">
+  <div class="brand">✦ MecaTeca <small>spec</small></div>
+  <div style="font-size:12px;color:var(--muted)">Backend v1 · Python webservice</div>
+  <ul class="toc" id="toc">
+    <li><a href="#decisions">0 · Decisions</a></li>
+    <li><a href="#arch">1 · Architecture</a></li>
+    <li><a href="#seams">2 · 3 Extensibility seams</a></li>
+    <li><a href="#layout">3 · Project layout</a></li>
+    <li><a href="#stack">4 · Stack</a></li>
+    <li><a href="#data">5 · Data model</a></li>
+    <li><a href="#prog">6 · Progression (XP/ranks)</a></li>
+    <li><a href="#ai">7 · AI (Claude)</a></li>
+    <li><a href="#api">8 · API v1</a></li>
+    <li><a href="#auth">9 · Auth</a></li>
+    <li><a href="#nfr">10 · Non-functional</a></li>
+    <li><a href="#future">11 · How the future slots in</a></li>
+    <li><a href="#order">12 · Build order</a></li>
+    <li><a href="#open">13 · Open decisions</a></li>
+  </ul>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <div class="doc-hero">
+    <h1>Backend Spec — v1</h1>
+    <p>Python webservice, designed so <strong>new subjects</strong> and <strong>new features</strong> drop in without rewrites. v1 ships <strong>Philosophy</strong>, with an <strong>AI Socratic tutor (text)</strong> + <strong>practice tests / ranked ladder</strong>. Voice, evaluation booking and credentials are designed-for, not built.</p>
+    <div class="pillrow">
+      <span class="pill pill--gold">FastAPI</span>
+      <span class="pill">PostgreSQL only</span>
+      <span class="pill">Text-first</span>
+      <span class="pill">Tutor + Ranked Ladder</span>
+      <span class="pill">Philosophy</span>
+    </div>
+  </div>
+
+  <!-- 0 DECISIONS -->
+  <section id="decisions">
+    <span class="kick">0 · Locked decisions</span>
+    <h2>What's decided</h2>
+    <table>
+      <tr><th>Area</th><th>Choice</th><th>Why</th></tr>
+      <tr><td>Web</td><td><b>FastAPI</b> (async)</td><td>Streaming (SSE/WS), Pydantic typing, fits AI + future voice</td></tr>
+      <tr><td>v1 modules</td><td>Socratic tutor (text), Practice/Ranked</td><td>Core learning loop first</td></tr>
+      <tr><td>Voice</td><td>Text-first; voice behind a port</td><td>Avoid realtime infra at start</td></tr>
+      <tr><td>Data</td><td><b>PostgreSQL only</b></td><td>Mastery Graph as closure-table + JSONB; transactional</td></tr>
+    </table>
+    <div class="note">
+      <strong>Assumed defaults</strong> (flip any — §13): Python 3.12 · <code>uv</code> · SQLAlchemy 2.0 async + asyncpg + Alembic · Pydantic v2 · Anthropic SDK async · Redis (cache/quota/rate-limit; ARQ for jobs later) · own JWT auth (argon2) + RBAC · Docker · structlog + OTel + Sentry · pytest + testcontainers.
+    </div>
+  </section>
+
+  <!-- 1 ARCH -->
+  <section id="arch">
+    <span class="kick">1 · Architecture</span>
+    <h2>Modular monolith, hexagonal</h2>
+    <p>One deployable, split into <strong>bounded contexts</strong> with a strict dependency rule (outside-in):</p>
+
+    <div class="stack">
+      <div class="layer layer--w1"><b>interfaces</b><small>FastAPI routers · SSE</small></div>
+      <div class="arrow">↓<small>depends on</small></div>
+      <div class="layer layer--w2"><b>application services</b><small>use-cases · orchestration · transactions</small></div>
+      <div class="arrow">↓<small>depends on</small></div>
+      <div class="layer layer--w3"><b>domain</b><small>entities · events · ports (Protocol) — <em>no I/O</em></small></div>
+      <div class="arrow">↑<small>implemented by</small></div>
+      <div class="layer layer--w2"><b>adapters</b><small>SQLAlchemy repos · Anthropic provider · Redis · clock · ids</small></div>
+    </div>
+
+    <div class="note"><strong>Rule:</strong> the domain imports nothing outward. Adapters implement <code>Protocol</code> ports. This is what lets you swap Claude→another LLM, Postgres→graph DB, or extract a context into its own service — without touching domain logic.</div>
+
+    <h3>Bounded contexts</h3>
+    <div class="ctxgrid">
+      <span class="ctx now"><span class="dot g"></span><span class="mono">identity</span></span>
+      <span class="ctx now"><span class="dot g"></span><span class="mono">catalog</span> · Mastery Graph</span>
+      <span class="ctx now"><span class="dot g"></span><span class="mono">tutoring</span></span>
+      <span class="ctx now"><span class="dot g"></span><span class="mono">assessment</span></span>
+      <span class="ctx now"><span class="dot g"></span><span class="mono">progression</span></span>
+      <span class="ctx now"><span class="dot g"></span><span class="mono">metering</span></span>
+      <span class="ctx soon"><span class="dot s"></span><span class="mono">evaluation</span> 🔜</span>
+      <span class="ctx soon"><span class="dot s"></span><span class="mono">credentials</span> 🔜</span>
+      <span class="ctx soon"><span class="dot s"></span><span class="mono">voice</span> 🔜</span>
+    </div>
+  </section>
+
+  <!-- 2 SEAMS -->
+  <section id="seams">
+    <span class="kick">2 · Extensibility</span>
+    <h2>The 3 seams that make everything future-proof</h2>
+    <p>Everything new is one of three plugin shapes. New work = implement an interface + register it; no edits to existing contexts.</p>
+
+    <div class="seams">
+      <div class="seam"><span class="n">1</span><h4>Subject Packs</h4><p>A subject is <b>data</b>, not code. A versioned YAML pack, validated, imported into Postgres. New subject = import a pack, <b>zero deploy</b>.</p></div>
+      <div class="seam"><span class="n">2</span><h4>Activity plugins</h4><p>Every surface (tutor, test, voice, debate) implements one interface and emits <b>events</b>. New feature = new Activity; the rest reacts to events.</p></div>
+      <div class="seam"><span class="n">3</span><h4>Strategy ports</h4><p><code>LLMProvider</code> · <code>Grader</code> · <code>MasteryModel</code>. Swap/add models, or add a <code>HumanGrader</code> — same port.</p></div>
+    </div>
+
+    <h3>2.1 — Subject Pack (new subject, no deploy)</h3>
+    <div class="flow">
+      <div class="node"><b>pack.yaml</b><small>authored</small></div>
+      <div class="ar">→</div>
+      <div class="node"><b>validate</b><small>Pydantic schema</small></div>
+      <div class="ar">→</div>
+      <div class="node"><b>import</b><small>upsert subject_version</small></div>
+      <div class="ar">→</div>
+      <div class="node"><b>activate</b><small>current version</small></div>
+    </div>
+<pre><span class="c"># packs/philosophy/1.0.0/pack.yaml (excerpt)</span>
+subject:
+  key: philosophy
+  name: Philosophy
+  version: 1.0.0
+  locale: en
+  progression_profile: standard      <span class="c"># ranks/xp rules</span>
+concepts:                            <span class="c"># Mastery Graph nodes</span>
+  - key: epistemology.jtb
+    name: Justified True Belief
+    difficulty: 2
+    prerequisites: [epistemology.belief-vs-knowledge]
+    objectives: [Distinguish belief from knowledge, Explain the 3 conditions]
+    misconceptions:
+      - { id: jtb-ignores-gettier, text: "Assuming JTB is sufficient for knowledge" }
+    tutor:
+      strategy: socratic
+      seed_questions: ["What does a true belief lack to count as knowledge?"]
+question_templates:
+  - { key: jtb-mcq-1, concept: epistemology.jtb, kind: mcq, difficulty: 2,
+      source: static, payload: {stem: "...", options: ["..."], answer_index: 1} }
+  - { key: jtb-reason-1, concept: epistemology.jtb, kind: reasoning,
+      difficulty: 3, source: ai, rubric: reasoning-default }
+rubrics:
+  - key: reasoning-default
+    criteria:
+      - { key: understanding, weight: 0.4, descriptor: "Identifies the core concept" }
+      - { key: reasoning,     weight: 0.4, descriptor: "Justifies with own reasoning" }
+      - { key: application,   weight: 0.2, descriptor: "Applies to a new case" }</pre>
+    <div class="note">The pack schema is itself versioned (<code>pack_schema_version</code>). Old versions stay (reproducibility).</div>
+
+    <h3>2.2 — Activity plugin (new feature)</h3>
+<pre><span class="c"># domain/activities/base.py</span>
+class Activity(Protocol):
+    type: str  <span class="c"># "socratic_chat", "practice_test", ...</span>
+    async def start(self, ctx, params: dict) -> ActivityState: ...
+    async def step(self, ctx, state, user_input) -> AsyncIterator[DomainEvent]: ...</pre>
+    <p>v1: <code>SocraticChatActivity</code> + <code>PracticeTestActivity</code>. A new feature = a new <code>Activity</code>; routers and progression react to the <strong>events</strong> it emits.</p>
+
+    <h3>2.3 — Strategy ports (swap implementations)</h3>
+<pre>class LLMProvider(Protocol):
+    async def stream(self, req) -> AsyncIterator[str]: ...
+    async def parse(self, req, schema: type[T]) -> T: ...   <span class="c"># structured output</span>
+
+class Grader(Protocol):
+    kind: str  <span class="c"># "mcq" | "ai_reasoning" | "human"</span>
+    async def grade(self, answer, question, rubric) -> Grade: ...
+
+class MasteryModel(Protocol):
+    def update(self, prior: float, outcome, difficulty: int) -> float: ...</pre>
+    <p>v1: <code>AnthropicProvider</code>, <code>MCQGrader</code> + <code>AIReasoningGrader</code>, <code>DecayBKTMastery</code>. The future <code>HumanGrader</code> (evaluation) plugs into the same port.</p>
+  </section>
+
+  <!-- 3 LAYOUT -->
+  <section id="layout">
+    <span class="kick">3 · Project</span>
+    <h2>Folder layout</h2>
+<pre>mecateca/
+  pyproject.toml            <span class="c"># uv-managed</span>
+  alembic/                  <span class="c"># migrations</span>
+  packs/philosophy/1.0.0/pack.yaml
+  src/mecateca/
+    main.py config.py deps.py
+    db/ {base,engine,session}.py
+    shared/ {events,ids,clock,errors,pagination}.py
+    contexts/
+      identity/    {router,service,models,schemas,security}.py
+      catalog/     {router,service,models,schemas,pack_loader,graph}.py
+      tutoring/    {router,service,activity,prompts,models,schemas}.py
+      assessment/  {router,service,activity,graders,models,schemas}.py
+      progression/ {router,service,rules,projector,models,schemas}.py
+      metering/    {service,models,quota}.py
+    adapters/
+      llm/ {anthropic_provider,router,base}.py
+      cache/redis.py
+  tests/ conftest.py contexts/ e2e/</pre>
+  </section>
+
+  <!-- 4 STACK -->
+  <section id="stack">
+    <span class="kick">4 · Stack</span>
+    <h2>Libraries (pinned)</h2>
+<pre><span class="c"># pyproject.toml (core)</span>
+fastapi>=0.115  uvicorn[standard]>=0.32
+pydantic>=2.9   pydantic-settings>=2.6
+sqlalchemy[asyncio]>=2.0  asyncpg>=0.30  alembic>=1.14
+anthropic>=0.69            <span class="c"># async client</span>
+redis>=5.2
+pyjwt>=2.10  argon2-cffi>=23.1
+structlog>=24.4  sentry-sdk>=2.18  pyyaml>=6.0
+<span class="c"># dev:</span> ruff mypy pytest pytest-asyncio httpx testcontainers[postgres] polyfactory</pre>
+  </section>
+
+  <!-- 5 DATA -->
+  <section id="data">
+    <span class="kick">5 · Data</span>
+    <h2>Data model (PostgreSQL)</h2>
+    <p>UUIDv7 PKs · <code>created_at/updated_at</code> timestamptz · JSONB for plugin-shaped payloads · money/cost in integer <code>micro_eur</code>.</p>
+
+    <h3>identity</h3>
+<pre>user( id, email citext unique, password_hash, role check(student|teacher|admin),
+      display_name, locale default 'en', plan default 'free' )
+refresh_token( id, user_id, token_hash, expires_at, revoked_at )</pre>
+
+    <h3>catalog — Mastery Graph</h3>
+<pre>subject( id, key unique, name, current_version_id )
+subject_version( id, subject_id, version, pack_schema_version, locale,
+                 progression_profile, UNIQUE(subject_id, version) )
+concept( id, subject_version_id, key, name, summary, difficulty,
+         objectives jsonb, misconceptions jsonb, tutor jsonb )
+<span class="c">-- prerequisite DAG: direct edges + closure table for O(1) reachability</span>
+concept_edge( subject_version_id, parent_concept_id, child_concept_id, kind='prerequisite' )
+concept_closure( ancestor_id, descendant_id, depth )
+question_template( id, subject_version_id, key, concept_id, kind, difficulty,
+                   source, payload jsonb, rubric_id )
+rubric( id, subject_version_id, key, criteria jsonb )</pre>
+    <div class="note">Graph queries (prerequisites / what-unlocks) via <code>concept_closure</code> (rebuilt on import) or a recursive CTE. The closure table keeps "is X ready?" cheap at scale.</div>
+
+    <h3>tutoring</h3>
+<pre>tutor_session( id, user_id, subject_version_id, concept_id?, status )
+tutor_message( id, session_id, role(user|assistant), content,
+               tokens_in, tokens_out, model )</pre>
+
+    <h3>assessment</h3>
+<pre>practice_session( id, user_id, subject_version_id, focus_concept_id?, difficulty, status )
+practice_item( id, session_id, concept_id, question_template_id?, kind, payload jsonb, ordinal )
+answer( id, item_id unique, user_id, raw jsonb, grade jsonb,
+        reasoning_score numeric, correct bool, graded_by )   <span class="c"># idempotent per item_id</span></pre>
+
+    <h3>progression — <span style="color:var(--gold)">event-sourced</span></h3>
+<pre>progression_event( id, user_id, subject_id, season_id?, type, payload jsonb, seq )  <span class="c"># append-only = source of truth</span>
+<span class="c">-- materialized projections (rebuildable from events):</span>
+user_subject_progress( user_id, subject_id, season_id, xp, rank, streak )
+user_concept_mastery( user_id, concept_id, mastery numeric, last_seen_at )   <span class="c"># adaptivity / spaced repetition</span>
+season( id, subject_id?, key, starts_at, ends_at )</pre>
+
+    <h3>metering</h3>
+<pre>usage_event( id, user_id, kind, model, tokens_in, tokens_out,
+             cost_micro_eur, ref_id )</pre>
+  </section>
+
+  <!-- 6 PROGRESSION -->
+  <section id="prog">
+    <span class="kick">6 · Progression</span>
+    <h2>XP/ranks engine — config, not code</h2>
+    <p>Ranks, thresholds and XP rules live in a <strong>ProgressionProfile</strong> (YAML/DB), referenced by a subject. Changing the scoring ≠ changing code.</p>
+<pre><span class="c"># progression/profiles/standard.yaml</span>
+ranks: [ {Bronze:0}, {Silver:120}, {Gold:300}, {Diamond:560} ]
+xp_rules:
+  correct_base: 40
+  streak_bonus_per: 5            <span class="c"># +5 * streak</span>
+  reasoning_multiplier: 1.0      <span class="c"># XP scales with reasoning_score → anti-offload</span>
+  wrong: 0</pre>
+
+    <div class="flow">
+      <div class="node"><b>Activity</b><small>emits event</small></div>
+      <div class="ar">→</div>
+      <div class="node"><b>AnswerGraded</b><small>correct · reasoning_score</small></div>
+      <div class="ar">→</div>
+      <div class="node"><b>projector</b><small>applies xp_rules</small></div>
+      <div class="ar">→</div>
+      <div class="node"><b>XpAwarded / RankUp</b><small>append + projection</small></div>
+    </div>
+    <div class="note note--green"><strong>Anti-offload baked in:</strong> XP scales with the grader's <code>reasoning_score</code>, not just correctness. Rebuild any projection by replaying events — audit-friendly, which matters because the product is trust.</div>
+  </section>
+
+  <!-- 7 AI -->
+  <section id="ai">
+    <span class="kick">7 · AI</span>
+    <h2>Anthropic Claude integration</h2>
+    <h3>Per-task routing (cost-aware)</h3>
+    <table>
+      <tr><th>Task</th><th>Model</th><th>Note</th></tr>
+      <tr><td><code>tutor_socratic</code></td><td>claude-haiku-4-5</td><td>cheap, high-volume</td></tr>
+      <tr><td><code>grade_reasoning</code></td><td>claude-haiku-4-5</td><td>structured output</td></tr>
+      <tr><td><code>generate_question</code></td><td>claude-sonnet-4-6</td><td>quality matters</td></tr>
+      <tr><td><em>voice / deep reasoning</em></td><td>sonnet / opus 🔜</td><td>later phase</td></tr>
+    </table>
+    <ul>
+      <li><strong>Streaming</strong> tutor replies over SSE (<code>client.messages.stream</code>).</li>
+      <li><strong>Structured outputs</strong> for grading (<code>messages.parse</code> + <code>output_config.format</code>) → typed <code>Grade</code>, no fragile parsing.</li>
+      <li><strong>Prompt caching</strong>: system prompt + concept context with <code>cache_control:{type:"ephemeral"}</code> → stable prefix at ~0.1× cost across a session.</li>
+      <li><strong>Metering</strong>: every call records a <code>usage_event</code> (tokens→micro-EUR); quota blocks free-tier users before the call.</li>
+    </ul>
+<pre>class AnthropicProvider(LLMProvider):
+    async def stream(self, req):
+        async with self._client.messages.stream(
+            model=self._router[req.task], max_tokens=1024,
+            system=req.system_blocks,        <span class="c"># carry cache_control</span>
+            messages=req.messages) as s:
+            async for text in s.text_stream: yield text
+        await self._meter(req, await s.get_final_message())
+
+    async def parse(self, req, schema):
+        r = await self._client.messages.parse(
+            model=self._router[req.task], max_tokens=1024, messages=req.messages,
+            output_config={"format": pydantic_format(schema)})
+        return r.parsed_output</pre>
+  </section>
+
+  <!-- 8 API -->
+  <section id="api">
+    <span class="kick">8 · API</span>
+    <h2>v1 surface — <code>/api/v1</code></h2>
+    <p>REST + JSON. Tutor over SSE. Cursor pagination. <code>Idempotency-Key</code> on writes that must not double-apply (answer submit).</p>
+
+    <div class="epgroup">
+      <h4>identity</h4>
+      <div class="ep"><span class="m post">POST</span><span class="path">/auth/register</span><span class="desc">email, password, display_name</span></div>
+      <div class="ep"><span class="m post">POST</span><span class="path">/auth/login</span><span class="desc">→ access, refresh</span></div>
+      <div class="ep"><span class="m post">POST</span><span class="path">/auth/refresh</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/me</span></div>
+    </div>
+
+    <div class="epgroup">
+      <h4>catalog</h4>
+      <div class="ep"><span class="m get">GET</span><span class="path">/subjects</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/subjects/{key}</span><span class="desc">current version</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/subjects/{key}/graph</span><span class="desc">concepts + edges</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/concepts/{id}</span></div>
+    </div>
+
+    <div class="epgroup">
+      <h4>tutoring (SSE)</h4>
+      <div class="ep"><span class="m post">POST</span><span class="path">/tutor/sessions</span><span class="desc">subject, concept?</span></div>
+      <div class="ep"><span class="m post">POST</span><span class="path">/tutor/sessions/{id}/messages</span><span class="desc">→ event-stream</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/tutor/sessions/{id}</span></div>
+    </div>
+
+    <div class="epgroup">
+      <h4>assessment</h4>
+      <div class="ep"><span class="m post">POST</span><span class="path">/practice/sessions</span><span class="desc">subject, concept?, difficulty</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/practice/sessions/{id}</span></div>
+      <div class="ep"><span class="m post">POST</span><span class="path">/practice/items/{id}/answer</span><span class="desc">Idempotency-Key → grade + xp</span></div>
+    </div>
+
+    <div class="epgroup">
+      <h4>progression · metering</h4>
+      <div class="ep"><span class="m get">GET</span><span class="path">/me/progress/{subject}</span><span class="desc">xp, rank, streak, weak concepts</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/leaderboards/{subject}?season=current</span></div>
+      <div class="ep"><span class="m get">GET</span><span class="path">/me/usage</span><span class="desc">tokens + remaining free quota</span></div>
+    </div>
+
+    <div class="epgroup">
+      <h4>admin / content</h4>
+      <div class="ep"><span class="m post">POST</span><span class="path">/admin/subjects/import</span><span class="desc">upload pack → new version</span></div>
+      <div class="ep"><span class="m post">POST</span><span class="path">/admin/subjects/{key}/activate</span><span class="desc">version</span></div>
+    </div>
+    <div class="note">Stub routers (501, interfaces defined) for 🔜 <code>evaluation</code> and <code>credentials</code>.</div>
+  </section>
+
+  <!-- 9 AUTH -->
+  <section id="auth">
+    <span class="kick">9 · Auth</span>
+    <h2>AuthN / AuthZ</h2>
+    <ul>
+      <li>JWT access (~15 min) + rotating refresh (hashed, stored). <strong>argon2id</strong> hashing.</li>
+      <li>RBAC via dependency: <code>require_role("admin")</code>, <code>current_user</code>. v1: student, admin (teacher arrives with <code>evaluation</code>).</li>
+      <li>Per-route + per-user rate limits in Redis. Ownership checks in services (a user reads only their own sessions).</li>
+      <li>Pluggable to OAuth/Clerk later — auth is a <code>deps.current_user</code> provider, swapped without touching routers.</li>
+    </ul>
+  </section>
+
+  <!-- 10 NFR -->
+  <section id="nfr">
+    <span class="kick">10 · Non-functional</span>
+    <h2>Operational</h2>
+    <table>
+      <tr><th>Topic</th><th>Decision</th></tr>
+      <tr><td>Config</td><td><code>pydantic-settings</code> + <code>.env</code>; secrets via env/secret-manager; price table for cost calc</td></tr>
+      <tr><td>Migrations</td><td>Alembic; closure rebuild in the import service, not in a migration</td></tr>
+      <tr><td>Testing</td><td>pytest-asyncio · <code>testcontainers[postgres]</code> (real PG) · httpx AsyncClient · faked LLM provider (deterministic) · golden-files for the pack loader</td></tr>
+      <tr><td>Observability</td><td>structlog JSON · request-id · OpenTelemetry (DB + LLM spans with tokens/cost) · Sentry</td></tr>
+      <tr><td>Cost</td><td>model routing · prompt caching · structured-output grading · <code>max_tokens</code> caps · per-user quota · Batch API for non-realtime bulk</td></tr>
+      <tr><td>i18n</td><td>content locale-tagged per subject version</td></tr>
+      <tr><td>Security</td><td>Pydantic validation · ORM params (SQLi-safe) · rate limits · no secrets in prompts/logs · CORS allowlist</td></tr>
+      <tr><td>Deploy</td><td>Docker image (uvicorn workers) · 12-factor · <code>/healthz</code> + readiness DB/Redis</td></tr>
+    </table>
+  </section>
+
+  <!-- 11 FUTURE -->
+  <section id="future">
+    <span class="kick">11 · Future</span>
+    <h2>How each future feature slots in — no rewrite</h2>
+    <table>
+      <tr><th>Future feature</th><th>Seam used</th><th>What you add</th></tr>
+      <tr><td>New subject (Math, History)</td><td>Subject Pack</td><td>author + import a pack; zero deploy</td></tr>
+      <tr><td>Voice-to-voice tutor</td><td>Activity + <code>voice</code> port</td><td><code>VoiceChatActivity</code> over WebSocket; STT/TTS adapters; reuses prompts</td></tr>
+      <tr><td>Human evaluation booking</td><td><code>evaluation</code> context</td><td>scheduling tables + <code>HumanGrader</code> (same port), same events</td></tr>
+      <tr><td>Verifiable credential</td><td><code>credentials</code> context</td><td>listens for <code>EvaluationPassed</code> → signs credential; public verify endpoint</td></tr>
+      <tr><td>New scoring / seasons</td><td>ProgressionProfile</td><td>new profile YAML; replay events if backfilling</td></tr>
+      <tr><td>Swap/add LLM</td><td><code>LLMProvider</code></td><td>new adapter + routing entry</td></tr>
+    </table>
+    <div class="note note--violet">The flat per-evaluation fee + Pro metering both already have a home (<code>metering</code>, future <code>evaluation</code>). Append-only events keep history intact.</div>
+  </section>
+
+  <!-- 12 ORDER -->
+  <section id="order">
+    <span class="kick">12 · Build</span>
+    <h2>Build order (v1)</h2>
+    <div class="steps">
+      <div class="step"><b>Skeleton</b> — app factory, config, DB session, Alembic, identity (auth + RBAC), <code>/healthz</code>.</div>
+      <div class="step"><b>catalog</b> — pack schema (Pydantic) + loader + Philosophy pack + graph endpoints + closure build.</div>
+      <div class="step"><b>metering</b> — usage_event + quota + price table (wire to a fake provider first).</div>
+      <div class="step"><b>tutoring</b> — SocraticChatActivity + AnthropicProvider (stream) + SSE endpoint + prompt assembly from the pack.</div>
+      <div class="step"><b>assessment</b> — PracticeTestActivity + MCQ/AIReasoning graders + answer endpoint (idempotent).</div>
+      <div class="step"><b>progression</b> — events + projector + ProgressionProfile + progress/leaderboard endpoints.</div>
+      <div class="step"><b>Hardening</b> — tests (testcontainers), observability, rate limits, Docker, CI.</div>
+    </div>
+  </section>
+
+  <!-- 13 OPEN -->
+  <section id="open">
+    <span class="kick">13 · To confirm</span>
+    <h2>Open decisions</h2>
+    <div class="dec"><div class="q"><b>ORM</b> — SQLAlchemy 2.0 async vs SQLModel (less boilerplate, some sharp edges).</div><span class="pick">pick: SQLAlchemy</span></div>
+    <div class="dec"><div class="q"><b>Auth build</b> — hand-rolled JWT (full control) vs <code>fastapi-users</code> (faster, opinionated).</div><span class="pick">pick: hand-rolled JWT</span></div>
+    <div class="dec"><div class="q"><b>Pack format</b> — YAML (authorable) vs JSON vs admin UI later.</div><span class="pick">pick: YAML</span></div>
+    <div class="dec"><div class="q"><b>Question generation in v1</b> — static bank only, or allow AI-generated items (<code>source: ai</code>) from day one — cost + caching implications.</div><span class="pick">to decide</span></div>
+    <div class="dec"><div class="q"><b>Mastery model</b> — simple decay+correctness vs BKT/Elo now.</div><span class="pick">pick: decay v1</span></div>
+    <div class="dec"><div class="q"><b>Multi-tenant?</b> — single-tenant assumed (one MecaTeca). Confirm no white-label.</div><span class="pick">to confirm</span></div>
+    <div class="dec"><div class="q"><b>Jobs</b> — none in v1 (all request-scoped). ARQ+Redis when voice/booking arrive.</div><span class="pick">to confirm</span></div>
+  </section>
+
+  <div class="foot">MecaTeca · Backend Spec v1 · rendered from SPEC.md — the markdown is the source of truth.</div>
+
+</main>
+</div>
+
+<script>
+// scrollspy
+const links=[...document.querySelectorAll('.toc a')];
+const map=new Map(links.map(a=>[a.getAttribute('href').slice(1),a]));
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){
+    links.forEach(l=>l.classList.remove('active'));
+    map.get(e.target.id)?.classList.add('active');
+  }});
+},{rootMargin:'-20% 0px -70% 0px'});
+document.querySelectorAll('main section').forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>

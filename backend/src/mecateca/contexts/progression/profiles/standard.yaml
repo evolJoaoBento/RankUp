@@ -1,0 +1,22 @@
+key: standard
+ranks:
+  - { name: Wood, xp: 0 }
+  - { name: Stone, xp: 60 }
+  - { name: Flint, xp: 140 }
+  - { name: Coal, xp: 240 }
+  - { name: Iron, xp: 360 }
+  - { name: Bronze, xp: 500 }
+  - { name: Silver, xp: 680 }
+  - { name: Gold, xp: 900 }
+  - { name: Platinum, xp: 1160 }
+  - { name: Emerald, xp: 1480 }
+  - { name: Sapphire, xp: 1860 }
+  - { name: Ruby, xp: 2320 }
+  - { name: Diamond, xp: 2880 }
+  - { name: Radiant, xp: 3560 }
+  - { name: Ascended, xp: 4400 }
+xp_rules:
+  correct_base: 40
+  streak_bonus_per: 5        # +5 * streak
+  reasoning_multiplier: 1.0  # reasoning_score (0..1) * correct_base, scales XP -> anti-offload
+  wrong: 0
