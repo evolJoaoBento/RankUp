@@ -1022,11 +1022,16 @@ function renderAssets(matId, assets) {
   }));
 }
 
+let _run = null;
 async function startTest(id) {
   $("#run").innerHTML = `<div class="card"><p class="muted">A carregar…</p></div>`;
   try {
     const s = await api(`/tests/${id}/start`, { method: "POST" });
-    const card = el(`<div class="card"><h3 style="font-size:16px;margin-bottom:10px">Teste em curso</h3><div id="runItems"></div></div>`);
+    _run = { total: s.items.length, answered: 0, correct: 0, ep: 0 };
+    const card = el(`<div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center"><h3 style="font-size:16px">Teste em curso</h3><span class="muted" id="runProg">0 / ${s.items.length}</span></div>
+      <div class="bar" style="margin:10px 0 16px"><div class="bar__f" id="runBar" style="width:0%"></div></div>
+      <div id="runItems"></div><div id="runSummary"></div></div>`);
     $("#run").innerHTML = ""; $("#run").appendChild(card);
     s.items.forEach((it, idx) => $("#runItems").appendChild(renderItem(it, idx)));
     card.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1330,6 +1335,18 @@ async function submitItem(it, node) {
     g.innerHTML = `<b>${r.correct ? "✓ Certo" : "✗ Rever"}</b> · raciocínio ${(r.reasoning_score * 100).toFixed(0)}% · <b>${r.xp_delta >= 0 ? "+" : ""}${r.xp_delta} EP</b>` +
       (r.feedback ? `<br>${esc(r.feedback)}` : "");
     btn.textContent = "Respondido";
+    if (_run) {
+      _run.answered++; if (r.correct) _run.correct++; _run.ep += r.xp_delta;
+      const pr = $("#runProg"), bar = $("#runBar");
+      if (pr) pr.textContent = `${_run.answered} / ${_run.total}`;
+      if (bar) bar.style.width = `${Math.round((100 * _run.answered) / _run.total)}%`;
+      if (_run.answered === _run.total && $("#runSummary")) {
+        const pct = Math.round((100 * _run.correct) / _run.total);
+        $("#runSummary").innerHTML = `<div class="grade ${pct >= 50 ? "ok" : "no"}" style="margin-top:14px">
+          <b>Teste concluído!</b> ${_run.correct}/${_run.total} certas (${pct}%) · <b>${_run.ep >= 0 ? "+" : ""}${_run.ep} EP</b></div>`;
+        $("#runSummary").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
     if (r.ranked_up) playRankUp(r.rank);
     refreshChip();
   } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = "Responder"; }
