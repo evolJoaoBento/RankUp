@@ -537,6 +537,18 @@ async function refreshChip() {
   try { p = await api(`/me/progress/${SUBJECT}`); } catch {}
   window._prog = p;
   await renderRail();
+  updateDuelBadge();
+}
+
+// red counter on the Duelos nav item: invites + duels waiting on me
+async function updateDuelBadge() {
+  let n = 0;
+  try {
+    const ds = await api("/duels");
+    n = ds.filter((d) => d.needs_my_action && ["pending", "setup", "active"].includes(d.status)).length;
+  } catch {}
+  const dot = $("#duelDot");
+  if (dot) { dot.hidden = !n; dot.textContent = n > 9 ? "9+" : n; }
 }
 
 /* ===================================================================== */
@@ -1866,8 +1878,9 @@ async function renderDuelList() {
       badge = d.is_draw ? "Empate" : (d.won ? "Vitória" : "Derrota");
     const cls = (d.status === "complete" || d.status === "forfeited") ? (d.is_draw ? "" : (d.won ? "win" : "loss")) : "";
     const incoming = d.status === "pending" && !d.is_challenger;
-    return `<div class="du-row">
-      <span><b>vs ${esc(d.opponent_name)}</b> <span class="du-badge ${cls}">${badge}</span>${d.ranked ? ` <span class="du-badge du-badge--ranked">Ranked</span>` : ""}
+    const myTurn = d.needs_my_action && ["setup", "active"].includes(d.status);
+    return `<div class="du-row ${myTurn || incoming ? "du-row--act" : ""}">
+      <span><b>vs ${esc(d.opponent_name)}</b> <span class="du-badge ${cls}">${badge}</span>${d.ranked ? ` <span class="du-badge du-badge--ranked">Ranked</span>` : ""}${myTurn ? ` <span class="du-badge du-badge--act">A tua vez</span>` : ""}
         ${["active", "complete", "forfeited"].includes(d.status) ? `<span class="muted" style="font-size:12px"> · ${d.my_points}–${d.opp_points}</span>` : ""}</span>
       <span class="row" style="gap:6px">
         ${incoming ? `<button class="btn btn--sm" data-acc="${d.id}">Aceitar</button><button class="btn btn--ghost btn--sm" data-dec="${d.id}">Recusar</button>`

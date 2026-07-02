@@ -417,6 +417,11 @@ th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5p
 .du-hist__body{margin-top:8px;font-size:14px;display:flex;flex-direction:column;gap:6px}
 .du-hist__body p{margin:0}
 .du-badge--ranked{color:#5b3fa0;background:#ece4fb;border-color:#cdb8f0}
+.du-badge--act{color:#8a6d1d;background:#f6ecd2;border-color:#e2cf9a;animation:actpulse 1.6s ease-in-out infinite}
+.du-row--act{border-color:var(--gold);background:linear-gradient(110deg,rgba(216,183,116,.14),transparent)}
+@keyframes actpulse{0%,100%{opacity:1}50%{opacity:.55}}
+.nav__dot{position:absolute;top:1px;right:2px;min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;line-height:1}
+.nav__dot[hidden]{display:none}
 .du-ranked-tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#5b3fa0;background:#ece4fb;border:1px solid #cdb8f0;border-radius:6px;padding:2px 9px;margin:0 auto 6px;width:fit-content}
 .du-rating{font-family:'Century Gothic','Jost',sans-serif;font-weight:700;font-size:18px;margin-top:6px;display:inline-flex;align-items:center;gap:5px}
 .du-rating.up{color:var(--green)} .du-rating.down{color:var(--red)}
