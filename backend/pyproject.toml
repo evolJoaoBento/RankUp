@@ -44,6 +44,10 @@ packages = ["src/mecateca"]
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint]
+# E402: settings/env must load before app imports; E702: compact one-liners are house style
+ignore = ["E402", "E702"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"

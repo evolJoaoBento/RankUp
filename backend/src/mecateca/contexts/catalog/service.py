@@ -382,7 +382,6 @@ def _extract_text(kind: str, data: bytes) -> str:
 
 async def add_asset(db: AsyncSession, material_id, filename: str, content_type: str, data: bytes, user) -> "MaterialAsset":
     import re as _re
-    from pathlib import Path
 
     m = await db.get(Material, material_id)
     if m is None:

@@ -4,7 +4,7 @@ import secrets
 import uuid
 from datetime import timedelta
 
-from sqlalchemy import func, or_, select, text, update
+from sqlalchemy import or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mecateca.adapters.llm.base import LLMProvider

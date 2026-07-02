@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mecateca.adapters.llm.base import LLMMessage, LLMProvider, LLMRequest, Usage
-from mecateca.contexts.catalog.models import Concept, Material
+from mecateca.contexts.catalog.models import Material
 from mecateca.contexts.tutoring.models import TutorMessage, TutorSession
 from mecateca.contexts.tutoring.prompts import build_system
 

@@ -33,6 +33,7 @@ from mecateca.contexts.catalog.schemas import (
 from mecateca.contexts.identity.models import User
 from mecateca.db.session import get_db
 from mecateca.deps import current_user, get_llm_provider, require_role
+from mecateca.shared.errors import NotFound
 
 
 async def _authors(db: AsyncSession, ids: list) -> dict:

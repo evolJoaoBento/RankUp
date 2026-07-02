@@ -19,7 +19,6 @@ _STARTUP_LOCK_KEY = 0x5EED0001
 from mecateca.config import get_settings
 from mecateca.contexts.identity import service as identity_service
 from mecateca.db import registry  # noqa: F401  (populate metadata)
-from mecateca.db.base import Base
 from mecateca.db.engine import get_engine, get_sessionmaker
 from mecateca.contexts.assessment.router import router as assessment_router
 from mecateca.contexts.catalog.router import router as catalog_router
