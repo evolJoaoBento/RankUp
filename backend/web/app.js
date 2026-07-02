@@ -1470,8 +1470,8 @@ async function setMyBackground(bg) {
 /* ===================================================================== */
 /* ADMIN                                                                 */
 /* ===================================================================== */
-const ADMIN_TABS = [["disciplinas", "Disciplinas"], ["contas", "Contas"], ["ranks", "Ranks"], ["conversas", "Conversas"]];
-let _adminTab = "disciplinas";
+const ADMIN_TABS = [["geral", "Visão geral"], ["disciplinas", "Disciplinas"], ["contas", "Contas"], ["ranks", "Ranks"], ["conversas", "Conversas"]];
+let _adminTab = "geral";
 
 async function vAdmin() {
   const v = $("#view");
@@ -1517,6 +1517,19 @@ function bindIconPick(btn) {
 
 async function showAdminTab(tab) {
   const p = $("#adminPanel");
+  if (tab === "geral") {
+    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:12px">Plataforma</h3><div class="statgrid" id="agStats">…</div></div>`;
+    try {
+      const s = await api("/admin/stats");
+      const tile = (label, val, warn) => `<div class="stattile ${warn && val > 0 ? "stattile--warn" : ""}"><b>${val}</b><span>${label}</span></div>`;
+      $("#agStats").innerHTML =
+        tile("Contas", s.users) + tile("Professores", s.teachers) + tile("Disciplinas", s.subjects) +
+        tile("Materiais", s.materials) + tile("Materiais pendentes", s.materials_pending, true) +
+        tile("Testes", s.tests) + tile("Conversas", s.conversations) +
+        tile("Conversas apagadas", s.deleted_conversations) + tile("Duelos", s.duels);
+    } catch (e) { $("#agStats").innerHTML = `<p class="err">${e.message}</p>`; }
+    return;
+  }
   if (tab === "disciplinas") {
     p.innerHTML = `
       <div class="card">

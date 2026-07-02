@@ -70,6 +70,34 @@ async def set_my_background(body: BackgroundIn, user: User = Depends(current_use
     return user
 
 
+# ---- admin: platform overview ----
+@router.get("/admin/stats", dependencies=[Depends(require_role("admin"))])
+async def admin_stats(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import func
+
+    from mecateca.contexts.catalog.models import Material, Subject, Test
+    from mecateca.contexts.duels.models import Duel
+    from mecateca.contexts.tutoring.models import TutorSession
+
+    async def count(model, *where):
+        q = select(func.count()).select_from(model)
+        for w in where:
+            q = q.where(w)
+        return (await db.execute(q)).scalar_one()
+
+    return {
+        "users": await count(User),
+        "teachers": await count(User, User.role == "teacher"),
+        "subjects": await count(Subject),
+        "materials": await count(Material),
+        "materials_pending": await count(Material, Material.teacher_approved.is_(False)),
+        "tests": await count(Test),
+        "conversations": await count(TutorSession, TutorSession.deleted_at.is_(None)),
+        "deleted_conversations": await count(TutorSession, TutorSession.deleted_at.is_not(None)),
+        "duels": await count(Duel),
+    }
+
+
 # ---- admin: account management ----
 @router.get("/admin/users", response_model=list[AdminUserOut], dependencies=[Depends(require_role("admin"))])
 async def list_users(db: AsyncSession = Depends(get_db)):
