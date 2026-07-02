@@ -175,6 +175,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .starter{font-family:inherit;font-size:13.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;transition:border-color .15s,transform .12s,box-shadow .15s}
 .starter:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.08)}
 .toolrow{display:flex;align-items:center;gap:12px;margin:14px 0 0}
+.lbrows{display:flex;flex-direction:column;gap:4px}
+.lbrow{display:flex;align-items:center;gap:12px;padding:7px 12px;border-radius:9px;background:var(--panel);border:1px solid transparent}
+.lbrow:nth-child(odd){background:var(--panel2)}
+.lbrow.is-me{border-color:var(--gold);background:linear-gradient(110deg,rgba(216,183,116,.16),rgba(169,155,214,.10))}
+.lbrow__pos{font-weight:700;width:22px;text-align:center;color:var(--muted)}
+.lbrow:nth-child(1) .lbrow__pos{color:#b8860b}
+.lbrow__name{flex:1;font-weight:600;font-size:14.5px}
+.lbrow__streak{display:inline-flex;align-items:center;gap:3px;font-size:13px;color:var(--muted)}
+.lbrow__ep{font-weight:700;font-size:14.5px;min-width:70px;text-align:right}
 .searchbar{flex:0 1 340px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font:inherit;font-size:14px;color:var(--ink)}
 .searchbar:focus{outline:none;border-color:var(--gold)}
 .dots:after{content:'…';animation:dots 1.2s steps(4) infinite}

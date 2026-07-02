@@ -739,6 +739,7 @@ async function vPractice() {
   const teacher = USER.role === "teacher" || USER.role === "admin";
   v.innerHTML = `
     <div class="view__head"><h1>Ranked</h1><p>Escolhe um teste do marketplace. EP ganha-se pelo raciocínio, não só pela resposta certa.</p></div>
+    <div class="card lbcard" id="epLb" style="display:none"></div>
     <div class="card">
       <div class="row" style="justify-content:space-between"><h3 style="font-size:16px">Marketplace de testes</h3>
         ${teacher ? `<div class="row"><button class="btn btn--ghost btn--sm" id="genTest">${icon("sparkle", 15)} Gerar com IA</button><button class="btn btn--sm" id="newTest">${icon("plus", 15)} Criar teste</button></div>` : ""}</div>
@@ -799,6 +800,27 @@ async function vPractice() {
     };
   }
   renderTests(teacher);
+  renderEpLeaderboard();
+}
+
+// per-subject EP ladder shown on the Ranked view
+async function renderEpLeaderboard() {
+  let lb = [];
+  try { lb = await api(`/leaderboards/${SUBJECT}?limit=10`); } catch {}
+  const box = $("#epLb");
+  if (!box || !lb.length) return;
+  const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
+  box.style.display = "";
+  box.innerHTML = `
+    <h3 style="font-size:16px;margin-bottom:10px">${icon("trophy", 16)} Classificação · ${esc(subjName)}</h3>
+    <div class="lbrows">${lb.map((r, i) => `
+      <div class="lbrow ${r.display_name === USER.display_name ? "is-me" : ""}">
+        <span class="lbrow__pos">${i + 1}</span>
+        ${rankLogo(r.rank, 26)}
+        <span class="lbrow__name">${esc(r.display_name)}</span>
+        <span class="lbrow__streak">${r.streak}${icon("flame", 12)}</span>
+        <span class="lbrow__ep">${r.xp} EP</span>
+      </div>`).join("")}</div>`;
 }
 
 async function renderTests(teacher) {
