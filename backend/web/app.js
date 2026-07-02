@@ -631,6 +631,7 @@ async function newTutor(materialId = null) {
     addMsg("bot", materialId
       ? `Olá — vamos explorar **${esc(s.title)}**. Não dou respostas; ajudo-te a chegar lá. Por onde começamos?`
       : "Olá — sou o teu tutor na **RankUp**. Não dou respostas; ajudo-te a encontrá-las. O que queres explorar?");
+    showStarters(!!materialId);
     await loadChatList();
   } catch (e) { toast(e.message); }
 }
@@ -642,10 +643,42 @@ async function openChat(id) {
   setTutorMat(meta && meta.material_id ? meta.title : null);
   try {
     const msgs = await api(`/tutor/sessions/${id}`);
-    if (!msgs.length) addMsg("bot", "Olá — sou o teu tutor na **RankUp**. O que queres explorar?");
+    if (!msgs.length) { addMsg("bot", "Olá — sou o teu tutor na **RankUp**. O que queres explorar?"); showStarters(!!(meta && meta.material_id)); }
     else msgs.forEach((m) => addMsg(m.role === "assistant" ? "bot" : "user", m.content));
   } catch (e) { toast(e.message); }
   document.querySelectorAll(".chatitem").forEach((b) => b.classList.toggle("is-active", b.dataset.id === id));
+}
+
+// live text filter over a card grid: hides non-matching cards, keeps a count label
+function wireGridSearch(inputSel, gridSel, countSel, noun) {
+  const input = $(inputSel), grid = $(gridSel), count = $(countSel);
+  if (!input || !grid) return;
+  const apply = () => {
+    const q = input.value.trim().toLowerCase();
+    let shown = 0;
+    grid.querySelectorAll(".mkt-card").forEach((c) => {
+      const hit = !q || (c.dataset.search || "").includes(q);
+      c.style.display = hit ? "" : "none";
+      if (hit) shown++;
+    });
+    if (count) count.textContent = q ? `${shown} ${noun}` : "";
+  };
+  input.oninput = apply;
+  apply();
+}
+
+// quick-start suggestion chips shown on an empty chat
+function showStarters(hasMat) {
+  const opts = hasMat
+    ? ["Quais são as ideias principais?", "Faz-me uma pergunta sobre isto", "Dá-me um exemplo do dia a dia", "Porque é que isto é importante?"]
+    : ["Ajuda-me a preparar um teste", "Explora um conceito comigo", "Testa o que eu já sei", "Por onde devo começar?"];
+  const box = el(`<div class="starters">${opts.map((o) => `<button type="button" class="starter">${o}</button>`).join("")}</div>`);
+  $("#chat").appendChild(box);
+  box.querySelectorAll(".starter").forEach((b) => (b.onclick = () => {
+    $("#chatText").value = b.textContent;
+    box.remove();
+    $("#chatForm").requestSubmit();
+  }));
 }
 
 function addMsg(who, text) {
@@ -658,6 +691,7 @@ function addMsg(who, text) {
 async function sendTutor(e) {
   e.preventDefault();
   const txt = $("#chatText").value.trim(); if (!txt || !tutorSid) return;
+  $("#chat").querySelectorAll(".starters").forEach((s) => s.remove());
   $("#chatText").value = ""; $("#chatSend").disabled = true;
   addMsg("user", txt);
   const bubble = addMsg("bot", "");
@@ -709,6 +743,7 @@ async function vPractice() {
       <div class="row" style="justify-content:space-between"><h3 style="font-size:16px">Marketplace de testes</h3>
         ${teacher ? `<div class="row"><button class="btn btn--ghost btn--sm" id="genTest">${icon("sparkle", 15)} Gerar com IA</button><button class="btn btn--sm" id="newTest">${icon("plus", 15)} Criar teste</button></div>` : ""}</div>
       <div id="newTestForm"></div>
+      <div class="toolrow"><input id="testSearch" class="searchbar" placeholder="Procurar teste…" autocomplete="off"><span class="muted" id="testCount"></span></div>
       <div id="tests" class="mkt-grid" style="margin-top:12px">…</div>
     </div>
     <div id="run"></div>`;
@@ -771,7 +806,7 @@ async function renderTests(teacher) {
   try { tests = await api(`/subjects/${SUBJECT}/tests`); } catch {}
   if (!tests.length) { $("#tests").innerHTML = `<p class="muted">Ainda não há testes${teacher ? " — cria um." : "."}</p>`; return; }
   $("#tests").innerHTML = tests.map((t) => `
-    <div class="mkt-card">
+    <div class="mkt-card" data-search="${esc(`${t.title} ${t.description || ""} ${t.author || ""}`.toLowerCase())}">
       <div class="mkt-card__top">
         <span class="mkt-card__title">${esc(t.title)}</span>
         ${t.is_public ? `<span class="badge-ok">${icon("globe", 12)} pública</span>` : `<span class="badge-pend">${icon("lock", 12)} privada</span>`}
@@ -791,6 +826,7 @@ async function renderTests(teacher) {
         ${(teacher && t.is_mine) || USER.role === "admin" ? `<button class="btn btn--ghost btn--sm" data-pub="${t.id}" data-cur="${t.is_public}">${t.is_public ? "Tornar privada" : "Publicar"}</button>` : ""}
       </div>
     </div>`).join("");
+  wireGridSearch("#testSearch", "#tests", "#testCount", "teste(s)");
   $("#tests").querySelectorAll("[data-do]").forEach((b) => (b.onclick = () => startTest(b.dataset.do)));
   $("#tests").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => openTestEditor(b.dataset.edit)));
   $("#tests").querySelectorAll("[data-cards]").forEach((b) => (b.onclick = () => startFlashcards(b.dataset.cards, b.dataset.title)));
@@ -821,6 +857,7 @@ async function vMaterials() {
         <div class="row" style="margin-top:8px"><button class="btn btn--sm" id="nmAdd">Adicionar</button><button class="btn btn--ghost btn--sm" id="nmCancel">Limpar</button></div>
       </div>
     </div>
+    <div class="toolrow"><input id="matSearch" class="searchbar" placeholder="Procurar material…" autocomplete="off"><span class="muted" id="matCount"></span></div>
     <div id="matGrid" class="mkt-grid">…</div>`;
   await renderMaterialsPage();
 }
@@ -840,7 +877,7 @@ async function renderMaterialsPage() {
   mats.sort((a, b) => (b.favorited ? 1 : 0) - (a.favorited ? 1 : 0));
   _matCache = {}; mats.forEach((m) => (_matCache[m.id] = m));
   $("#matGrid").innerHTML = mats.length ? mats.map((m) => `
-    <div class="mkt-card pick" data-open="${m.id}">
+    <div class="mkt-card pick" data-open="${m.id}" data-search="${esc(`${m.title} ${m.body || ""}`.slice(0, 400).toLowerCase())}">
       <div class="mkt-card__top">
         <span class="mkt-card__title">${esc(m.title)}</span>
         <button class="iconbtn star ${m.favorited ? "on" : ""}" data-fav="${m.id}" title="Favorito">${icon("star", 16)}</button>
@@ -852,6 +889,7 @@ async function renderMaterialsPage() {
         ${(isTeacher && !m.teacher_approved) ? `<button class="btn btn--sm" data-approve="${m.id}">${icon("check", 14)} Aprovar</button>` : ""}
       </div>
     </div>`).join("") : `<p class="muted">Sem materiais ainda — adiciona o primeiro.</p>`;
+  wireGridSearch("#matSearch", "#matGrid", "#matCount", "material(is)");
   $("#matGrid").querySelectorAll("[data-open]").forEach((c) => (c.onclick = () => openMaterialInspector(_matCache[c.dataset.open])));
   $("#matGrid").querySelectorAll("[data-study]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); PENDING_MATERIAL = b.dataset.study; go("tutor"); }));
   $("#matGrid").querySelectorAll("[data-approve]").forEach((b) => (b.onclick = async (e) => {

@@ -171,6 +171,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .msg__b pre code{background:none;border:0;color:inherit;padding:0}
 .msg__b a{color:var(--gold)}
 .chat__in{display:flex;gap:10px;margin-top:12px}
+.starters{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 0 44px}
+.starter{font-family:inherit;font-size:13.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;transition:border-color .15s,transform .12s,box-shadow .15s}
+.starter:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.toolrow{display:flex;align-items:center;gap:12px;margin:14px 0 0}
+.searchbar{flex:0 1 340px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font:inherit;font-size:14px;color:var(--ink)}
+.searchbar:focus{outline:none;border-color:var(--gold)}
 .dots:after{content:'…';animation:dots 1.2s steps(4) infinite}
 @keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
 

@@ -7,9 +7,9 @@ from pathlib import Path
 
 from playwright.async_api import async_playwright
 
-BASE = "http://127.0.0.1:8000"
+BASE = "http://127.0.0.1:8080"
 OUT = Path(__file__).resolve().parents[1] / "shots"
-VIEWS = ["tutor", "practice", "progress", "leaderboard", "usage", "admin"]
+VIEWS = ["tutor", "practice", "materials", "duels", "admin"]
 
 
 async def main(views: list[str]) -> None:
