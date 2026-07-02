@@ -882,7 +882,7 @@ async function renderTests(teacher) {
 async function vMaterials() {
   const v = $("#view");
   v.innerHTML = `
-    <div class="view__head"><h1>Materiais</h1><p>Referências que alimentam o tutor (Practice) e fundamentam os testes (Ranked). Material de professor fica aprovado.</p></div>
+    <div class="view__head"><h1>Materiais</h1><p>Referências que alimentam o tutor (Learn) e fundamentam os testes (Ranked). Material de professor fica aprovado.</p></div>
     <div class="card">
       <div class="mgbox">
         <b>${icon("plus", 15)} Adicionar material</b>
@@ -891,7 +891,12 @@ async function vMaterials() {
         <div class="row" style="margin-top:8px"><button class="btn btn--sm" id="nmAdd">Adicionar</button><button class="btn btn--ghost btn--sm" id="nmCancel">Limpar</button></div>
       </div>
     </div>
-    <div class="toolrow"><input id="matSearch" class="searchbar" placeholder="Procurar material…" autocomplete="off"><span class="muted" id="matCount"></span></div>
+    <div class="toolrow"><input id="matSearch" class="searchbar" placeholder="Procurar material…" autocomplete="off">
+      <select id="matSort" class="searchbar" style="flex:0 0 auto;width:auto">
+        <option value="fav">Favoritos primeiro</option>
+        <option value="new">Mais recentes</option>
+        <option value="pend">Pendentes primeiro</option>
+      </select><span class="muted" id="matCount"></span></div>
     <div id="matGrid" class="mkt-grid">…</div>`;
   await renderMaterialsPage();
 }
@@ -908,7 +913,10 @@ async function renderMaterialsPage() {
   const isTeacher = USER.role === "teacher" || USER.role === "admin";
   let mats = [];
   try { mats = await api(`/subjects/${SUBJECT}/material`); } catch {}
-  mats.sort((a, b) => (b.favorited ? 1 : 0) - (a.favorited ? 1 : 0));
+  const sortMode = ($("#matSort") || {}).value || "fav";
+  if (sortMode === "new") mats.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+  else if (sortMode === "pend") mats.sort((a, b) => (a.teacher_approved ? 1 : 0) - (b.teacher_approved ? 1 : 0));
+  else mats.sort((a, b) => (b.favorited ? 1 : 0) - (a.favorited ? 1 : 0));
   _matCache = {}; mats.forEach((m) => (_matCache[m.id] = m));
   $("#matGrid").innerHTML = mats.length ? mats.map((m) => `
     <div class="mkt-card pick" data-open="${m.id}" data-search="${esc(`${m.title} ${m.body || ""}`.slice(0, 400).toLowerCase())}">
@@ -923,6 +931,8 @@ async function renderMaterialsPage() {
         ${(isTeacher && !m.teacher_approved) ? `<button class="btn btn--sm" data-approve="${m.id}">${icon("check", 14)} Aprovar</button>` : ""}
       </div>
     </div>`).join("") : `<p class="muted">Sem materiais ainda — adiciona o primeiro.</p>`;
+  const sortSel = $("#matSort");
+  if (sortSel && !sortSel._wired) { sortSel._wired = true; sortSel.onchange = () => renderMaterialsPage(); }
   wireGridSearch("#matSearch", "#matGrid", "#matCount", "material(is)");
   $("#matGrid").querySelectorAll("[data-open]").forEach((c) => (c.onclick = () => openMaterialInspector(_matCache[c.dataset.open])));
   $("#matGrid").querySelectorAll("[data-study]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); PENDING_MATERIAL = b.dataset.study; go("tutor"); }));
