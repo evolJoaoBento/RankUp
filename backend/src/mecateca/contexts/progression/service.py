@@ -108,6 +108,39 @@ async def leaderboard(db: AsyncSession, subject_key: str, limit: int = 20) -> li
     ]
 
 
+async def xp_history(db: AsyncSession, user_id, subject_key: str, days: int = 14) -> list[dict]:
+    """EP earned per day (from the append-only event log) for a profile sparkline."""
+    from datetime import timedelta
+
+    from sqlalchemy import Integer, cast, func
+
+    from mecateca.contexts.progression.models import ProgressionEvent
+    from mecateca.shared.clock import now
+
+    subject = await catalog_service.get_subject(db, subject_key)
+    since = now() - timedelta(days=days - 1)
+    day = func.date_trunc("day", ProgressionEvent.created_at)
+    rows = (
+        await db.execute(
+            select(day, func.sum(cast(ProgressionEvent.payload["amount"].astext, Integer)))
+            .where(
+                ProgressionEvent.user_id == user_id,
+                ProgressionEvent.subject_id == subject.id,
+                ProgressionEvent.type == "XpAwarded",
+                ProgressionEvent.created_at >= since,
+            )
+            .group_by(day)
+            .order_by(day)
+        )
+    ).all()
+    by_day = {d.date().isoformat(): int(s or 0) for d, s in rows}
+    today = now().date()
+    return [
+        {"day": (today - timedelta(days=i)).isoformat(), "ep": by_day.get((today - timedelta(days=i)).isoformat(), 0)}
+        for i in range(days - 1, -1, -1)
+    ]
+
+
 async def my_position(db: AsyncSession, subject_key: str, user_id) -> dict | None:
     """1-based ladder position of the user in a subject, or None if unranked."""
     subject = await catalog_service.get_subject(db, subject_key)

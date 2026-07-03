@@ -42,6 +42,11 @@ async def leaderboard(
     return await service.leaderboard(db, subject, limit)
 
 
+@router.get("/me/progress/{subject}/history")
+async def my_xp_history(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.xp_history(db, user.id, subject)
+
+
 @router.get("/leaderboards/{subject}/me")
 async def leaderboard_me(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     return await service.my_position(db, subject, user.id) or {"position": None}

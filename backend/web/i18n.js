@@ -257,6 +257,8 @@ window.I18N = (() => {
       // profile
       "Meu perfil": "My profile",
       "Últimos resultados": "Recent results",
+      "EP — últimos 14 dias": "EP — last 14 days",
+      "Ainda sem EP nestas 2 semanas — faz um teste no Ranked.": "No EP in the last 2 weeks yet — take a test in Ranked.",
       "Quando": "When",
       "Certas": "Correct",
       "Raciocínio": "Reasoning",

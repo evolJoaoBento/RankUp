@@ -1508,6 +1508,8 @@ async function vProfile() {
         return `<div class="rankladder">${ladder}</div><p class="muted" style="font-size:13px;margin-top:2px">${hint}</p>`;
       })()}
       <div class="stat"><div><span class="label">EP</span><b>${p.xp}</b></div><div><span class="label">${t("Streak")}</span><b style="display:inline-flex;align-items:center;gap:4px">${p.streak}${icon("flame", 15)}</b></div><div><span class="label">${t("Rating duelos")}</span><b id="pgElo">—</b></div><div><span class="label">${t("V / D / E")}</span><b id="pgWdl">—</b></div></div>
+      <h3 style="margin:18px 0 6px;font-size:16px">${t("EP — últimos 14 dias")}</h3>
+      <div class="spark" id="pgSpark"></div>
       <h3 style="margin:18px 0 6px;font-size:16px">${t("Fundo do emblema")}</h3>
       <p class="muted" style="font-size:13px;margin-bottom:8px">${t("Desbloqueias mais cores ao subir de rank.")}</p>
       <div class="bg-pick" id="bgPick">${sw("", !USER.background)}${unlocked.map((n) => sw(n, USER.background === n)).join("")}</div>
@@ -1522,6 +1524,15 @@ async function vProfile() {
       if ($("#pgElo")) $("#pgElo").textContent = r.rating;
       if ($("#pgWdl")) $("#pgWdl").textContent = `${r.wins} / ${r.losses} / ${r.draws}`;
     } catch {}
+    try {
+      const hist = await api(`/me/progress/${SUBJECT}/history`);
+      const max = Math.max(1, ...hist.map((h) => h.ep));
+      $("#pgSpark").innerHTML = hist.some((h) => h.ep)
+        ? hist.map((h) =>
+            `<div class="spark__bar ${h.ep ? "" : "spark__bar--zero"}" style="height:${Math.max(4, Math.round((100 * h.ep) / max))}%" title="${h.day}: ${h.ep} EP"></div>`
+          ).join("")
+        : `<p class="muted" style="font-size:13px">${t("Ainda sem EP nestas 2 semanas — faz um teste no Ranked.")}</p>`;
+    } catch { if ($("#pgSpark")) $("#pgSpark").innerHTML = ""; }
   } catch (e) { $("#pg").innerHTML = `<p class="err">${e.message}</p>`; }
   try {
     const rs = await api("/me/results");
