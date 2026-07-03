@@ -1951,9 +1951,29 @@ async function renderFriends(card) {
   box.querySelectorAll("[data-duel]").forEach((b) => (b.onclick = () => challengeFriend(b.dataset.duel)));
 }
 
-async function challengeFriend(opponentId) {
+// challenging always asks which discipline first (duels are per-subject)
+function challengeFriend(opponentId) {
+  if (SUBJECTS.length <= 1) return createDuel(opponentId, SUBJECT || (SUBJECTS[0] || {}).key);
+  $("#modal").innerHTML = `
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel" style="max-width:380px">
+      <div class="modal__hd"><h3>Duelo — escolher disciplina</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__body"><div class="subjpick">
+        ${SUBJECTS.map((s) => `<button class="subjpick__it ${s.key === SUBJECT ? "is-active" : ""}" data-subj="${s.key}">${subjectIcon(s.icon, 18)}<span>${esc(s.name)}</span></button>`).join("")}
+      </div></div>
+    </div>`;
+  $("#modal").classList.add("show");
+  $("#mClose").querySelector("svg").style.transform = "rotate(45deg)";
+  $("#mClose").onclick = closeModal; $("#modal .modal__backdrop").onclick = closeModal;
+  $("#modal").querySelectorAll("[data-subj]").forEach((b) => (b.onclick = () => {
+    closeModal();
+    createDuel(opponentId, b.dataset.subj);
+  }));
+}
+
+async function createDuel(opponentId, subject) {
   try {
-    const r = await api("/duels", { method: "POST", body: { opponent_id: opponentId, subject: SUBJECT } });
+    const r = await api("/duels", { method: "POST", body: { opponent_id: opponentId, subject } });
     toast("Desafio enviado!");
     openDuel(r.id);
   } catch (e) { toast(e.message); }
@@ -1965,7 +1985,7 @@ async function renderDuelList() {
   if (!duels.length) { $("#duBox").innerHTML = `<p class="muted" style="font-size:13px">Sem duelos. Desafia um amigo.</p>`; return; }
   const STATUS = {
     pending: "Convite pendente", setup: "A preparar", active: "A decorrer",
-    complete: "Terminado", declined: "Recusado", forfeited: "Desistência",
+    complete: "Terminado", declined: "Recusado", forfeited: "Desistência", cancelled: "Cancelado",
   };
   $("#duBox").innerHTML = duels.map((d) => {
     let badge = STATUS[d.status] || d.status;
@@ -1979,6 +1999,7 @@ async function renderDuelList() {
         ${["active", "complete", "forfeited"].includes(d.status) ? `<span class="muted" style="font-size:12px"> · ${d.my_points}–${d.opp_points}</span>` : ""}</span>
       <span class="row" style="gap:6px">
         ${incoming ? `<button class="btn btn--sm" data-acc="${d.id}">Aceitar</button><button class="btn btn--ghost btn--sm" data-dec="${d.id}">Recusar</button>`
+          : d.status === "pending" && d.is_challenger ? `<button class="btn btn--ghost btn--sm" data-open="${d.id}">Ver</button><button class="btn btn--ghost btn--sm" data-cancel="${d.id}">Cancelar</button>`
           : (["setup", "active"].includes(d.status) ? `<button class="btn btn--sm" data-open="${d.id}">Entrar</button>`
           : `<button class="btn btn--ghost btn--sm" data-open="${d.id}">Ver</button>`)}
       </span></div>`;
@@ -1986,6 +2007,7 @@ async function renderDuelList() {
   $("#duBox").querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openDuel(b.dataset.open)));
   $("#duBox").querySelectorAll("[data-acc]").forEach((b) => (b.onclick = async () => { try { await api(`/duels/${b.dataset.acc}/accept`, { method: "POST" }); openDuel(b.dataset.acc); } catch (e) { toast(e.message); } }));
   $("#duBox").querySelectorAll("[data-dec]").forEach((b) => (b.onclick = async () => { try { await api(`/duels/${b.dataset.dec}/decline`, { method: "POST" }); renderDuelList(); } catch (e) { toast(e.message); } }));
+  $("#duBox").querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { try { await api(`/duels/${b.dataset.cancel}/cancel`, { method: "POST" }); toast("Desafio cancelado"); renderDuelList(); } catch (e) { toast(e.message); } }));
 }
 
 /* ---- arena (polls server) ---- */
@@ -2027,11 +2049,16 @@ function renderDuelArena(d) {
   const forfeitBtn = `<button class="btn btn--ghost btn--sm" id="duForfeit" style="color:var(--red)">Desistir</button>`;
   const hist = historyHtml(d);
 
+  const cancelBtn = `<button class="btn btn--ghost btn--sm" id="duCancel">Cancelar desafio</button>`;
   let body = "";
   if (d.status === "pending") {
-    body = `<div class="du-wait">${icon("trophy", 28)}<p>À espera que <b>${esc(d.opponent_name)}</b> aceite o desafio…</p>${forfeitBtn}</div>`;
+    body = `<div class="du-wait">${icon("trophy", 28)}<p>À espera que <b>${esc(d.opponent_name)}</b> aceite o desafio…</p><p class="muted" style="font-size:12.5px">Podes cancelar sem consequências enquanto ele não aceitar.</p>${cancelBtn}</div>`;
   } else if (d.status === "declined") {
     body = `<div class="du-wait"><p>Desafio recusado.</p></div>`;
+    stopDuelPolling();
+  } else if (d.status === "cancelled") {
+    body = `<div class="du-wait"><p>Desafio cancelado — sem consequências.</p></div>`;
+    stopDuelPolling();
   } else if (d.status === "setup") {
     const mine = d.my_material_id ? `<span class="badge-ok">${icon("check", 12)} escolhido</span>` : `<button class="btn btn--sm" id="duPick">${icon("book", 14)} Escolher material</button>`;
     const opp = d.opp_material_picked ? `<span class="badge-ok">${icon("check", 12)} escolhido</span>` : `<span class="badge-pend">à espera</span>`;
@@ -2080,6 +2107,10 @@ function renderDuelArena(d) {
   arena.innerHTML = body;
 
   // wire actions
+  if ($("#duCancel")) $("#duCancel").onclick = async () => {
+    try { await api(`/duels/${d.id}/cancel`, { method: "POST" }); toast("Desafio cancelado"); go("duels"); }
+    catch (e) { toast(e.message); }
+  };
   if ($("#duAgain")) $("#duAgain").onclick = async () => {
     if ($("#duAgain").dataset.mode === "ranked") { go("duels"); setTimeout(() => startMatchmaking(), 400); return; }
     try {
@@ -2089,6 +2120,13 @@ function renderDuelArena(d) {
     } catch (e) { toast(e.message); }
   };
   if ($("#duForfeit")) $("#duForfeit").onclick = async () => {
+    // inside the grace window leaving is free — try that first
+    if (!d.ranked && d.status === "setup") {
+      try {
+        await api(`/duels/${d.id}/cancel`, { method: "POST" });
+        toast("Saíste sem consequências"); go("duels"); return;
+      } catch {}
+    }
     if (!confirm("Desistir do duelo? O adversário ganha.")) return;
     try { await api(`/duels/${d.id}/forfeit`, { method: "POST" }); _duelSig = ""; pollDuel(); } catch (e) { toast(e.message); }
   };

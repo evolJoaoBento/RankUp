@@ -111,6 +111,31 @@ async def decline(db: AsyncSession, user: User, duel_id: uuid.UUID) -> Duel:
     return duel
 
 
+# leaving is consequence-free while the invite is unanswered, and for a short
+# grace window right after it's accepted; after that only forfeit remains.
+CANCEL_GRACE_SECS = 3
+
+
+async def cancel(db: AsyncSession, user: User, duel_id: uuid.UUID) -> Duel:
+    duel = await _owned(db, duel_id, user)
+    if duel.ranked:
+        raise AppError("duelos ranked não podem ser cancelados")
+    if duel.status == "pending":
+        if user.id != duel.challenger_id:
+            raise Forbidden("só quem desafiou pode cancelar o convite")
+    elif duel.status == "setup":
+        accepted_at = duel.updated_at or duel.created_at
+        if (now() - accepted_at).total_seconds() > CANCEL_GRACE_SECS:
+            raise AppError("o duelo já está bloqueado — só podes desistir")
+    else:
+        raise AppError("este duelo já não pode ser cancelado")
+    duel.status = "cancelled"
+    duel.phase = ""
+    duel.phase_deadline = None
+    await db.flush()
+    return duel
+
+
 async def pick_material(db: AsyncSession, user: User, duel_id: uuid.UUID, material_id: uuid.UUID) -> Duel:
     duel = await _owned(db, duel_id, user)
     if duel.status != "setup":

@@ -73,6 +73,12 @@ async def accept_duel(duel_id: uuid.UUID, user: User = Depends(current_user), db
     return {"ok": True}
 
 
+@router.post("/duels/{duel_id}/cancel")
+async def cancel_duel(duel_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    await service.cancel(db, user, duel_id)
+    return {"ok": True}
+
+
 @router.post("/duels/{duel_id}/decline")
 async def decline_duel(duel_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     await service.decline(db, user, duel_id)

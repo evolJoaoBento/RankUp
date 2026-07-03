@@ -27,7 +27,7 @@ class Duel(PkMixin, TimestampMixin, Base):
     challenger_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), index=True)
     opponent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), index=True)
 
-    # pending | setup | active | complete | declined | forfeited
+    # pending | setup | active | complete | declined | forfeited | cancelled
     status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
 
     challenger_material_id: Mapped[uuid.UUID | None] = mapped_column(

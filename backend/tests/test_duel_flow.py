@@ -69,6 +69,32 @@ async def test_full_friendly_duel_is_judged_to_completion(client):
 
 
 @pytest.mark.asyncio
+async def test_cancel_is_consequence_free(client):
+    a, _ = await _make_user(client, "Leo")
+    b, _ = await _make_user(client, "Mia")
+    b_id = await _befriend(client, a, b)
+
+    # pending: only the challenger can cancel; nobody wins
+    duel_id = (await client.post(
+        f"{API}/duels", headers=a, json={"opponent_id": b_id, "subject": "philosophy"}
+    )).json()["id"]
+    r = await client.post(f"{API}/duels/{duel_id}/cancel", headers=b)
+    assert r.status_code in (400, 403)
+    r = await client.post(f"{API}/duels/{duel_id}/cancel", headers=a)
+    assert r.status_code == 200
+    row = next(d for d in (await client.get(f"{API}/duels", headers=a)).json() if d["id"] == duel_id)
+    assert row["status"] == "cancelled" and row["won"] is None
+
+    # setup: inside the 3s grace either player may still leave freely
+    d2 = (await client.post(
+        f"{API}/duels", headers=a, json={"opponent_id": b_id, "subject": "philosophy"}
+    )).json()["id"]
+    await client.post(f"{API}/duels/{d2}/accept", headers=b)
+    r = await client.post(f"{API}/duels/{d2}/cancel", headers=b)
+    assert r.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_ranked_matchmaking_and_elo_on_forfeit(client):
     a, _ = await _make_user(client, "Joao")
     b, _ = await _make_user(client, "Katia")
