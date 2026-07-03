@@ -724,8 +724,9 @@ function showStarters(hasMat) {
   const opts = (hasMat
     ? ["Quais são as ideias principais?", "Faz-me uma pergunta sobre isto", "Dá-me um exemplo do dia a dia", "Porque é que isto é importante?"]
     : ["Ajuda-me a preparar um teste", "Explora um conceito comigo", "Testa o que eu já sei", "Por onde devo começar?"]).map((s) => t(s));
+  const chat = $("#chat"); if (!chat) return;
   const box = el(`<div class="starters">${opts.map((o) => `<button type="button" class="starter">${o}</button>`).join("")}</div>`);
-  $("#chat").appendChild(box);
+  chat.appendChild(box);
   box.querySelectorAll(".starter").forEach((b) => (b.onclick = () => {
     $("#chatText").value = b.textContent;
     box.remove();
@@ -736,7 +737,8 @@ function showStarters(hasMat) {
 function addMsg(who, text) {
   const inner = who === "bot" ? mdToHtml(text) : esc(text);
   const m = el(`<div class="msg msg--${who}"><div class="msg__av">${who === "bot" ? icon("sparkle", 16) : icon("user", 16)}</div><div class="msg__b">${inner}</div></div>`);
-  $("#chat").appendChild(m); $("#chat").scrollTop = $("#chat").scrollHeight;
+  const chat = $("#chat");
+  if (chat) { chat.appendChild(m); chat.scrollTop = chat.scrollHeight; }  // user may have left the view mid-flight
   return m.querySelector(".msg__b");
 }
 
@@ -792,6 +794,7 @@ async function vPractice() {
   v.innerHTML = `
     <div class="view__head"><h1>${t("Ranked")}</h1><p>${t("Escolhe um teste do marketplace. EP ganha-se pelo raciocínio, não só pela resposta certa.")}</p></div>
     <div class="card lbcard" id="epLb" style="display:none"></div>
+    ${teacher ? `<div class="card" id="classCard" style="display:none"></div>` : ""}
     <div class="card">
       <div class="row" style="justify-content:space-between"><h3 style="font-size:16px">${t("Marketplace de testes")}</h3>
         ${teacher ? `<div class="row"><button class="btn btn--ghost btn--sm" id="genTest">${icon("sparkle", 15)} ${t("Gerar com IA")}</button><button class="btn btn--sm" id="newTest">${icon("plus", 15)} ${t("Criar teste")}</button></div>` : ""}</div>
@@ -853,6 +856,24 @@ async function vPractice() {
   }
   renderTests(teacher);
   renderEpLeaderboard();
+  if (teacher) renderClassView();
+}
+
+// teacher-only radar: class-wide weakest topics for the active discipline
+async function renderClassView() {
+  const box = $("#classCard"); if (!box) return;
+  let topics = [];
+  try { topics = await api(`/teacher/class-topics/${SUBJECT}`); } catch {}
+  if (!topics.length) return;
+  box.style.display = "";
+  box.innerHTML = `
+    <h3 style="font-size:16px;margin-bottom:4px">${icon("compass", 16)} ${t("Visão da turma")}</h3>
+    <p class="muted" style="font-size:13px;margin-bottom:10px">${t("Temas com pior mestria média — onde a turma precisa de reforço.")}</p>
+    <table><tr><th>${t("Tema")}</th><th>${t("Alunos")}</th><th>${t("Mestria média")}</th></tr>
+    ${topics.map((tp) => {
+      const pct = Math.round(tp.avg_mastery * 100);
+      return `<tr><td>${esc(tp.topic)}</td><td>${tp.students}</td><td><b style="color:${pct < 40 ? "var(--red)" : pct < 70 ? "#8a6d1d" : "var(--green)"}">${pct}%</b></td></tr>`;
+    }).join("")}</table>`;
 }
 
 // per-subject EP ladder shown on the Ranked view

@@ -162,6 +162,10 @@ window.I18N = (() => {
       "Publicar": "Publish",
       "Pública": "Public", "Privada": "Private",
       "Classificação": "Leaderboard",
+      "Visão da turma": "Class view",
+      "Temas com pior mestria média — onde a turma precisa de reforço.": "Topics with the lowest average mastery — where the class needs reinforcement.",
+      "Alunos": "Students",
+      "Mestria média": "Average mastery",
       // test run
       "A carregar…": "Loading…",
       "Teste em curso": "Test in progress",

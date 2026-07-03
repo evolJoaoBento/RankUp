@@ -141,6 +141,35 @@ async def xp_history(db: AsyncSession, user_id, subject_key: str, days: int = 14
     ]
 
 
+async def class_weak_topics(db: AsyncSession, subject_key: str, limit: int = 10) -> list[dict]:
+    """Class-wide mastery per topic, weakest first — the teacher's radar."""
+    from sqlalchemy import func
+
+    from mecateca.contexts.catalog.models import Concept
+    from mecateca.contexts.progression.models import UserConceptMastery
+
+    subject = await catalog_service.get_subject(db, subject_key)
+    sv_id = subject.current_version_id
+    rows = (
+        await db.execute(
+            select(
+                Concept.name,
+                func.count(UserConceptMastery.user_id),
+                func.avg(UserConceptMastery.mastery),
+            )
+            .join(UserConceptMastery, UserConceptMastery.concept_id == Concept.id)
+            .where(Concept.subject_version_id == sv_id)
+            .group_by(Concept.id, Concept.name)
+            .order_by(func.avg(UserConceptMastery.mastery).asc())
+            .limit(limit)
+        )
+    ).all()
+    return [
+        {"topic": name, "students": int(n), "avg_mastery": round(float(avg or 0), 2)}
+        for name, n, avg in rows
+    ]
+
+
 async def my_position(db: AsyncSession, subject_key: str, user_id) -> dict | None:
     """1-based ladder position of the user in a subject, or None if unranked."""
     subject = await catalog_service.get_subject(db, subject_key)

@@ -42,6 +42,11 @@ async def leaderboard(
     return await service.leaderboard(db, subject, limit)
 
 
+@router.get("/teacher/class-topics/{subject}", dependencies=[Depends(require_role("teacher", "admin"))])
+async def class_topics(subject: str, db: AsyncSession = Depends(get_db)):
+    return await service.class_weak_topics(db, subject)
+
+
 @router.get("/me/progress/{subject}/history")
 async def my_xp_history(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     return await service.xp_history(db, user.id, subject)
