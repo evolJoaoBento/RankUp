@@ -2258,3 +2258,6 @@ async function openDuelMaterialPicker(subjectKey, onPick) {
 /* ---- start ---- */
 if (TOKEN) boot().then(preloadConcepts);
 else $("#auth").style.display = "grid";
+
+// offline shell (network-first, so it never serves stale assets while online)
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
