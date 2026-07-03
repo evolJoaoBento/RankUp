@@ -16,3 +16,7 @@ backend/var/
 # Dev artifacts
 backend/shots/
 claude_projects/
+
+# server debug logs
+backend/uvicorn.*
+
