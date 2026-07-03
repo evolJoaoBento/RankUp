@@ -54,11 +54,15 @@ class Duel(PkMixin, TimestampMixin, Base):
 
 
 class DuelRating(TimestampMixin, Base):
-    """One Elo row per player — global ranked-duel ladder (chess-style)."""
+    """One Elo row per player PER DISCIPLINE — being good at Maths says nothing
+    about Philosophy (chess-style, K=32)."""
 
     __tablename__ = "duel_rating"
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
+    )
+    subject_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("subject.id", ondelete="CASCADE"), primary_key=True
     )
     rating: Mapped[int] = mapped_column(Integer, default=1000)
     games: Mapped[int] = mapped_column(Integer, default=0)

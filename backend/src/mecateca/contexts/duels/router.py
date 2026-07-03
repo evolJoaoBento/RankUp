@@ -25,15 +25,15 @@ async def list_my_duels(user: User = Depends(current_user), db: AsyncSession = D
     return await service.list_duels(db, user)
 
 
-# ---- ranked: rating + matchmaking ----
+# ---- ranked: rating + matchmaking (per discipline) ----
 @router.get("/duels/rating")
-async def my_rating(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
-    return await service.rating_view(db, user)
+async def my_rating(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.rating_view(db, user, subject)
 
 
 @router.get("/duels/leaderboard")
-async def duel_leaderboard(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
-    return await service.leaderboard(db)
+async def duel_leaderboard(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.leaderboard(db, subject)
 
 
 @router.post("/duels/ranked/queue")

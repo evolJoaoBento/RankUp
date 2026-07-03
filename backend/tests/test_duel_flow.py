@@ -64,7 +64,7 @@ async def test_full_friendly_duel_is_judged_to_completion(client):
     assert v["result"] == "draw"
     assert v["my_points"] == v["opp_points"] == total
     # unranked duels never touch Elo
-    ra = (await client.get(f"{API}/duels/rating", headers=a)).json()
+    ra = (await client.get(f"{API}/duels/rating?subject=philosophy", headers=a)).json()
     assert ra["rating"] == 1000 and ra["games"] == 0
 
 
@@ -112,10 +112,10 @@ async def test_ranked_matchmaking_and_elo_on_forfeit(client):
     v = (await client.get(f"{API}/duels/{duel_id}", headers=a)).json()
     assert v["ranked"] is True
 
-    # forfeit ends it and applies Elo (equal ratings -> +16 / -16)
+    # forfeit ends it and applies Elo (equal ratings -> +16 / -16), scoped to the subject
     r = await client.post(f"{API}/duels/{duel_id}/forfeit", headers=a)
     assert r.status_code == 200
-    ra = (await client.get(f"{API}/duels/rating", headers=a)).json()
-    rb = (await client.get(f"{API}/duels/rating", headers=b)).json()
+    ra = (await client.get(f"{API}/duels/rating?subject=philosophy", headers=a)).json()
+    rb = (await client.get(f"{API}/duels/rating?subject=philosophy", headers=b)).json()
     assert (ra["rating"], ra["losses"], ra["games"]) == (984, 1, 1)
     assert (rb["rating"], rb["wins"], rb["games"]) == (1016, 1, 1)

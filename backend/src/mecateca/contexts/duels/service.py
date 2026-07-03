@@ -545,10 +545,19 @@ def _match_window(wait_s: int) -> int:
     return MATCH_BASE_WINDOW + MATCH_WINDOW_PER_10S * (wait_s // 10)
 
 
-async def _get_rating(db: AsyncSession, user_id: uuid.UUID) -> DuelRating:
-    r = await db.get(DuelRating, user_id)
+async def _subject_id_of(db: AsyncSession, duel_or_sv) -> uuid.UUID:
+    from mecateca.contexts.catalog.models import SubjectVersion
+
+    sv_id = duel_or_sv.subject_version_id if hasattr(duel_or_sv, "subject_version_id") else duel_or_sv
+    return (
+        await db.execute(select(SubjectVersion.subject_id).where(SubjectVersion.id == sv_id))
+    ).scalar_one()
+
+
+async def _get_rating(db: AsyncSession, user_id: uuid.UUID, subject_id: uuid.UUID) -> DuelRating:
+    r = await db.get(DuelRating, (user_id, subject_id))
     if r is None:
-        r = DuelRating(user_id=user_id, rating=elo.START_RATING)
+        r = DuelRating(user_id=user_id, subject_id=subject_id, rating=elo.START_RATING)
         db.add(r)
         await db.flush()
     return r
@@ -557,8 +566,9 @@ async def _get_rating(db: AsyncSession, user_id: uuid.UUID) -> DuelRating:
 async def _apply_elo(db: AsyncSession, duel: Duel) -> None:
     if not duel.ranked or duel.challenger_rating_delta or duel.opponent_rating_delta:
         return  # not ranked, or already applied
-    ra = await _get_rating(db, duel.challenger_id)
-    rb = await _get_rating(db, duel.opponent_id)
+    subject_id = await _subject_id_of(db, duel)
+    ra = await _get_rating(db, duel.challenger_id, subject_id)
+    rb = await _get_rating(db, duel.opponent_id, subject_id)
     old_a, old_b = ra.rating, rb.rating
     if duel.winner_id == duel.challenger_id:
         sa = 1.0
@@ -580,17 +590,19 @@ async def _apply_elo(db: AsyncSession, duel: Duel) -> None:
     duel.opponent_rating_delta = nb - old_b
 
 
-async def rating_view(db: AsyncSession, user: User) -> dict:
-    r = await _get_rating(db, user.id)
+async def rating_view(db: AsyncSession, user: User, subject_key: str) -> dict:
+    subject = await catalog_service.get_subject(db, subject_key)
+    r = await _get_rating(db, user.id, subject.id)
     return {"rating": r.rating, "games": r.games, "wins": r.wins, "losses": r.losses, "draws": r.draws}
 
 
-async def leaderboard(db: AsyncSession, top: int = 20) -> list[dict]:
+async def leaderboard(db: AsyncSession, subject_key: str, top: int = 20) -> list[dict]:
+    subject = await catalog_service.get_subject(db, subject_key)
     rows = (
         await db.execute(
             select(DuelRating, User.display_name)
             .join(User, User.id == DuelRating.user_id)
-            .where(DuelRating.games > 0)
+            .where(DuelRating.games > 0, DuelRating.subject_id == subject.id)
             .order_by(DuelRating.rating.desc())
             .limit(top)
         )
@@ -654,7 +666,7 @@ async def join_queue(db: AsyncSession, user: User, subject_key: str) -> dict:
     existing = await _open_ranked_duel(db, user.id)
     if existing is not None:
         return {"state": "matched", "duel_id": str(existing.id)}
-    r = await _get_rating(db, user.id)
+    r = await _get_rating(db, user.id, sv.subject_id)
     q = await db.get(DuelQueue, user.id)
     if q is not None:
         q.subject_version_id = sv.id

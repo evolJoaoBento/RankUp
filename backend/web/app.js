@@ -1520,7 +1520,7 @@ async function vProfile() {
         : `<p class="muted">${t("Ainda sem dados — faz uns exercícios na Prática.")}</p>`}`;
     $("#bgPick").querySelectorAll(".bg-sw").forEach((b) => (b.onclick = () => setMyBackground(b.dataset.bg)));
     try {
-      const r = await api(`/duels/rating`);
+      const r = await api(`/duels/rating?subject=${SUBJECT}`);
       if ($("#pgElo")) $("#pgElo").textContent = r.rating;
       if ($("#pgWdl")) $("#pgWdl").textContent = `${r.wins} / ${r.losses} / ${r.draws}`;
     } catch {}
@@ -1876,8 +1876,8 @@ async function renderRanked() {
   const box = $("#rankedCard"); if (!box) return;
   const subj = SUBJECTS.find((s) => s.key === SUBJECT) || { name: SUBJECT, icon: "" };
   let r = { rating: 1000, games: 0, wins: 0, losses: 0, draws: 0 }, lb = [];
-  try { r = await api("/duels/rating"); } catch {}
-  try { lb = await api("/duels/leaderboard"); } catch {}
+  try { r = await api(`/duels/rating?subject=${SUBJECT}`); } catch {}
+  try { lb = await api(`/duels/leaderboard?subject=${SUBJECT}`); } catch {}
   box.className = "rk";
   box.innerHTML = `
     <span class="rk__bk rk__bk--tl"></span><span class="rk__bk rk__bk--br"></span>

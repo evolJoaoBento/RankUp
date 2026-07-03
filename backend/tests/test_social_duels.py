@@ -102,10 +102,10 @@ async def test_duel_invite_accept_decline(client):
 @pytest.mark.asyncio
 async def test_rating_starts_at_1000_and_leaderboard_hides_unplayed(client):
     a, _ = await _make_user(client, "Gil")
-    r = await client.get(f"{API}/duels/rating", headers=a)
+    r = await client.get(f"{API}/duels/rating?subject=philosophy", headers=a)
     assert r.status_code == 200
     body = r.json()
     assert body["rating"] == 1000 and body["games"] == 0
 
-    lb = (await client.get(f"{API}/duels/leaderboard", headers=a)).json()
+    lb = (await client.get(f"{API}/duels/leaderboard?subject=philosophy", headers=a)).json()
     assert all(x["name"] != "Gil" for x in lb)  # games == 0 -> not listed
