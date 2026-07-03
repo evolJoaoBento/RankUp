@@ -1479,6 +1479,16 @@ async function vProfile() {
     $("#pg").innerHTML = `
       <div class="rankrow">${rankLogo(p.rank, 72, USER.background)}<span class="rankbadge" style="color:${RANK_COLORS[p.rank] || "var(--ink)"}">${p.rank}</span></div>
       <div class="bar"><div class="bar__f" style="width:${rankFill(p.xp)}%"></div></div>
+      ${(() => {
+        const next = RANKS.find(([, ep]) => p.xp < ep);
+        const ladder = RANKS.map(([n, ep]) => `
+          <div class="rkstep ${n === p.rank ? "is-cur" : ""} ${p.xp < ep ? "is-locked" : ""}" title="${n} · ${ep} EP">
+            ${rankLogo(n, 34)}<span>${n}</span><b>${ep} EP</b></div>`).join("");
+        const hint = next
+          ? `Faltam <b>${next[1] - p.xp} EP</b> para <b>${next[0]}</b>.`
+          : "Rank máximo alcançado!";
+        return `<div class="rankladder">${ladder}</div><p class="muted" style="font-size:13px;margin-top:2px">${hint}</p>`;
+      })()}
       <div class="stat"><div><span class="label">EP</span><b>${p.xp}</b></div><div><span class="label">Streak</span><b style="display:inline-flex;align-items:center;gap:4px">${p.streak}${icon("flame", 15)}</b></div><div><span class="label">Rating duelos</span><b id="pgElo">—</b></div><div><span class="label">V / D / E</span><b id="pgWdl">—</b></div></div>
       <h3 style="margin:18px 0 6px;font-size:16px">Fundo do emblema</h3>
       <p class="muted" style="font-size:13px;margin-bottom:8px">Desbloqueias mais cores ao subir de rank.</p>
@@ -1486,7 +1496,7 @@ async function vProfile() {
       <h3 style="margin:18px 0 8px;font-size:16px">Temas a melhorar</h3>
       ${(p.weak_concepts || []).length
         ? `<table><tr><th>Tema</th><th>Mestria</th></tr>` +
-          p.weak_concepts.map((w) => `<tr><td>${conceptName(w.concept_id)}</td><td>${(w.mastery * 100).toFixed(0)}%</td></tr>`).join("") + `</table>`
+          p.weak_concepts.map((w) => `<tr><td>${esc(w.name || "") || conceptName(w.concept_id)}</td><td>${(w.mastery * 100).toFixed(0)}%</td></tr>`).join("") + `</table>`
         : `<p class="muted">Ainda sem dados — faz uns exercícios na Prática.</p>`}`;
     $("#bgPick").querySelectorAll(".bg-sw").forEach((b) => (b.onclick = () => setMyBackground(b.dataset.bg)));
     try {

@@ -59,23 +59,28 @@ async def progress(db: AsyncSession, user_id: uuid.UUID, subject_key: str) -> di
     if season is not None:
         prog = await db.get(UserSubjectProgress, (user_id, subject.id, season.id))
 
-    weak = list(
-        (
-            await db.execute(
-                select(UserConceptMastery)
-                .where(UserConceptMastery.user_id == user_id)
-                .order_by(UserConceptMastery.mastery.asc())
-                .limit(5)
+    from mecateca.contexts.catalog.models import Concept
+
+    weak = (
+        await db.execute(
+            select(UserConceptMastery, Concept.name)
+            .join(Concept, Concept.id == UserConceptMastery.concept_id)
+            .where(
+                UserConceptMastery.user_id == user_id,
+                Concept.subject_version_id == subject.current_version_id,
             )
-        ).scalars()
-    )
+            .order_by(UserConceptMastery.mastery.asc())
+            .limit(5)
+        )
+    ).all()
     return {
         "subject": subject_key,
         "xp": prog.xp if prog else 0,
         "rank": prog.rank if prog else lowest,
         "streak": prog.streak if prog else 0,
         "weak_concepts": [
-            {"concept_id": str(w.concept_id), "mastery": float(w.mastery)} for w in weak
+            {"concept_id": str(w.concept_id), "name": name, "mastery": float(w.mastery)}
+            for w, name in weak
         ],
     }
 
