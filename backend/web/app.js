@@ -613,11 +613,35 @@ async function loadChatList() {
   $("#chatList").innerHTML = sessions.length
     ? sessions.map((s) => `<div class="chatrow">
         <button class="chatitem ${s.id === tutorSid ? "is-active" : ""}" data-id="${s.id}">${esc(s.title || "Conversa")}</button>
+        <button class="chatdel" data-ren="${s.id}" title="Mudar nome">${icon("pencil", 13)}</button>
         <button class="chatdel" data-del="${s.id}" title="Apagar conversa">${icon("trash", 14)}</button>
       </div>`).join("")
     : `<p class="muted" style="font-size:13px;padding:8px">Sem conversas ainda.</p>`;
   $("#chatList").querySelectorAll(".chatitem").forEach((b) => (b.onclick = () => openChat(b.dataset.id)));
-  $("#chatList").querySelectorAll(".chatdel").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); deleteChat(b.dataset.del); }));
+  $("#chatList").querySelectorAll("[data-ren]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); startRenameChat(b.dataset.ren); }));
+  $("#chatList").querySelectorAll("[data-del]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); deleteChat(b.dataset.del); }));
+}
+
+// swap a chat row for an inline input; Enter/blur saves, Esc cancels
+function startRenameChat(id) {
+  const row = $(`#chatList .chatitem[data-id="${id}"]`); if (!row) return;
+  const cur = row.textContent;
+  const inp = el(`<input class="chatitem chatitem--edit" maxlength="120">`);
+  inp.value = cur;
+  row.replaceWith(inp); inp.focus(); inp.select();
+  const save = async () => {
+    const t = inp.value.trim();
+    if (t && t !== cur) {
+      try { await api(`/tutor/sessions/${id}`, { method: "PATCH", body: { title: t } }); toast("Nome alterado"); }
+      catch (e) { toast(e.message); }
+    }
+    loadChatList();
+  };
+  inp.onblur = save;
+  inp.onkeydown = (ev) => {
+    if (ev.key === "Enter") inp.blur();
+    else if (ev.key === "Escape") { inp.onblur = null; loadChatList(); }
+  };
 }
 
 async function deleteChat(id) {

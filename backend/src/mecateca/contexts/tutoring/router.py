@@ -18,6 +18,7 @@ from mecateca.contexts.tutoring.models import TutorMessage
 from mecateca.contexts.tutoring.schemas import (
     MessageIn,
     MessageOut,
+    RenameSessionIn,
     SessionListItem,
     SessionOut,
     StartSessionIn,
@@ -44,6 +45,12 @@ async def list_sessions(user: User = Depends(current_user), db: AsyncSession = D
 @router.delete("/tutor/sessions/{session_id}", status_code=204)
 async def delete_session(session_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     await service.soft_delete(db, user.id, session_id)
+
+
+@router.patch("/tutor/sessions/{session_id}", response_model=SessionListItem)
+async def rename_session(session_id: uuid.UUID, body: RenameSessionIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    s = await service.rename(db, user.id, session_id, body.title)
+    return SessionListItem(id=s.id, title=s.title, material_id=s.material_id)
 
 
 # ---- admin: deleted-chat recovery ----

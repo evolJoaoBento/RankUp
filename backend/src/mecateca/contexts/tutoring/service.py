@@ -49,6 +49,13 @@ async def list_sessions(db: AsyncSession, user_id: uuid.UUID) -> list[TutorSessi
     )
 
 
+async def rename(db: AsyncSession, user_id: uuid.UUID, session_id: uuid.UUID, title: str) -> TutorSession:
+    session = await get_owned(db, user_id, session_id)
+    session.title = title.strip()[:120] or session.title
+    await db.flush()
+    return session
+
+
 async def get_owned(db: AsyncSession, user_id: uuid.UUID, session_id: uuid.UUID) -> TutorSession:
     session = await db.get(TutorSession, session_id)
     if session is None or session.deleted_at is not None:

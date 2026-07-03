@@ -25,6 +25,10 @@ class SessionListItem(BaseModel):
     material_id: uuid.UUID | None
 
 
+class RenameSessionIn(BaseModel):
+    title: str
+
+
 class MessageIn(BaseModel):
     text: str
 
