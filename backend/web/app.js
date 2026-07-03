@@ -459,6 +459,12 @@ $("#authForm").onsubmit = async (e) => {
 
 $("#logout").onclick = () => { store.clear(); location.reload(); };
 
+$("#afEye").onclick = () => {
+  const p = $("#afPass"), show = p.type === "password";
+  p.type = show ? "text" : "password";
+  $("#afEye").classList.toggle("on", show);
+};
+
 /* right-side account rail: collapsed (avatar + friend avatars + expand arrow)
    <-> expanded (profile + friends + red exit). Bottom arrow toggles; no close X. */
 let _railOpen = localStorage.getItem("mt_rail") === "1";
