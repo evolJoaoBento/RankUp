@@ -2083,7 +2083,7 @@ function renderDuelArena(d) {
     body = `<div class="du-wait"><p>${t("Desafio cancelado — sem consequências.")}</p></div>`;
     stopDuelPolling();
   } else if (d.status === "setup") {
-    const mine = d.my_material_id ? `<span class="badge-ok">${icon("check", 12)} ${t("escolhido")}</span>` : `<button class="btn btn--sm" id="duPick">${icon("book", 14)} ${t("Escolher material")}</button>`;
+    const mine = d.my_material_id ? `<span class="badge-ok">${icon("check", 12)} ${esc(d.my_material_title || t("escolhido"))}</span>` : `<button class="btn btn--sm" id="duPick">${icon("book", 14)} ${t("Escolher material")}</button>`;
     const opp = d.opp_material_picked ? `<span class="badge-ok">${icon("check", 12)} ${t("escolhido")}</span>` : `<span class="badge-pend">${t("à espera")}</span>`;
     body = `<div class="card"><h3 style="font-size:16px;margin-bottom:6px">${t("Preparação")}</h3>
       <p class="muted" style="font-size:13px;margin-bottom:12px">${t("Cada jogador escolhe um material de <b>{subj}</b>. O duelo começa quando ambos escolherem (sorteio de quem começa).", { subj: esc(d.subject_name) })}</p>

@@ -28,7 +28,9 @@ router = APIRouter(tags=["identity"])
 
 
 @router.post("/auth/register", response_model=UserOut, status_code=201)
-async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
+async def register(body: RegisterIn, request: Request, db: AsyncSession = Depends(get_db)):
+    # same Postgres-backed IP throttle as login — stops mass account creation
+    await service.check_login_rate(request.client.host if request.client else "?")
     user = await service.register(db, body.email, body.password, body.display_name)
     return user
 

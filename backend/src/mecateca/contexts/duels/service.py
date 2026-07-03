@@ -434,6 +434,9 @@ async def get_view(db: AsyncSession, provider: LLMProvider, user: User, duel_id:
         "my_points": my_points,
         "opp_points": opp_points,
         "my_material_id": str(my_material) if my_material else None,
+        "my_material_title": (
+            (await db.get(Material, my_material)).title if my_material else None
+        ),
         "opp_material_picked": opp_material is not None,
         "current_round": duel.current_round,
         "total_rounds": TOTAL_ROUNDS,
