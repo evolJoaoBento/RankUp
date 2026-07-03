@@ -1094,7 +1094,7 @@ async function startTest(id) {
   $("#run").innerHTML = `<div class="card"><p class="muted">${t("A carregar…")}</p></div>`;
   try {
     const s = await api(`/tests/${id}/start`, { method: "POST" });
-    _run = { total: s.items.length, answered: 0, correct: 0, ep: 0 };
+    _run = { id, total: s.items.length, answered: 0, correct: 0, ep: 0 };
     const card = el(`<div class="card">
       <div class="row" style="justify-content:space-between;align-items:center"><h3 style="font-size:16px">${t("Teste em curso")}</h3><span class="muted" id="runProg">0 / ${s.items.length}</span></div>
       <div class="bar" style="margin:10px 0 16px"><div class="bar__f" id="runBar" style="width:0%"></div></div>
@@ -1424,7 +1424,9 @@ async function submitItem(it, node) {
       if (_run.answered === _run.total && $("#runSummary")) {
         const pct = Math.round((100 * _run.correct) / _run.total);
         $("#runSummary").innerHTML = `<div class="grade ${pct >= 50 ? "ok" : "no"}" style="margin-top:14px">
-          <b>${t("Teste concluído!")}</b> ${t("{c}/{n} certas ({p}%)", { c: _run.correct, n: _run.total, p: pct })} · <b>${_run.ep >= 0 ? "+" : ""}${_run.ep} EP</b></div>`;
+          <b>${t("Teste concluído!")}</b> ${t("{c}/{n} certas ({p}%)", { c: _run.correct, n: _run.total, p: pct })} · <b>${_run.ep >= 0 ? "+" : ""}${_run.ep} EP</b>
+          <div style="margin-top:10px"><button class="btn btn--sm" id="runAgain">${t("Repetir teste")}</button></div></div>`;
+        $("#runAgain").onclick = () => startTest(_run.id);
         $("#runSummary").scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
@@ -1448,6 +1450,7 @@ async function vProfile() {
   const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
   v.innerHTML = `<div class="view__head"><h1>${t("Meu perfil")}</h1><p>${esc(USER.display_name)} · ${esc(subjName)}</p></div>
     <div class="card" id="pg">…</div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Últimos resultados")}</h3><div id="pres">…</div></div>
     <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Histórico de duelos")}</h3><div id="dhist">…</div></div>
     <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Uso da IA")}</h3><div id="us">…</div></div>
     <div class="card">
@@ -1512,6 +1515,16 @@ async function vProfile() {
       if ($("#pgWdl")) $("#pgWdl").textContent = `${r.wins} / ${r.losses} / ${r.draws}`;
     } catch {}
   } catch (e) { $("#pg").innerHTML = `<p class="err">${e.message}</p>`; }
+  try {
+    const rs = await api("/me/results");
+    const dfmt = (iso) => new Date(iso).toLocaleDateString(I18N.lang === "pt" ? "pt-PT" : I18N.lang);
+    $("#pres").innerHTML = rs.length
+      ? `<table><tr><th>${t("Quando")}</th><th>${t("Teste")}</th><th>${t("Certas")}</th><th>${t("Raciocínio")}</th></tr>` + rs.map((r) => {
+          const pct = r.answered ? Math.round((100 * r.correct) / r.answered) : 0;
+          return `<tr><td>${dfmt(r.when)}</td><td>${esc(r.test_title || t("Prática"))}</td><td>${r.correct}/${r.answered} (${pct}%)</td><td>${Math.round(r.avg_reasoning * 100)}%</td></tr>`;
+        }).join("") + `</table>`
+      : `<p class="muted">${t("Ainda sem testes feitos.")}</p>`;
+  } catch { $("#pres").innerHTML = `<p class="muted">—</p>`; }
   try {
     const ds = (await api("/duels")).filter((d) => d.status === "complete" || d.status === "forfeited").slice(0, 10);
     $("#dhist").innerHTML = ds.length

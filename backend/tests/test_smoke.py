@@ -58,6 +58,15 @@ async def test_practice_mcq_awards_xp(client, auth):
 
 
 @pytest.mark.asyncio
+async def test_my_results_lists_graded_sessions(client, auth):
+    r = await client.get("/api/v1/me/results", headers=auth)
+    assert r.status_code == 200
+    rows = r.json()
+    assert rows and rows[0]["answered"] >= 1  # session graded in the mcq test above
+    assert {"session_id", "when", "correct", "avg_reasoning", "test_title"} <= set(rows[0])
+
+
+@pytest.mark.asyncio
 async def test_reasoning_grading_offline(client, auth):
     r = await client.post(
         "/api/v1/practice/sessions",

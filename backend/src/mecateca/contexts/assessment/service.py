@@ -214,6 +214,48 @@ async def submit_answer(
     )
 
 
+async def my_results(db: AsyncSession, user_id: uuid.UUID, limit: int = 10) -> list[dict]:
+    """A student's recent test/practice sessions with score aggregates."""
+    from sqlalchemy import Integer, String, cast, func
+
+    rows = (
+        await db.execute(
+            select(
+                PracticeSession.id,
+                PracticeSession.created_at,
+                func.count(Answer.id),
+                func.sum(cast(Answer.correct, Integer)),
+                func.avg(Answer.reasoning_score),
+                # Postgres has no max(uuid) — aggregate as text; any test id of the session works
+                func.max(cast(QuestionTemplate.test_id, String)),
+            )
+            .join(PracticeItem, PracticeItem.session_id == PracticeSession.id)
+            .join(Answer, Answer.item_id == PracticeItem.id)
+            .outerjoin(QuestionTemplate, QuestionTemplate.id == PracticeItem.question_template_id)
+            .where(PracticeSession.user_id == user_id)
+            .group_by(PracticeSession.id, PracticeSession.created_at)
+            .order_by(PracticeSession.created_at.desc())
+            .limit(limit)
+        )
+    ).all()
+    test_ids = [uuid.UUID(tid) for *_x, tid in rows if tid]
+    titles = {}
+    if test_ids:
+        for t_id, title in (await db.execute(select(Test.id, Test.title).where(Test.id.in_(test_ids)))).all():
+            titles[str(t_id)] = title
+    return [
+        {
+            "session_id": str(sid),
+            "when": created.isoformat(),
+            "answered": int(n),
+            "correct": int(c or 0),
+            "avg_reasoning": round(float(avg or 0), 2),
+            "test_title": titles.get(tid),
+        }
+        for sid, created, n, c, avg, tid in rows
+    ]
+
+
 async def test_stats(db: AsyncSession, subject_key: str) -> list[dict]:
     """Per-test answer aggregates for teachers: attempts, distinct students, % correct."""
     from sqlalchemy import Integer, cast, func

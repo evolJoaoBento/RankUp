@@ -256,6 +256,13 @@ window.I18N = (() => {
       "Sem anexos. PDFs e markdown são lidos e usados para informar o tutor e a avaliação.": "No attachments. PDFs and markdown are read and used to inform the tutor and grading.",
       // profile
       "Meu perfil": "My profile",
+      "Últimos resultados": "Recent results",
+      "Quando": "When",
+      "Certas": "Correct",
+      "Raciocínio": "Reasoning",
+      "Prática": "Practice",
+      "Ainda sem testes feitos.": "No tests taken yet.",
+      "Repetir teste": "Retake test",
       "Histórico de duelos": "Duel history",
       "Uso da IA": "AI usage",
       "Idioma": "Language",

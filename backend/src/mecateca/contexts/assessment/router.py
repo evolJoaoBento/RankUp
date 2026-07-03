@@ -21,6 +21,11 @@ from mecateca.shared.lang import norm_lang
 router = APIRouter(tags=["assessment"])
 
 
+@router.get("/me/results")
+async def my_results(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.my_results(db, user.id)
+
+
 @router.get("/teacher/test-stats/{subject}", dependencies=[Depends(require_role("teacher", "admin"))])
 async def teacher_test_stats(subject: str, db: AsyncSession = Depends(get_db)):
     return await service.test_stats(db, subject)
