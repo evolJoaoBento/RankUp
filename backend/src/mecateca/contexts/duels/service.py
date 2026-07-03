@@ -468,6 +468,27 @@ async def list_duels(db: AsyncSession, user: User) -> list[dict]:
         ).scalars()
     )
     names = await _names(db, [d.challenger_id for d in duels] + [d.opponent_id for d in duels])
+    # current rounds of active duels — so "needs_my_action" is exact, not "active = always"
+    active_ids = [d.id for d in duels if d.status == "active"]
+    cur_rounds: dict = {}
+    if active_ids:
+        by_duel = {d.id: d.current_round for d in duels if d.status == "active"}
+        for r in (
+            await db.execute(select(DuelRound).where(DuelRound.duel_id.in_(active_ids)))
+        ).scalars():
+            if r.ordinal == by_duel.get(r.duel_id):
+                cur_rounds[r.duel_id] = r
+
+    def _active_needs_me(d: Duel, me_is_challenger: bool) -> bool:
+        r = cur_rounds.get(d.id)
+        if r is None:
+            return True
+        if d.phase == "question":
+            return r.asker_id == user.id and not r.question_text
+        if d.phase == "answer":
+            return not (r.challenger_answered if me_is_challenger else r.opponent_answered)
+        return False  # judging
+
     out = []
     for d in duels:
         me_is_challenger = user.id == d.challenger_id
@@ -482,7 +503,7 @@ async def list_duels(db: AsyncSession, user: User) -> list[dict]:
                 (d.status == "pending" and not me_is_challenger)
                 or (d.status == "setup" and not (
                     d.challenger_material_id if me_is_challenger else d.opponent_material_id))
-                or d.status == "active"
+                or (d.status == "active" and _active_needs_me(d, me_is_challenger))
             ),
             "won": d.winner_id == user.id if d.status in ("complete", "forfeited") else None,
             "is_draw": d.status == "complete" and d.winner_id is None,
