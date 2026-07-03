@@ -66,6 +66,7 @@ const ICONS = {
   trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0Z"/><path d="M7 6H4v1.5a3 3 0 0 0 3 3"/><path d="M17 6h3v1.5a3 3 0 0 1-3 3"/><path d="M9 19h6"/><path d="M12 13v6"/>',
   book: '<path d="M5 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2Z"/><path d="M5 17.5h12"/>',
   shield: '<path d="M12 3 19 6v5c0 4-3 7-7 9-4-2-7-5-7-9V6Z"/>',
+  swords: '<polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/><line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/>',
   sparkle: '<path d="M12 3.5 13.7 9 19 10.7 13.7 12.4 12 18 10.3 12.4 5 10.7 10.3 9Z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.7 2.7 2.7 15.3 0 18M12 3c-2.7 2.7-2.7 15.3 0 18"/>',
@@ -1998,13 +1999,24 @@ function renderDuelArena(d) {
       (r === "win" ? "Venceste!" : r === "loss" ? "Derrota" : "Empate");
     const ratingLine = (d.ranked && d.rating_delta != null)
       ? `<p class="du-rating ${d.rating_delta >= 0 ? "up" : "down"}">${icon("sparkle", 14)} Rating ${d.rating_delta >= 0 ? "+" : ""}${d.rating_delta}</p>` : "";
-    body = `${d.ranked ? `<div class="du-ranked-tag">${icon("sparkle", 12)} Ranked</div>` : ""}${score}<div class="du-result du-result--${r}">${icon(r === "win" ? "trophy" : "shield", 30)}<h2>${txt}</h2><p class="muted">${d.my_points}–${d.opp_points}</p>${ratingLine}</div>${hist}`;
+    const again = d.ranked
+      ? `<button class="btn btn--sm" id="duAgain" data-mode="ranked">${icon("trophy", 14)} Nova partida ranked</button>`
+      : `<button class="btn btn--sm" id="duAgain" data-mode="rematch">${icon("swords", 14)} Desforra</button>`;
+    body = `${d.ranked ? `<div class="du-ranked-tag">${icon("sparkle", 12)} Ranked</div>` : ""}${score}<div class="du-result du-result--${r}">${icon(r === "win" ? "trophy" : "shield", 30)}<h2>${txt}</h2><p class="muted">${d.my_points}–${d.opp_points}</p>${ratingLine}<div style="margin-top:12px">${again}</div></div>${hist}`;
     if (r === "win" && !d.forfeited) { try { playPop(); } catch {} }
     stopDuelPolling();
   }
   arena.innerHTML = body;
 
   // wire actions
+  if ($("#duAgain")) $("#duAgain").onclick = async () => {
+    if ($("#duAgain").dataset.mode === "ranked") { go("duels"); setTimeout(() => startMatchmaking(), 400); return; }
+    try {
+      const nd = await api("/duels", { method: "POST", body: { opponent_id: d.opponent_id, subject: d.subject } });
+      toast("Desforra enviada — à espera do adversário");
+      openDuel(nd.id);
+    } catch (e) { toast(e.message); }
+  };
   if ($("#duForfeit")) $("#duForfeit").onclick = async () => {
     if (!confirm("Desistir do duelo? O adversário ganha.")) return;
     try { await api(`/duels/${d.id}/forfeit`, { method: "POST" }); _duelSig = ""; pollDuel(); } catch (e) { toast(e.message); }

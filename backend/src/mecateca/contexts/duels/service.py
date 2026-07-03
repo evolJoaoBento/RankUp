@@ -404,6 +404,7 @@ async def get_view(db: AsyncSession, provider: LLMProvider, user: User, duel_id:
         "subject_name": subj_name,
         "my_role": "challenger" if me_is_challenger else "opponent",
         "opponent_name": names.get(_other(duel, user.id), "?"),
+        "opponent_id": str(_other(duel, user.id)),
         "my_name": names.get(user.id, "?"),
         "my_points": my_points,
         "opp_points": opp_points,
