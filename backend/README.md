@@ -50,6 +50,15 @@ ruff check src
 
 CI (GitHub Actions) runs both on every push/PR with a Postgres 16 service.
 
+## Operations
+
+```bash
+# backup (all data lives in Postgres; var/uploads holds material files)
+docker exec backend-db-1 pg_dump -U mecateca mecateca > rankup-$(date +%F).sql
+# restore
+cat rankup-2026-07-04.sql | docker exec -i backend-db-1 psql -U mecateca mecateca
+```
+
 ## Migrations
 
 Schema is managed by Alembic and applied automatically at boot. To add one:

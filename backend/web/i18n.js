@@ -294,7 +294,7 @@ window.I18N = (() => {
       "Tokens in": "Tokens in", "Tokens out": "Tokens out", "Custo": "Cost",
       "Tutor restante hoje": "Tutor left today",
       "Ver perfil →": "View profile →",
-      "Streak: {n} dia(s)": "Streak: {n} day(s)",
+      "Sequência: {n} certas seguidas": "Streak: {n} correct in a row",
       "Sem amigos": "No friends",
       // admin
       "Administração": "Administration",

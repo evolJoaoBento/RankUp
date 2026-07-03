@@ -501,7 +501,7 @@ async function renderRail() {
     $("#logout").style.display = "";
   } else {
     top.innerHTML = `<div class="rail__avatar" title="${esc(USER.display_name)}">${rankLogo(p.rank, 44, USER.background)}</div>
-      ${p.streak ? `<div class="rail__streak" title="${t("Streak: {n} dia(s)", { n: p.streak })}">${p.streak}${icon("flame", 12)}</div>` : ""}`;
+      ${p.streak ? `<div class="rail__streak" title="${t("Sequência: {n} certas seguidas", { n: p.streak })}">${p.streak}${icon("flame", 12)}</div>` : ""}`;
     let d = { friends: [] };
     try { d = await api("/friends"); } catch {}
     fr.innerHTML = d.friends.length
