@@ -15,9 +15,14 @@ from mecateca.contexts.assessment.schemas import (
 )
 from mecateca.contexts.identity.models import User
 from mecateca.db.session import get_db
-from mecateca.deps import current_user, get_llm_provider
+from mecateca.deps import current_user, get_llm_provider, require_role
 
 router = APIRouter(tags=["assessment"])
+
+
+@router.get("/teacher/test-stats/{subject}", dependencies=[Depends(require_role("teacher", "admin"))])
+async def teacher_test_stats(subject: str, db: AsyncSession = Depends(get_db)):
+    return await service.test_stats(db, subject)
 
 
 def _items_out(items) -> list[ItemOut]:

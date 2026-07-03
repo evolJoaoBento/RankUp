@@ -870,8 +870,11 @@ async function renderEpLeaderboard() {
 }
 
 async function renderTests(teacher) {
-  let tests = [];
+  let tests = [], stats = {};
   try { tests = await api(`/subjects/${SUBJECT}/tests`); } catch {}
+  if (teacher) {
+    try { (await api(`/teacher/test-stats/${SUBJECT}`)).forEach((s) => (stats[s.test_id] = s)); } catch {}
+  }
   if (!tests.length) { $("#tests").innerHTML = `<p class="muted">Ainda não há testes${teacher ? " — cria um." : "."}</p>`; return; }
   $("#tests").innerHTML = tests.map((t) => `
     <div class="mkt-card" data-search="${esc(`${t.title} ${t.description || ""} ${t.author || ""}`.toLowerCase())}">
@@ -880,7 +883,7 @@ async function renderTests(teacher) {
         ${t.is_public ? `<span class="badge-ok">${icon("globe", 12)} pública</span>` : `<span class="badge-pend">${icon("lock", 12)} privada</span>`}
       </div>
       <p class="mkt-card__desc">${esc(t.description || "—")}</p>
-      <div class="mkt-card__meta">${t.question_count} pergunta(s)</div>
+      <div class="mkt-card__meta">${t.question_count} pergunta(s)${stats[t.id] ? ` · ${stats[t.id].students} aluno(s) · ${stats[t.id].pct_correct}% certas` : ""}</div>
       <div class="mkt-card__tags">
         ${t.ai_generated ? `<span class="tag tag--ai">${icon("sparkle", 12)} Gerado por IA</span>` : ""}
         <span class="tag tag--author" title="Submetido por">${icon("pencil", 12)} ${esc(t.author || "—")}</span>

@@ -211,3 +211,36 @@ async def submit_answer(
         ranked_up=res.ranked_up,
         streak=res.streak,
     )
+
+
+async def test_stats(db: AsyncSession, subject_key: str) -> list[dict]:
+    """Per-test answer aggregates for teachers: attempts, distinct students, % correct."""
+    from sqlalchemy import Integer, cast, func
+
+    sv = await catalog_service.current_version(db, subject_key)
+    rows = (
+        await db.execute(
+            select(
+                QuestionTemplate.test_id,
+                func.count(Answer.id),
+                func.count(func.distinct(Answer.user_id)),
+                func.avg(cast(Answer.correct, Integer)),
+            )
+            .join(PracticeItem, PracticeItem.question_template_id == QuestionTemplate.id)
+            .join(Answer, Answer.item_id == PracticeItem.id)
+            .where(
+                QuestionTemplate.subject_version_id == sv.id,
+                QuestionTemplate.test_id.is_not(None),
+            )
+            .group_by(QuestionTemplate.test_id)
+        )
+    ).all()
+    return [
+        {
+            "test_id": str(t),
+            "answers": int(n),
+            "students": int(s),
+            "pct_correct": round(float(avg or 0) * 100),
+        }
+        for t, n, s, avg in rows
+    ]
