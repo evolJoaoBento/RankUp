@@ -1214,6 +1214,10 @@ const QTYPES = [["mcq", "Escolha múltipla"], ["short", "Resposta curta"], ["rea
 let _editCtx = { testId: null, concepts: [], materials: [] };
 
 function closeModal() { $("#modal").classList.remove("show"); $("#modal").innerHTML = ""; }
+// Esc closes whatever modal is open
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("#modal").innerHTML) closeModal();
+});
 
 async function openTestEditor(testId) {
   _editCtx.testId = testId;
