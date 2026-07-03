@@ -543,6 +543,7 @@ async function refreshChip() {
 }
 
 // red counter on the Duelos nav item: invites + duels waiting on me
+setInterval(() => { if (USER) updateDuelBadge(); }, 30000);  // keep it fresh while browsing
 async function updateDuelBadge() {
   let n = 0;
   try {
