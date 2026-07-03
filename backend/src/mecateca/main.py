@@ -53,7 +53,15 @@ async def lifespan(app: FastAPI):
     # two app replicas booting at once can't race the migration or double-seed.
     import asyncio
     async with get_engine().connect() as lock_conn:
+        # A force-killed instance leaves a dead session holding the lock until the
+        # server notices. Aggressive keepalives reap it in ~30s, and lock_timeout
+        # makes a stuck boot fail loudly instead of hanging forever.
+        await lock_conn.execute(text("SET tcp_keepalives_idle = 15"))
+        await lock_conn.execute(text("SET tcp_keepalives_interval = 5"))
+        await lock_conn.execute(text("SET tcp_keepalives_count = 3"))
+        await lock_conn.execute(text("SET lock_timeout = '120s'"))
         await lock_conn.execute(text("SELECT pg_advisory_lock(:k)"), {"k": _STARTUP_LOCK_KEY})
+        await lock_conn.execute(text("SET lock_timeout = 0"))
         try:
             await asyncio.to_thread(_run_migrations)
             async with get_sessionmaker()() as db:
