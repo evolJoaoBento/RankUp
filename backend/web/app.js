@@ -433,7 +433,7 @@ function setAuthMode(m) {
   $("#afEmail").style.display = reg ? "block" : "none";
   $("#afId").style.display = reg ? "none" : "block";
   $("#afEmail").required = reg; $("#afId").required = !reg;
-  $("#afSubmit").textContent = reg ? "Criar conta" : "Entrar";
+  $("#afSubmit").textContent = reg ? t("Criar conta") : t("Entrar");
 }
 
 $("#authForm").onsubmit = async (e) => {
@@ -445,7 +445,7 @@ $("#authForm").onsubmit = async (e) => {
     let identifier;
     if (authMode === "reg") {
       const email = $("#afEmail").value;
-      await api("/auth/register", { method: "POST", body: { email, password, display_name: $("#afName").value || "Estudante" } });
+      await api("/auth/register", { method: "POST", body: { email, password, display_name: $("#afName").value || t("Estudante") } });
       identifier = email;
     } else {
       identifier = $("#afId").value;
@@ -486,7 +486,7 @@ async function renderRail() {
       <span class="umprofile__info">
         <b>${esc(USER.display_name)}</b>
         <span class="muted" style="display:inline-flex;align-items:center;gap:5px;font-size:13px">${p.rank} · ${p.xp} EP · ${p.streak}${icon("flame", 13)}</span>
-        <span class="umprofile__link">Ver perfil →</span>
+        <span class="umprofile__link">${t("Ver perfil →")}</span>
       </span></button>`;
     $("#umProfileBtn").onclick = () => go("profile");
     fr.innerHTML = friendsCard();
@@ -494,12 +494,12 @@ async function renderRail() {
     $("#logout").style.display = "";
   } else {
     top.innerHTML = `<div class="rail__avatar" title="${esc(USER.display_name)}">${rankLogo(p.rank, 44, USER.background)}</div>
-      ${p.streak ? `<div class="rail__streak" title="Streak: ${p.streak} dia(s)">${p.streak}${icon("flame", 12)}</div>` : ""}`;
+      ${p.streak ? `<div class="rail__streak" title="${t("Streak: {n} dia(s)", { n: p.streak })}">${p.streak}${icon("flame", 12)}</div>` : ""}`;
     let d = { friends: [] };
     try { d = await api("/friends"); } catch {}
     fr.innerHTML = d.friends.length
       ? d.friends.map((f) => `<span class="rail__friend" title="${esc(f.display_name)}">${esc(_initial(f.display_name))}</span>`).join("")
-      : `<div class="rail__noav" title="Sem amigos">${icon("user", 18)}</div>`;
+      : `<div class="rail__noav" title="${t("Sem amigos")}">${icon("user", 18)}</div>`;
     $("#logout").style.display = "none";
   }
 }
@@ -581,21 +581,21 @@ let tutorSid = null, tutorConcepts = [], PENDING_MATERIAL = null;
 async function vTutor() {
   const v = $("#view");
   v.innerHTML = `
-    <div class="view__head"><h1>Tutor Socrático</h1><p>Orienta-te a pensar — nunca dá a resposta. As conversas ficam guardadas.</p></div>
+    <div class="view__head"><h1>${t("Tutor Socrático")}</h1><p>${t("Orienta-te a pensar — nunca dá a resposta. As conversas ficam guardadas.")}</p></div>
     <div class="tutor">
       <aside class="chats">
-        <button class="btn btn--sm" id="tNew" style="width:100%">+ Nova conversa</button>
+        <button class="btn btn--sm" id="tNew" style="width:100%">${t("+ Nova conversa")}</button>
         <div class="chats__list" id="chatList"></div>
       </aside>
       <div class="card">
         <div class="row" style="margin-bottom:10px">
-          <button class="btn btn--ghost btn--sm" id="tPick">${icon("book", 14)} Escolher material</button>
+          <button class="btn btn--ghost btn--sm" id="tPick">${icon("book", 14)} ${t("Escolher material")}</button>
           <span id="tMat" class="muted" style="font-size:13px"></span>
         </div>
         <div class="chat" id="chat"></div>
         <form class="chat__in" id="chatForm">
-          <input id="chatText" placeholder="Escreve ao tutor…" autocomplete="off" />
-          <button class="btn" id="chatSend">Enviar</button>
+          <input id="chatText" placeholder="${t("Escreve ao tutor…")}" autocomplete="off" />
+          <button class="btn" id="chatSend">${t("Enviar")}</button>
         </form>
       </div>
     </div>`;
@@ -612,7 +612,7 @@ async function vTutor() {
   if (sessions.length) await openChat(sessions[0].id);
   else await newTutor(null);
 }
-function setTutorMat(title) { $("#tMat").textContent = title ? `· ${title}` : "· Tópico livre"; }
+function setTutorMat(title) { $("#tMat").textContent = title ? `· ${title}` : `· ${t("Tópico livre")}`; }
 
 async function loadChatList() {
   let sessions = [];
@@ -620,11 +620,11 @@ async function loadChatList() {
   window._chats = sessions;
   $("#chatList").innerHTML = sessions.length
     ? sessions.map((s) => `<div class="chatrow">
-        <button class="chatitem ${s.id === tutorSid ? "is-active" : ""}" data-id="${s.id}">${esc(s.title || "Conversa")}</button>
-        <button class="chatdel" data-ren="${s.id}" title="Mudar nome">${icon("pencil", 13)}</button>
-        <button class="chatdel" data-del="${s.id}" title="Apagar conversa">${icon("trash", 14)}</button>
+        <button class="chatitem ${s.id === tutorSid ? "is-active" : ""}" data-id="${s.id}">${esc(s.title || t("Conversa"))}</button>
+        <button class="chatdel" data-ren="${s.id}" title="${t("Mudar nome")}">${icon("pencil", 13)}</button>
+        <button class="chatdel" data-del="${s.id}" title="${t("Apagar conversa")}">${icon("trash", 14)}</button>
       </div>`).join("")
-    : `<p class="muted" style="font-size:13px;padding:8px">Sem conversas ainda.</p>`;
+    : `<p class="muted" style="font-size:13px;padding:8px">${t("Sem conversas ainda.")}</p>`;
   $("#chatList").querySelectorAll(".chatitem").forEach((b) => (b.onclick = () => openChat(b.dataset.id)));
   $("#chatList").querySelectorAll("[data-ren]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); startRenameChat(b.dataset.ren); }));
   $("#chatList").querySelectorAll("[data-del]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); deleteChat(b.dataset.del); }));
@@ -638,9 +638,9 @@ function startRenameChat(id) {
   inp.value = cur;
   row.replaceWith(inp); inp.focus(); inp.select();
   const save = async () => {
-    const t = inp.value.trim();
-    if (t && t !== cur) {
-      try { await api(`/tutor/sessions/${id}`, { method: "PATCH", body: { title: t } }); toast("Nome alterado"); }
+    const val = inp.value.trim();
+    if (val && val !== cur) {
+      try { await api(`/tutor/sessions/${id}`, { method: "PATCH", body: { title: val } }); toast(t("Nome alterado")); }
       catch (e) { toast(e.message); }
     }
     loadChatList();
@@ -653,10 +653,10 @@ function startRenameChat(id) {
 }
 
 async function deleteChat(id) {
-  if (!confirm("Apagar esta conversa? Fica oculta e é recuperável durante 6 meses (no painel de admin); depois é apagada permanentemente.")) return;
+  if (!confirm(t("Apagar esta conversa? Fica oculta e é recuperável durante 6 meses (no painel de admin); depois é apagada permanentemente."))) return;
   try {
     await api(`/tutor/sessions/${id}`, { method: "DELETE" });
-    toast("Conversa apagada");
+    toast(t("Conversa apagada"));
     if (id === tutorSid) { tutorSid = null; $("#chat").innerHTML = ""; }
     await loadChatList();
     const sessions = window._chats || [];
@@ -674,8 +674,8 @@ async function newTutor(materialId = null) {
     $("#chat").innerHTML = "";
     setTutorMat(materialId ? s.title : null);
     addMsg("bot", materialId
-      ? `Olá — vamos explorar **${esc(s.title)}**. Não dou respostas; ajudo-te a chegar lá. Por onde começamos?`
-      : "Olá — sou o teu tutor na **RankUp**. Não dou respostas; ajudo-te a encontrá-las. O que queres explorar?");
+      ? t("Olá — vamos explorar **{title}**. Não dou respostas; ajudo-te a chegar lá. Por onde começamos?", { title: esc(s.title) })
+      : t("Olá — sou o teu tutor na **RankUp**. Não dou respostas; ajudo-te a encontrá-las. O que queres explorar?"));
     showStarters(!!materialId);
     await loadChatList();
   } catch (e) { toast(e.message); }
@@ -688,7 +688,7 @@ async function openChat(id) {
   setTutorMat(meta && meta.material_id ? meta.title : null);
   try {
     const msgs = await api(`/tutor/sessions/${id}`);
-    if (!msgs.length) { addMsg("bot", "Olá — sou o teu tutor na **RankUp**. O que queres explorar?"); showStarters(!!(meta && meta.material_id)); }
+    if (!msgs.length) { addMsg("bot", t("Olá — sou o teu tutor na **RankUp**. O que queres explorar?")); showStarters(!!(meta && meta.material_id)); }
     else msgs.forEach((m) => addMsg(m.role === "assistant" ? "bot" : "user", m.content));
   } catch (e) { toast(e.message); }
   document.querySelectorAll(".chatitem").forEach((b) => b.classList.toggle("is-active", b.dataset.id === id));
@@ -714,9 +714,9 @@ function wireGridSearch(inputSel, gridSel, countSel, noun) {
 
 // quick-start suggestion chips shown on an empty chat
 function showStarters(hasMat) {
-  const opts = hasMat
+  const opts = (hasMat
     ? ["Quais são as ideias principais?", "Faz-me uma pergunta sobre isto", "Dá-me um exemplo do dia a dia", "Porque é que isto é importante?"]
-    : ["Ajuda-me a preparar um teste", "Explora um conceito comigo", "Testa o que eu já sei", "Por onde devo começar?"];
+    : ["Ajuda-me a preparar um teste", "Explora um conceito comigo", "Testa o que eu já sei", "Por onde devo começar?"]).map((s) => t(s));
   const box = el(`<div class="starters">${opts.map((o) => `<button type="button" class="starter">${o}</button>`).join("")}</div>`);
   $("#chat").appendChild(box);
   box.querySelectorAll(".starter").forEach((b) => (b.onclick = () => {
@@ -749,7 +749,7 @@ async function sendTutor(e) {
       token: (d) => { first = false; acc += d.text; bubble.innerHTML = mdToHtml(acc); $("#chat").scrollTop = $("#chat").scrollHeight; },
       done: () => {},
     });
-    if (first) bubble.textContent = "(sem resposta)";
+    if (first) bubble.textContent = t("(sem resposta)");
   } catch (err) {
     bubble.textContent = "⚠ " + err.message;
   } finally { $("#chatSend").disabled = false; refreshChip(); loadChatList(); }
@@ -783,13 +783,13 @@ async function vPractice() {
   const v = $("#view");
   const teacher = USER.role === "teacher" || USER.role === "admin";
   v.innerHTML = `
-    <div class="view__head"><h1>Ranked</h1><p>Escolhe um teste do marketplace. EP ganha-se pelo raciocínio, não só pela resposta certa.</p></div>
+    <div class="view__head"><h1>${t("Ranked")}</h1><p>${t("Escolhe um teste do marketplace. EP ganha-se pelo raciocínio, não só pela resposta certa.")}</p></div>
     <div class="card lbcard" id="epLb" style="display:none"></div>
     <div class="card">
-      <div class="row" style="justify-content:space-between"><h3 style="font-size:16px">Marketplace de testes</h3>
-        ${teacher ? `<div class="row"><button class="btn btn--ghost btn--sm" id="genTest">${icon("sparkle", 15)} Gerar com IA</button><button class="btn btn--sm" id="newTest">${icon("plus", 15)} Criar teste</button></div>` : ""}</div>
+      <div class="row" style="justify-content:space-between"><h3 style="font-size:16px">${t("Marketplace de testes")}</h3>
+        ${teacher ? `<div class="row"><button class="btn btn--ghost btn--sm" id="genTest">${icon("sparkle", 15)} ${t("Gerar com IA")}</button><button class="btn btn--sm" id="newTest">${icon("plus", 15)} ${t("Criar teste")}</button></div>` : ""}</div>
       <div id="newTestForm"></div>
-      <div class="toolrow"><input id="testSearch" class="searchbar" placeholder="Procurar teste…" autocomplete="off"><span class="muted" id="testCount"></span></div>
+      <div class="toolrow"><input id="testSearch" class="searchbar" placeholder="${t("Procurar teste…")}" autocomplete="off"><span class="muted" id="testCount"></span></div>
       <div id="tests" class="mkt-grid" style="margin-top:12px">…</div>
     </div>
     <div id="run"></div>`;
@@ -798,15 +798,15 @@ async function vPractice() {
       const f = $("#newTestForm");
       if (f.innerHTML) { f.innerHTML = ""; return; }
       f.innerHTML = `<div class="mgbox" style="margin-top:10px">
-        <label class="fld"><span class="label">Título do teste</span><input id="ntTitle" placeholder="ex: Ética — fundamentos"></label>
-        <label class="fld"><span class="label">Descrição</span><input id="ntDesc" placeholder="breve descrição"></label>
-        <label class="remember" style="margin:4px 0"><input type="checkbox" id="ntPub"> Tornar pública já</label>
-        <div class="row"><button class="btn btn--sm" id="ntCreate">Criar</button><button class="btn btn--ghost btn--sm" id="ntCancel">Cancelar</button></div></div>`;
+        <label class="fld"><span class="label">${t("Título do teste")}</span><input id="ntTitle" placeholder="${t("ex: Ética — fundamentos")}"></label>
+        <label class="fld"><span class="label">${t("Descrição")}</span><input id="ntDesc" placeholder="${t("breve descrição")}"></label>
+        <label class="remember" style="margin:4px 0"><input type="checkbox" id="ntPub"> ${t("Tornar pública já")}</label>
+        <div class="row"><button class="btn btn--sm" id="ntCreate">${t("Criar")}</button><button class="btn btn--ghost btn--sm" id="ntCancel">${t("Cancelar")}</button></div></div>`;
       $("#ntCancel").onclick = () => { f.innerHTML = ""; };
       $("#ntCreate").onclick = async () => {
         try {
           await api(`/subjects/${SUBJECT}/tests`, { method: "POST", body: { title: $("#ntTitle").value.trim(), description: $("#ntDesc").value.trim(), is_public: $("#ntPub").checked } });
-          f.innerHTML = ""; toast("Teste criado"); renderTests(teacher);
+          f.innerHTML = ""; toast(t("Teste criado")); renderTests(teacher);
         } catch (e) { toast(e.message); }
       };
     };
@@ -815,29 +815,29 @@ async function vPractice() {
       if (f.dataset.mode === "gen") { f.innerHTML = ""; f.dataset.mode = ""; return; }
       f.dataset.mode = "gen";
       f.innerHTML = `<div class="mgbox" style="margin-top:10px">
-        <b>${icon("sparkle", 16)} Gerar teste com IA</b>
-        <label class="fld"><span class="label">Tópico</span><input id="gTopic" placeholder="ex: ética de Kant"></label>
+        <b>${icon("sparkle", 16)} ${t("Gerar teste com IA")}</b>
+        <label class="fld"><span class="label">${t("Tópico")}</span><input id="gTopic" placeholder="${t("ex: ética de Kant")}"></label>
         <div class="row">
-          <label class="fld"><span class="label">Nº de perguntas</span><select id="gCount" style="max-width:130px">${[3,5,8,10].map(n=>`<option ${n===3?"selected":""}>${n}</option>`).join("")}</select></label>
-          <label class="fld"><span class="label">Dificuldade</span><select id="gDiff" style="max-width:130px">${[[1,"Fácil"],[2,"Médio"],[3,"Difícil"]].map(([v,t])=>`<option value="${v}" ${v===2?"selected":""}>${t}</option>`).join("")}</select></label>
-          <label class="fld"><span class="label">Tema</span><select id="gConcept" style="max-width:200px"></select></label>
+          <label class="fld"><span class="label">${t("Nº de perguntas")}</span><select id="gCount" style="max-width:130px">${[3,5,8,10].map(n=>`<option ${n===3?"selected":""}>${n}</option>`).join("")}</select></label>
+          <label class="fld"><span class="label">${t("Dificuldade")}</span><select id="gDiff" style="max-width:130px">${[[1,t("Fácil")],[2,t("Médio")],[3,t("Difícil")]].map(([v,n])=>`<option value="${v}" ${v===2?"selected":""}>${n}</option>`).join("")}</select></label>
+          <label class="fld"><span class="label">${t("Tema")}</span><select id="gConcept" style="max-width:200px"></select></label>
         </div>
-        <div class="row"><button class="btn btn--sm" id="gGo">Gerar</button><button class="btn btn--ghost btn--sm" id="gCancel">Cancelar</button></div></div>`;
+        <div class="row"><button class="btn btn--sm" id="gGo">${t("Gerar")}</button><button class="btn btn--ghost btn--sm" id="gCancel">${t("Cancelar")}</button></div></div>`;
       $("#gCancel").onclick = () => { f.innerHTML = ""; f.dataset.mode = ""; };
       (async () => {
         let cs = [];
         try { cs = (await api(`/subjects/${SUBJECT}/graph`)).concepts; } catch {}
-        $("#gConcept").innerHTML = `<option value="">tema automático</option>` + cs.map((c) => `<option value="${c.key}">${esc(c.name)}</option>`).join("");
+        $("#gConcept").innerHTML = `<option value="">${t("tema automático")}</option>` + cs.map((c) => `<option value="${c.key}">${esc(c.name)}</option>`).join("");
       })();
       $("#gGo").onclick = async () => {
         const topic = $("#gTopic").value.trim();
-        if (!topic) return toast("Escreve um tópico");
+        if (!topic) return toast(t("Escreve um tópico"));
         f.innerHTML = ""; f.dataset.mode = "";
-        const ph = el(`<div class="mkt-card mkt-card--gen"><div class="gen-shimmer"></div><div class="gen-shimmer" style="width:70%"></div><div class="gen-shimmer" style="width:40%"></div><p class="muted" style="font-size:13px;display:flex;align-items:center;gap:6px">${icon("sparkle", 15)} A IA está a criar o teste…</p></div>`);
+        const ph = el(`<div class="mkt-card mkt-card--gen"><div class="gen-shimmer"></div><div class="gen-shimmer" style="width:70%"></div><div class="gen-shimmer" style="width:40%"></div><p class="muted" style="font-size:13px;display:flex;align-items:center;gap:6px">${icon("sparkle", 15)} ${t("A IA está a criar o teste…")}</p></div>`);
         $("#tests").prepend(ph);
         try {
-          const t = await api(`/subjects/${SUBJECT}/tests/generate`, { method: "POST", body: { topic, count: +$("#gCount")?.value || 3, difficulty: +$("#gDiff")?.value || 2, concept: $("#gConcept")?.value || null } });
-          toast(`Teste gerado: ${t.question_count} pergunta(s)`);
+          const gen = await api(`/subjects/${SUBJECT}/tests/generate`, { method: "POST", body: { topic, count: +$("#gCount")?.value || 3, difficulty: +$("#gDiff")?.value || 2, concept: $("#gConcept")?.value || null } });
+          toast(t("Teste gerado: {n} pergunta(s)", { n: gen.question_count }));
           await renderTests(teacher);
           const card = $(`#tests .mkt-card`); if (card) card.classList.add("gen-in");
         } catch (e) { toast(e.message); ph.remove(); }
@@ -872,7 +872,7 @@ async function renderEpLeaderboard() {
     } catch {}
   }
   box.innerHTML = `
-    <h3 style="font-size:16px;margin-bottom:10px">${icon("trophy", 16)} Classificação · ${esc(subjName)}</h3>
+    <h3 style="font-size:16px;margin-bottom:10px">${icon("trophy", 16)} ${t("Classificação")} · ${esc(subjName)}</h3>
     <div class="lbrows">${html}</div>`;
 }
 
@@ -882,29 +882,29 @@ async function renderTests(teacher) {
   if (teacher) {
     try { (await api(`/teacher/test-stats/${SUBJECT}`)).forEach((s) => (stats[s.test_id] = s)); } catch {}
   }
-  if (!tests.length) { $("#tests").innerHTML = `<p class="muted">Ainda não há testes${teacher ? " — cria um." : "."}</p>`; return; }
-  $("#tests").innerHTML = tests.map((t) => `
-    <div class="mkt-card" data-search="${esc(`${t.title} ${t.description || ""} ${t.author || ""}`.toLowerCase())}">
+  if (!tests.length) { $("#tests").innerHTML = `<p class="muted">${teacher ? t("Ainda não há testes — cria um.") : t("Ainda não há testes.")}</p>`; return; }
+  $("#tests").innerHTML = tests.map((ts) => `
+    <div class="mkt-card" data-search="${esc(`${ts.title} ${ts.description || ""} ${ts.author || ""}`.toLowerCase())}">
       <div class="mkt-card__top">
-        <span class="mkt-card__title">${esc(t.title)}</span>
-        ${t.is_public ? `<span class="badge-ok">${icon("globe", 12)} pública</span>` : `<span class="badge-pend">${icon("lock", 12)} privada</span>`}
+        <span class="mkt-card__title">${esc(ts.title)}</span>
+        ${ts.is_public ? `<span class="badge-ok">${icon("globe", 12)} ${t("pública")}</span>` : `<span class="badge-pend">${icon("lock", 12)} ${t("privada")}</span>`}
       </div>
-      <p class="mkt-card__desc">${esc(t.description || "—")}</p>
-      <div class="mkt-card__meta">${t.question_count} pergunta(s)${stats[t.id] ? ` · ${stats[t.id].students} aluno(s) · ${stats[t.id].pct_correct}% certas` : ""}</div>
+      <p class="mkt-card__desc">${esc(ts.description || "—")}</p>
+      <div class="mkt-card__meta">${t("{n} pergunta(s)", { n: ts.question_count })}${stats[ts.id] ? ` · ${t("{n} aluno(s)", { n: stats[ts.id].students })} · ${t("{p}% certas", { p: stats[ts.id].pct_correct })}` : ""}</div>
       <div class="mkt-card__tags">
-        ${t.ai_generated ? `<span class="tag tag--ai">${icon("sparkle", 12)} Gerado por IA</span>` : ""}
-        <span class="tag tag--author" title="Submetido por">${icon("pencil", 12)} ${esc(t.author || "—")}</span>
-        ${t.teacher_approved ? `<span class="tag" title="Aprovado por">${icon("check", 12)} ${esc(t.approver || "aprovado")}</span>` : `<span class="badge-pend">pendente</span>`}
-        ${(t.materials || []).map((m) => `<span class="tag tag--mat" data-mat="${m.id}" title="Ctrl+clique para abrir o material">${icon("book", 12)} ${esc(m.title)}</span>`).join("")}
+        ${ts.ai_generated ? `<span class="tag tag--ai">${icon("sparkle", 12)} ${t("Gerado por IA")}</span>` : ""}
+        <span class="tag tag--author" title="${t("Submetido por")}">${icon("pencil", 12)} ${esc(ts.author || "—")}</span>
+        ${ts.teacher_approved ? `<span class="tag" title="${t("Aprovado por")}">${icon("check", 12)} ${esc(ts.approver || t("aprovado"))}</span>` : `<span class="badge-pend">${t("pendente")}</span>`}
+        ${(ts.materials || []).map((m) => `<span class="tag tag--mat" data-mat="${m.id}" title="${t("Ctrl+clique para abrir o material")}">${icon("book", 12)} ${esc(m.title)}</span>`).join("")}
       </div>
       <div class="mkt-card__foot">
-        ${t.question_count ? `<button class="btn btn--sm" data-do="${t.id}">Fazer</button>` : `<span class="muted" style="font-size:13px">sem perguntas</span>`}
-        ${t.question_count ? `<button class="btn btn--ghost btn--sm" data-cards="${t.id}" data-title="${esc(t.title)}">${icon("book", 14)} Flashcards</button>` : ""}
-        ${(teacher && t.is_mine) || USER.role === "admin" ? `<button class="btn btn--ghost btn--sm" data-edit="${t.id}">${icon("pencil", 14)} Editar</button>` : ""}
-        ${(teacher && t.is_mine) || USER.role === "admin" ? `<button class="btn btn--ghost btn--sm" data-pub="${t.id}" data-cur="${t.is_public}">${t.is_public ? "Tornar privada" : "Publicar"}</button>` : ""}
+        ${ts.question_count ? `<button class="btn btn--sm" data-do="${ts.id}">${t("Fazer")}</button>` : `<span class="muted" style="font-size:13px">${t("sem perguntas")}</span>`}
+        ${ts.question_count ? `<button class="btn btn--ghost btn--sm" data-cards="${ts.id}" data-title="${esc(ts.title)}">${icon("book", 14)} ${t("Flashcards")}</button>` : ""}
+        ${(teacher && ts.is_mine) || USER.role === "admin" ? `<button class="btn btn--ghost btn--sm" data-edit="${ts.id}">${icon("pencil", 14)} ${t("Editar")}</button>` : ""}
+        ${(teacher && ts.is_mine) || USER.role === "admin" ? `<button class="btn btn--ghost btn--sm" data-pub="${ts.id}" data-cur="${ts.is_public}">${ts.is_public ? t("Tornar privada") : t("Publicar")}</button>` : ""}
       </div>
     </div>`).join("");
-  wireGridSearch("#testSearch", "#tests", "#testCount", "teste(s)");
+  wireGridSearch("#testSearch", "#tests", "#testCount", t("teste(s)"));
   $("#tests").querySelectorAll("[data-do]").forEach((b) => (b.onclick = () => startTest(b.dataset.do)));
   $("#tests").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => openTestEditor(b.dataset.edit)));
   $("#tests").querySelectorAll("[data-cards]").forEach((b) => (b.onclick = () => startFlashcards(b.dataset.cards, b.dataset.title)));
@@ -915,7 +915,7 @@ async function renderTests(teacher) {
   $("#tests").querySelectorAll("[data-pub]").forEach((b) => (b.onclick = async () => {
     try {
       await api(`/tests/${b.dataset.pub}`, { method: "PATCH", body: { is_public: b.dataset.cur !== "true" } });
-      toast(b.dataset.cur !== "true" ? "Pública" : "Privada"); renderTests(teacher);
+      toast(b.dataset.cur !== "true" ? t("Pública") : t("Privada")); renderTests(teacher);
     } catch (e) { toast(e.message); }
   }));
 }
@@ -926,20 +926,20 @@ async function renderTests(teacher) {
 async function vMaterials() {
   const v = $("#view");
   v.innerHTML = `
-    <div class="view__head"><h1>Materiais</h1><p>Referências que alimentam o tutor (Learn) e fundamentam os testes (Ranked). Material de professor fica aprovado.</p></div>
+    <div class="view__head"><h1>${t("Materiais")}</h1><p>${t("Referências que alimentam o tutor (Learn) e fundamentam os testes (Ranked). Material de professor fica aprovado.")}</p></div>
     <div class="card">
       <div class="mgbox">
-        <b>${icon("plus", 15)} Adicionar material</b>
-        <label class="fld"><span class="label">Título</span><input id="nmTitle" placeholder="ex: Imperativo categórico"></label>
-        <label class="fld"><span class="label">Conteúdo de referência</span><textarea id="nmBody" rows="3"></textarea></label>
-        <div class="row" style="margin-top:8px"><button class="btn btn--sm" id="nmAdd">Adicionar</button><button class="btn btn--ghost btn--sm" id="nmCancel">Limpar</button></div>
+        <b>${icon("plus", 15)} ${t("Adicionar material")}</b>
+        <label class="fld"><span class="label">${t("Título")}</span><input id="nmTitle" placeholder="${t("ex: Imperativo categórico")}"></label>
+        <label class="fld"><span class="label">${t("Conteúdo de referência")}</span><textarea id="nmBody" rows="3"></textarea></label>
+        <div class="row" style="margin-top:8px"><button class="btn btn--sm" id="nmAdd">${t("Adicionar")}</button><button class="btn btn--ghost btn--sm" id="nmCancel">${t("Limpar")}</button></div>
       </div>
     </div>
-    <div class="toolrow"><input id="matSearch" class="searchbar" placeholder="Procurar material…" autocomplete="off">
+    <div class="toolrow"><input id="matSearch" class="searchbar" placeholder="${t("Procurar material…")}" autocomplete="off">
       <select id="matSort" class="searchbar" style="flex:0 0 auto;width:auto">
-        <option value="fav">Favoritos primeiro</option>
-        <option value="new">Mais recentes</option>
-        <option value="pend">Pendentes primeiro</option>
+        <option value="fav">${t("Favoritos primeiro")}</option>
+        <option value="new">${t("Mais recentes")}</option>
+        <option value="pend">${t("Pendentes primeiro")}</option>
       </select><span class="muted" id="matCount"></span></div>
     <div id="matGrid" class="mkt-grid">…</div>`;
   await renderMaterialsPage();
@@ -951,7 +951,7 @@ async function renderMaterialsPage() {
     try {
       await api(`/subjects/${SUBJECT}/material`, { method: "POST", body: {
         title: $("#nmTitle").value.trim(), body: $("#nmBody").value } });
-      $("#nmTitle").value = ""; $("#nmBody").value = ""; toast("Material adicionado"); renderMaterialsPage();
+      $("#nmTitle").value = ""; $("#nmBody").value = ""; toast(t("Material adicionado")); renderMaterialsPage();
     } catch (e) { toast(e.message); }
   };
   const isTeacher = USER.role === "teacher" || USER.role === "admin";
@@ -966,23 +966,23 @@ async function renderMaterialsPage() {
     <div class="mkt-card pick" data-open="${m.id}" data-search="${esc(`${m.title} ${m.body || ""}`.slice(0, 400).toLowerCase())}">
       <div class="mkt-card__top">
         <span class="mkt-card__title">${esc(m.title)}</span>
-        <button class="iconbtn star ${m.favorited ? "on" : ""}" data-fav="${m.id}" title="Favorito">${icon("star", 16)}</button>
+        <button class="iconbtn star ${m.favorited ? "on" : ""}" data-fav="${m.id}" title="${t("Favorito")}">${icon("star", 16)}</button>
       </div>
       <div class="mkt-card__meta">${matStatus(m)}</div>
       <p class="mkt-card__desc">${esc((m.body || "").slice(0, 160))}${(m.body || "").length > 160 ? "…" : ""}</p>
       <div class="mkt-card__foot">
-        <button class="btn btn--ghost btn--sm" data-study="${m.id}">${icon("compass", 14)} Estudar no Learn</button>
-        ${(isTeacher && !m.teacher_approved) ? `<button class="btn btn--sm" data-approve="${m.id}">${icon("check", 14)} Aprovar</button>` : ""}
+        <button class="btn btn--ghost btn--sm" data-study="${m.id}">${icon("compass", 14)} ${t("Estudar no Learn")}</button>
+        ${(isTeacher && !m.teacher_approved) ? `<button class="btn btn--sm" data-approve="${m.id}">${icon("check", 14)} ${t("Aprovar")}</button>` : ""}
       </div>
-    </div>`).join("") : `<p class="muted">Sem materiais ainda — adiciona o primeiro.</p>`;
+    </div>`).join("") : `<p class="muted">${t("Sem materiais ainda — adiciona o primeiro.")}</p>`;
   const sortSel = $("#matSort");
   if (sortSel && !sortSel._wired) { sortSel._wired = true; sortSel.onchange = () => renderMaterialsPage(); }
-  wireGridSearch("#matSearch", "#matGrid", "#matCount", "material(is)");
+  wireGridSearch("#matSearch", "#matGrid", "#matCount", t("material(is)"));
   $("#matGrid").querySelectorAll("[data-open]").forEach((c) => (c.onclick = () => openMaterialInspector(_matCache[c.dataset.open])));
   $("#matGrid").querySelectorAll("[data-study]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); PENDING_MATERIAL = b.dataset.study; go("tutor"); }));
   $("#matGrid").querySelectorAll("[data-approve]").forEach((b) => (b.onclick = async (e) => {
     e.stopPropagation();
-    try { await api(`/materials/${b.dataset.approve}/approve`, { method: "POST" }); toast("Material aprovado"); renderMaterialsPage(); }
+    try { await api(`/materials/${b.dataset.approve}/approve`, { method: "POST" }); toast(t("Material aprovado")); renderMaterialsPage(); }
     catch (err) { toast(err.message); }
   }));
   $("#matGrid").querySelectorAll("[data-fav]").forEach((b) => (b.onclick = async (e) => {
@@ -996,8 +996,8 @@ async function renderMaterialsPage() {
 function matStatus(m) {
   const who = m.author ? ` · ${icon("pencil", 11)} ${esc(m.author)}` : "";
   const state = m.teacher_approved
-    ? `<span class="badge-ok">${icon("check", 12)} aprovado${m.approver ? " · " + esc(m.approver) : ""}</span>`
-    : `<span class="badge-pend">pendente</span>`;
+    ? `<span class="badge-ok">${icon("check", 12)} ${t("aprovado")}${m.approver ? " · " + esc(m.approver) : ""}</span>`
+    : `<span class="badge-pend">${t("pendente")}</span>`;
   return state + who;
 }
 
@@ -1008,7 +1008,7 @@ async function openMaterialById(id) {
     try { m = (await api(`/subjects/${SUBJECT}/material`)).find((x) => x.id === id); } catch {}
   }
   if (m) openMaterialInspector(m);
-  else toast("Material não encontrado");
+  else toast(t("Material não encontrado"));
 }
 function _fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
 function _assetIcon(kind) { return kind === "pdf" ? "doc" : kind === "markdown" ? "book" : "doc"; }
@@ -1020,22 +1020,22 @@ async function openMaterialInspector(m) {
   $("#modal").innerHTML = `
     <div class="modal__backdrop"></div>
     <div class="modal__panel">
-      <div class="modal__hd"><h3>Material</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__hd"><h3>${t("Material")}</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
       <div class="modal__body">
         <div class="mgbox">
-          <label class="fld"><span class="label">Título</span><input id="miTitle" value="${esc(full.title)}"></label>
-          <label class="fld"><span class="label">Conteúdo (markdown suportado)</span><textarea id="miBody" rows="8">${esc(full.body || "")}</textarea></label>
+          <label class="fld"><span class="label">${t("Título")}</span><input id="miTitle" value="${esc(full.title)}"></label>
+          <label class="fld"><span class="label">${t("Conteúdo (markdown suportado)")}</span><textarea id="miBody" rows="8">${esc(full.body || "")}</textarea></label>
           <div class="mkt-card__meta">${matStatus(full)}</div>
           <div class="row" style="margin-top:6px">
-            <button class="btn btn--sm" id="miSave">Guardar</button>
-            <button class="btn btn--ghost btn--sm" id="miStudy">${icon("compass", 14)} Estudar no Learn</button>
-            ${((USER.role === "teacher" || USER.role === "admin") && !full.teacher_approved) ? `<button class="btn btn--sm" id="miApprove">${icon("check", 14)} Aprovar</button>` : ""}
+            <button class="btn btn--sm" id="miSave">${t("Guardar")}</button>
+            <button class="btn btn--ghost btn--sm" id="miStudy">${icon("compass", 14)} ${t("Estudar no Learn")}</button>
+            ${((USER.role === "teacher" || USER.role === "admin") && !full.teacher_approved) ? `<button class="btn btn--sm" id="miApprove">${icon("check", 14)} ${t("Aprovar")}</button>` : ""}
           </div>
         </div>
-        <h4 class="modal__sub">Anexos (PDF / Markdown)</h4>
+        <h4 class="modal__sub">${t("Anexos (PDF / Markdown)")}</h4>
         <div id="miAssets"></div>
         <label class="btn btn--ghost btn--sm" style="margin-top:10px;cursor:pointer">
-          ${icon("plus", 14)} Adicionar ficheiro
+          ${icon("plus", 14)} ${t("Adicionar ficheiro")}
           <input id="miUpload" type="file" accept=".pdf,.md,.markdown,.txt" style="display:none">
         </label>
       </div>
@@ -1046,13 +1046,13 @@ async function openMaterialInspector(m) {
   $("#mClose").onclick = close; $("#modal .modal__backdrop").onclick = close;
   $("#miStudy").onclick = () => { PENDING_MATERIAL = m.id; closeModal(); go("tutor"); };
   if ($("#miApprove")) $("#miApprove").onclick = async () => {
-    try { await api(`/materials/${m.id}/approve`, { method: "POST" }); toast("Material aprovado"); closeModal(); if (CURRENT_VIEW === "materials") renderMaterialsPage(); }
+    try { await api(`/materials/${m.id}/approve`, { method: "POST" }); toast(t("Material aprovado")); closeModal(); if (CURRENT_VIEW === "materials") renderMaterialsPage(); }
     catch (e) { toast(e.message); }
   };
   $("#miSave").onclick = async () => {
     try {
       await api(`/materials/${m.id}`, { method: "PATCH", body: { title: $("#miTitle").value.trim(), body: $("#miBody").value } });
-      toast("Material atualizado");
+      toast(t("Material atualizado"));
       if (CURRENT_VIEW === "materials") renderMaterialsPage();
     } catch (e) { toast(e.message); }
   };
@@ -1062,8 +1062,8 @@ async function openMaterialInspector(m) {
     const fd = new FormData(); fd.append("file", f);
     try {
       const res = await fetch(`${API}/materials/${m.id}/assets`, { method: "POST", headers: TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}, body: fd });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error?.message || "erro");
-      toast("Ficheiro anexado");
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error?.message || t("erro"));
+      toast(t("Ficheiro anexado"));
       const fresh = await api(`/materials/${m.id}`);
       renderAssets(m.id, fresh.assets || []);
     } catch (err) { toast(err.message); }
@@ -1076,12 +1076,12 @@ function renderAssets(matId, assets) {
     <div class="asset-row">
       <span class="asset-row__name">${icon(_assetIcon(a.kind), 15)} ${esc(a.filename)} <span class="muted" style="font-size:12px">· ${a.kind} · ${_fmtSize(a.size)}</span></span>
       <span class="row" style="gap:6px">
-        <a class="btn btn--ghost btn--sm" href="${API}/materials/${matId}/assets/${a.id}/download" target="_blank">Abrir</a>
-        <button class="btn btn--ghost btn--sm" data-del="${a.id}">Apagar</button>
+        <a class="btn btn--ghost btn--sm" href="${API}/materials/${matId}/assets/${a.id}/download" target="_blank">${t("Abrir")}</a>
+        <button class="btn btn--ghost btn--sm" data-del="${a.id}">${t("Apagar")}</button>
       </span>
-    </div>`).join("") : `<p class="muted" style="font-size:13px">Sem anexos. PDFs e markdown são lidos e usados para informar o tutor e a avaliação.</p>`;
+    </div>`).join("") : `<p class="muted" style="font-size:13px">${t("Sem anexos. PDFs e markdown são lidos e usados para informar o tutor e a avaliação.")}</p>`;
   box.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => {
-    if (!confirm("Apagar este anexo?")) return;
+    if (!confirm(t("Apagar este anexo?"))) return;
     try { await api(`/materials/${matId}/assets/${b.dataset.del}`, { method: "DELETE" });
       const fresh = await api(`/materials/${matId}`); renderAssets(matId, fresh.assets || []); }
     catch (e) { toast(e.message); }
@@ -1090,12 +1090,12 @@ function renderAssets(matId, assets) {
 
 let _run = null;
 async function startTest(id) {
-  $("#run").innerHTML = `<div class="card"><p class="muted">A carregar…</p></div>`;
+  $("#run").innerHTML = `<div class="card"><p class="muted">${t("A carregar…")}</p></div>`;
   try {
     const s = await api(`/tests/${id}/start`, { method: "POST" });
     _run = { total: s.items.length, answered: 0, correct: 0, ep: 0 };
     const card = el(`<div class="card">
-      <div class="row" style="justify-content:space-between;align-items:center"><h3 style="font-size:16px">Teste em curso</h3><span class="muted" id="runProg">0 / ${s.items.length}</span></div>
+      <div class="row" style="justify-content:space-between;align-items:center"><h3 style="font-size:16px">${t("Teste em curso")}</h3><span class="muted" id="runProg">0 / ${s.items.length}</span></div>
       <div class="bar" style="margin:10px 0 16px"><div class="bar__f" id="runBar" style="width:0%"></div></div>
       <div id="runItems"></div><div id="runSummary"></div></div>`);
     $("#run").innerHTML = ""; $("#run").appendChild(card);
@@ -1110,27 +1110,27 @@ async function startTest(id) {
 let _fc = null;
 async function startFlashcards(testId, title) {
   $("#view").innerHTML = `
-    <div class="view__head"><h1>Flashcards</h1><p>${esc(title || "Teste")}</p></div>
-    <div class="loader"><div class="loader__ring"></div><span>A baralhar as cartas…</span></div>`;
+    <div class="view__head"><h1>${t("Flashcards")}</h1><p>${esc(title || t("Teste"))}</p></div>
+    <div class="loader"><div class="loader__ring"></div><span>${t("A baralhar as cartas…")}</span></div>`;
   let cards = [];
   try { cards = await api(`/tests/${testId}/cards`); } catch (e) { go("practice"); return toast(e.message); }
-  if (!cards.length) { go("practice"); return toast("Sem perguntas"); }
+  if (!cards.length) { go("practice"); return toast(t("Sem perguntas")); }
   for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
-  _fc = { cards, i: 0, scoreSum: 0, answered: 0, title: title || "Teste" };
+  _fc = { cards, i: 0, scoreSum: 0, answered: 0, title: title || t("Teste") };
   const v = $("#view");
   v.innerHTML = `
     <div class="view__head" style="display:flex;align-items:center;justify-content:space-between">
-      <div><h1>Flashcards</h1><p>${esc(_fc.title)}</p></div>
-      <button class="btn btn--ghost btn--sm" id="fcExit">← Voltar</button>
+      <div><h1>${t("Flashcards")}</h1><p>${esc(_fc.title)}</p></div>
+      <button class="btn btn--ghost btn--sm" id="fcExit">${t("← Voltar")}</button>
     </div>
     <div class="fc-wrap">
-      <div class="fc-bar"><span id="fcProg"></span><span class="muted" style="font-size:12.5px">← → navegar · espaço virar</span><span id="fcScore"></span></div>
+      <div class="fc-bar"><span id="fcProg"></span><span class="muted" style="font-size:12.5px">${t("← → navegar · espaço virar")}</span><span id="fcScore"></span></div>
       <div id="fcStage"></div>
-      <div class="fc-nav"><button class="btn btn--ghost btn--sm" id="fcPrev">Anterior</button><button class="btn btn--sm" id="fcNext">Próxima →</button></div>
+      <div class="fc-nav"><button class="btn btn--ghost btn--sm" id="fcPrev">${t("Anterior")}</button><button class="btn btn--sm" id="fcNext">${t("Próxima →")}</button></div>
     </div>`;
   $("#fcExit").onclick = () => go("practice");
   $("#fcPrev").onclick = () => { if (_fc.i > 0) { _fc.i--; renderCard(); } };
-  $("#fcNext").onclick = () => { if (_fc.i < _fc.cards.length - 1) { _fc.i++; renderCard(); } else toast("Última carta"); };
+  $("#fcNext").onclick = () => { if (_fc.i < _fc.cards.length - 1) { _fc.i++; renderCard(); } else toast(t("Última carta")); };
   // keyboard: arrows navigate, space/enter flips (single listener, rebound per deck)
   if (window._fcKeys) document.removeEventListener("keydown", window._fcKeys);
   window._fcKeys = (e) => {
@@ -1146,29 +1146,29 @@ async function startFlashcards(testId, title) {
 
 function renderCard() {
   const c = _fc.cards[_fc.i];
-  $("#fcProg").textContent = `Carta ${_fc.i + 1} / ${_fc.cards.length}`;
-  $("#fcScore").textContent = _fc.answered ? `Média ${Math.round(_fc.scoreSum / _fc.answered)}%` : "—";
+  $("#fcProg").textContent = t("Carta {i} / {n}", { i: _fc.i + 1, n: _fc.cards.length });
+  $("#fcScore").textContent = _fc.answered ? t("Média {p}%", { p: Math.round(_fc.scoreSum / _fc.answered) }) : "—";
   const mcq = c.kind === "mcq";
   const answerInput = mcq
     ? `<div class="fc-opts">${(c.options || []).map((o, i) => `<label class="opt"><input type="radio" name="fcopt" value="${i}"> ${esc(o)}</label>`).join("")}</div>`
-    : `<textarea id="fcText" rows="4" placeholder="Escreve a tua resposta…"></textarea>`;
+    : `<textarea id="fcText" rows="4" placeholder="${t("Escreve a tua resposta…")}"></textarea>`;
   $("#fcStage").innerHTML = `
     <div class="flashcard" id="fcCard">
       <div class="flashcard__inner">
         <div class="flashcard__face flashcard__front">
-          <span class="fc-kind">${mcq ? "Escolha múltipla" : (c.kind === "short" ? "Resposta curta" : "Resposta longa")}</span>
+          <span class="fc-kind">${mcq ? t("Escolha múltipla") : (c.kind === "short" ? t("Resposta curta") : t("Resposta longa"))}</span>
           <div class="fc-q">${esc(c.text)}</div>
         </div>
         <div class="flashcard__face flashcard__back">
           <div id="fcResult"></div>
         </div>
       </div>
-      <div class="fc-loading" id="fcLoading"><div class="loader__ring"></div><span>A avaliar…</span></div>
+      <div class="fc-loading" id="fcLoading"><div class="loader__ring"></div><span>${t("A avaliar…")}</span></div>
     </div>
     <div class="fc-answer" id="fcAnswer">
-      <span class="label">A tua resposta</span>
+      <span class="label">${t("A tua resposta")}</span>
       ${answerInput}
-      <button class="btn btn--sm" id="fcCheck" style="align-self:flex-start">Verificar</button>
+      <button class="btn btn--sm" id="fcCheck" style="align-self:flex-start">${t("Verificar")}</button>
     </div>`;
   $("#fcCheck").onclick = () => checkCard(c);
   // click the card itself to flip between question and result, indefinitely
@@ -1180,12 +1180,12 @@ async function checkCard(c) {
   let raw;
   if (mcq) {
     const sel = document.querySelector('input[name="fcopt"]:checked');
-    if (!sel) return toast("Escolhe uma opção");
+    if (!sel) return toast(t("Escolhe uma opção"));
     raw = { selected_index: +sel.value };
   } else {
-    const t = ($("#fcText").value || "").trim();
-    if (!t) return toast("Escreve uma resposta");
-    raw = { text: t };
+    const txt = ($("#fcText").value || "").trim();
+    if (!txt) return toast(t("Escreve uma resposta"));
+    raw = { text: txt };
   }
   $("#fcLoading").classList.add("show");
   $("#fcCheck").disabled = true;
@@ -1196,20 +1196,20 @@ async function checkCard(c) {
     let detail;
     if (mcq) {
       const opts = r.answer.options || c.options || [];
-      detail = `<p><b>Resposta certa:</b> ${esc(opts[r.answer.answer_index] ?? "—")}</p>` + (r.answer.why ? `<p class="muted">${esc(r.answer.why)}</p>` : "");
+      detail = `<p><b>${t("Resposta certa:")}</b> ${esc(opts[r.answer.answer_index] ?? "—")}</p>` + (r.answer.why ? `<p class="muted">${esc(r.answer.why)}</p>` : "");
     } else {
-      detail = (r.feedback ? `<p>${esc(r.feedback)}</p>` : "") + (r.answer.reference ? `<p class="muted" style="font-size:13px"><b>Referência:</b> ${esc(r.answer.reference.slice(0, 400))}…</p>` : "");
+      detail = (r.feedback ? `<p>${esc(r.feedback)}</p>` : "") + (r.answer.reference ? `<p class="muted" style="font-size:13px"><b>${t("Referência:")}</b> ${esc(r.answer.reference.slice(0, 400))}…</p>` : "");
     }
     $("#fcResult").innerHTML = `
       <div class="fc-grade ${score >= 60 ? "ok" : "no"}">${score}%</div>
-      <div class="fc-verdict">${mcq ? (r.correct ? "Certo!" : "Rever") : "Avaliação do raciocínio"}</div>
+      <div class="fc-verdict">${mcq ? (r.correct ? t("Certo!") : t("Rever")) : t("Avaliação do raciocínio")}</div>
       ${detail}`;
     $("#fcLoading").classList.remove("show");
     $("#fcCard").classList.add("is-flipped");
-    $("#fcScore").textContent = `Média ${Math.round(_fc.scoreSum / _fc.answered)}%`;
+    $("#fcScore").textContent = t("Média {p}%", { p: Math.round(_fc.scoreSum / _fc.answered) });
     // lock the answer area, hint to flip back
     $("#fcAnswer").querySelectorAll("input,textarea,button").forEach((el) => (el.disabled = true));
-    $("#fcCheck").textContent = "Respondido ✓";
+    $("#fcCheck").textContent = t("Respondido ✓");
   } catch (e) {
     toast(e.message); $("#fcLoading").classList.remove("show"); $("#fcCheck").disabled = false;
   }
@@ -1235,38 +1235,38 @@ async function openTestEditor(testId) {
 }
 
 async function reloadEditor() {
-  let t;
-  try { t = await api(`/tests/${_editCtx.testId}/full`); } catch (e) { return toast(e.message); }
+  let tf;
+  try { tf = await api(`/tests/${_editCtx.testId}/full`); } catch (e) { return toast(e.message); }
   const cOpts = (sel) => _editCtx.concepts.map((c) => `<option value="${c.key}" ${c.key === sel ? "selected" : ""}>${esc(c.name)}</option>`).join("");
-  const mOpts = (sel) => `<option value="">— sem material —</option>` + _editCtx.materials.map((m) => `<option value="${m.id}" ${m.id === sel ? "selected" : ""}>${esc(m.title)}</option>`).join("");
-  const diffOpts = (d) => [[1, "Fácil"], [2, "Médio"], [3, "Difícil"]].map(([v, n]) => `<option value="${v}" ${v === d ? "selected" : ""}>${n}</option>`).join("");
+  const mOpts = (sel) => `<option value="">${t("— sem material —")}</option>` + _editCtx.materials.map((m) => `<option value="${m.id}" ${m.id === sel ? "selected" : ""}>${esc(m.title)}</option>`).join("");
+  const diffOpts = (d) => [[1, t("Fácil")], [2, t("Médio")], [3, t("Difícil")]].map(([v, n]) => `<option value="${v}" ${v === d ? "selected" : ""}>${n}</option>`).join("");
 
   const qForm = (q, i) => {
     const isNew = !q.id;
     const kind = q.kind || "reasoning";
     return `<div class="qedit" data-qid="${q.id || ""}">
-      <div class="qedit__hd">${isNew ? "Nova pergunta" : "Pergunta " + (i + 1)}</div>
+      <div class="qedit__hd">${isNew ? t("Nova pergunta") : t("Pergunta {n}", { n: i + 1 })}</div>
       <div class="row">
-        <label class="fld"><span class="label">Tipo</span><select class="qe-kind">${QTYPES.map(([v, n]) => `<option value="${v}" ${v === kind ? "selected" : ""}>${n}</option>`).join("")}</select></label>
-        <label class="fld"><span class="label">Conceito</span><select class="qe-concept">${cOpts(q.concept) || `<option value="">(cria conceitos no Admin)</option>`}</select></label>
-        <label class="fld"><span class="label">Dificuldade</span><select class="qe-diff">${diffOpts(q.difficulty || 2)}</select></label>
+        <label class="fld"><span class="label">${t("Tipo")}</span><select class="qe-kind">${QTYPES.map(([v, n]) => `<option value="${v}" ${v === kind ? "selected" : ""}>${t(n)}</option>`).join("")}</select></label>
+        <label class="fld"><span class="label">${t("Tema")}</span><select class="qe-concept">${cOpts(q.concept) || `<option value="">${t("(sem temas nesta disciplina)")}</option>`}</select></label>
+        <label class="fld"><span class="label">${t("Dificuldade")}</span><select class="qe-diff">${diffOpts(q.difficulty || 2)}</select></label>
       </div>
       <div class="row">
-        <label class="fld"><span class="label">EP por acerto</span><input class="qe-ep" type="number" placeholder="50" value="${q.ep_award ?? ""}"></label>
-        <label class="fld"><span class="label">EP por erro</span><input class="qe-epw" type="number" placeholder="0" value="${q.ep_wrong ?? 0}"></label>
+        <label class="fld"><span class="label">${t("EP por acerto")}</span><input class="qe-ep" type="number" placeholder="50" value="${q.ep_award ?? ""}"></label>
+        <label class="fld"><span class="label">${t("EP por erro")}</span><input class="qe-epw" type="number" placeholder="0" value="${q.ep_wrong ?? 0}"></label>
       </div>
       <div class="qe-mcq" style="display:${kind === "mcq" ? "block" : "none"}">
-        <label class="fld"><span class="label">Enunciado</span><input class="qe-stem" value="${esc(q.stem || "")}"></label>
-        <label class="fld"><span class="label">Opções (uma por linha)</span><textarea class="qe-opts" rows="3">${esc((q.options || []).join("\n"))}</textarea></label>
-        <label class="fld"><span class="label">Índice da opção correta (0, 1, 2…)</span><input class="qe-ans" type="number" min="0" value="${q.answer_index ?? ""}" style="max-width:200px"></label>
+        <label class="fld"><span class="label">${t("Enunciado")}</span><input class="qe-stem" value="${esc(q.stem || "")}"></label>
+        <label class="fld"><span class="label">${t("Opções (uma por linha)")}</span><textarea class="qe-opts" rows="3">${esc((q.options || []).join("\n"))}</textarea></label>
+        <label class="fld"><span class="label">${t("Índice da opção correta (0, 1, 2…)")}</span><input class="qe-ans" type="number" min="0" value="${q.answer_index ?? ""}" style="max-width:200px"></label>
       </div>
       <div class="qe-open" style="display:${kind === "mcq" ? "none" : "block"}">
-        <label class="fld"><span class="label">Pergunta</span><textarea class="qe-prompt" rows="2">${esc(q.prompt || "")}</textarea></label>
-        <label class="fld"><span class="label">Material para avaliação</span><select class="qe-mat">${mOpts(q.material_id)}</select></label>
+        <label class="fld"><span class="label">${t("Pergunta")}</span><textarea class="qe-prompt" rows="2">${esc(q.prompt || "")}</textarea></label>
+        <label class="fld"><span class="label">${t("Material para avaliação")}</span><select class="qe-mat">${mOpts(q.material_id)}</select></label>
       </div>
       <div class="row" style="margin-top:8px">
-        <button class="btn btn--sm qe-save">${isNew ? "Adicionar" : "Guardar"}</button>
-        ${isNew ? `<button class="btn btn--ghost btn--sm qe-discard">Descartar</button>` : `<button class="btn btn--ghost btn--sm qe-del">Apagar</button>`}
+        <button class="btn btn--sm qe-save">${isNew ? t("Adicionar") : t("Guardar")}</button>
+        ${isNew ? `<button class="btn btn--ghost btn--sm qe-discard">${t("Descartar")}</button>` : `<button class="btn btn--ghost btn--sm qe-del">${t("Apagar")}</button>`}
       </div>
     </div>`;
   };
@@ -1275,19 +1275,19 @@ async function reloadEditor() {
     <div class="modal__backdrop"></div>
     <div class="modal__panel">
       <div class="modal__hd">
-        <h3>Editar teste</h3>
+        <h3>${t("Editar teste")}</h3>
         <button class="iconbtn" id="mClose">${icon("plus", 18)}</button>
       </div>
       <div class="modal__body">
         <div class="mgbox">
-          <label class="fld"><span class="label">Título</span><input id="etTitle" value="${esc(t.title)}"></label>
-          <label class="fld"><span class="label">Descrição</span><input id="etDesc" value="${esc(t.description || "")}"></label>
-          <label class="remember"><input type="checkbox" id="etPub" ${t.is_public ? "checked" : ""}> Pública (visível a todos)</label>
-          <button class="btn btn--sm" id="etSave" style="align-self:flex-start;margin-top:6px">Guardar detalhes</button>
+          <label class="fld"><span class="label">${t("Título")}</span><input id="etTitle" value="${esc(tf.title)}"></label>
+          <label class="fld"><span class="label">${t("Descrição")}</span><input id="etDesc" value="${esc(tf.description || "")}"></label>
+          <label class="remember"><input type="checkbox" id="etPub" ${tf.is_public ? "checked" : ""}> ${t("Pública (visível a todos)")}</label>
+          <button class="btn btn--sm" id="etSave" style="align-self:flex-start;margin-top:6px">${t("Guardar detalhes")}</button>
         </div>
-        <h4 class="modal__sub">Perguntas (${t.questions.length})</h4>
-        <div id="qList">${t.questions.map((q, i) => qForm(q, i)).join("") || `<p class="muted">Sem perguntas — adiciona uma.</p>`}</div>
-        <button class="btn btn--ghost btn--sm" id="qAddNew" style="margin-top:10px">${icon("plus", 14)} Adicionar pergunta</button>
+        <h4 class="modal__sub">${t("Perguntas")} (${tf.questions.length})</h4>
+        <div id="qList">${tf.questions.map((q, i) => qForm(q, i)).join("") || `<p class="muted">${t("Sem perguntas — adiciona uma.")}</p>`}</div>
+        <button class="btn btn--ghost btn--sm" id="qAddNew" style="margin-top:10px">${icon("plus", 14)} ${t("Adicionar pergunta")}</button>
       </div>
     </div>`;
   $("#modal").classList.add("show");
@@ -1297,7 +1297,7 @@ async function reloadEditor() {
   $("#etSave").onclick = async () => {
     try {
       await api(`/tests/${_editCtx.testId}`, { method: "PATCH", body: { title: $("#etTitle").value.trim(), description: $("#etDesc").value.trim(), is_public: $("#etPub").checked } });
-      toast("Detalhes guardados");
+      toast(t("Detalhes guardados"));
     } catch (e) { toast(e.message); }
   };
   $("#qAddNew").onclick = () => {
@@ -1312,9 +1312,9 @@ async function reloadEditor() {
 function matPickCard(m) {
   return `<div class="mkt-card pick" data-pick="${m.id}">
     <div class="mkt-card__top"><span class="mkt-card__title">${esc(m.title)}</span>
-      <button class="iconbtn star ${m.favorited ? "on" : ""}" data-fav="${m.id}" title="Favorito">${icon("star", 16)}</button></div>
+      <button class="iconbtn star ${m.favorited ? "on" : ""}" data-fav="${m.id}" title="${t("Favorito")}">${icon("star", 16)}</button></div>
     <p class="mkt-card__desc">${esc((m.body || "").slice(0, 120))}${(m.body || "").length > 120 ? "…" : ""}</p>
-    ${m.teacher_approved ? `<div class="mkt-card__tags"><span class="badge-ok">${icon("check", 12)} aprovado</span></div>` : ""}
+    ${m.teacher_approved ? `<div class="mkt-card__tags"><span class="badge-ok">${icon("check", 12)} ${t("aprovado")}</span></div>` : ""}
   </div>`;
 }
 async function openMaterialPicker(onPick) {
@@ -1324,10 +1324,10 @@ async function openMaterialPicker(onPick) {
   $("#modal").innerHTML = `
     <div class="modal__backdrop"></div>
     <div class="modal__panel">
-      <div class="modal__hd"><h3>Escolher material</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__hd"><h3>${t("Escolher material")}</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
       <div class="modal__body">
         <div class="mkt-grid" id="pickGrid">
-          <div class="mkt-card pick" data-free="1"><div class="mkt-card__top"><span class="mkt-card__title">${icon("sparkle", 14)} Tópico livre</span></div><p class="mkt-card__desc">Conversa aberta, sem material.</p></div>
+          <div class="mkt-card pick" data-free="1"><div class="mkt-card__top"><span class="mkt-card__title">${icon("sparkle", 14)} ${t("Tópico livre")}</span></div><p class="mkt-card__desc">${t("Conversa aberta, sem material.")}</p></div>
           ${mats.map(matPickCard).join("")}
         </div>
       </div>
@@ -1357,8 +1357,8 @@ function wireQRow(row) {
   q(".qe-kind").onchange = sync; sync();
   if (q(".qe-discard")) q(".qe-discard").onclick = () => row.remove();
   if (q(".qe-del")) q(".qe-del").onclick = async () => {
-    if (!confirm("Apagar esta pergunta?")) return;
-    try { await api(`/tests/${_editCtx.testId}/questions/${row.dataset.qid}`, { method: "DELETE" }); toast("Apagada"); reloadEditor(); }
+    if (!confirm(t("Apagar esta pergunta?"))) return;
+    try { await api(`/tests/${_editCtx.testId}/questions/${row.dataset.qid}`, { method: "DELETE" }); toast(t("Apagada")); reloadEditor(); }
     catch (e) { toast(e.message); }
   };
   q(".qe-save").onclick = async () => {
@@ -1373,7 +1373,7 @@ function wireQRow(row) {
     try {
       if (qid) await api(`/tests/${_editCtx.testId}/questions/${qid}`, { method: "PATCH", body });
       else await api(`/tests/${_editCtx.testId}/questions`, { method: "POST", body });
-      toast("Guardada"); reloadEditor();
+      toast(t("Guardada")); reloadEditor();
     } catch (e) { toast(e.message); }
   };
 }
@@ -1384,11 +1384,11 @@ function renderItem(it, idx) {
   if (it.kind === "mcq") {
     node.innerHTML = `<div class="q__stem">${idx + 1}. ${esc(p.stem)}</div>` +
       (p.options || []).map((o, i) => `<label class="opt"><input type="radio" name="q${it.id}" value="${i}"> ${esc(o)}</label>`).join("") +
-      `<button class="btn btn--sm" data-go>Responder</button><div class="grade" style="display:none"></div>`;
+      `<button class="btn btn--sm" data-go>${t("Responder")}</button><div class="grade" style="display:none"></div>`;
   } else {
     node.innerHTML = `<div class="q__stem">${idx + 1}. ${esc(p.prompt || p.stem)}</div>` +
-      `<textarea rows="4" placeholder="Explica o teu raciocínio…"></textarea>` +
-      `<div style="margin-top:10px"><button class="btn btn--sm" data-go>Responder</button></div><div class="grade" style="display:none"></div>`;
+      `<textarea rows="4" placeholder="${t("Explica o teu raciocínio…")}"></textarea>` +
+      `<div style="margin-top:10px"><button class="btn btn--sm" data-go>${t("Responder")}</button></div><div class="grade" style="display:none"></div>`;
   }
   node.querySelector("[data-go]").onclick = () => submitItem(it, node);
   return node;
@@ -1399,22 +1399,22 @@ async function submitItem(it, node) {
   let raw;
   if (it.kind === "mcq") {
     const sel = node.querySelector(`input[name="q${it.id}"]:checked`);
-    if (!sel) return toast("Escolhe uma opção");
+    if (!sel) return toast(t("Escolhe uma opção"));
     raw = { selected_index: +sel.value };
   } else {
-    const t = node.querySelector("textarea").value.trim();
-    if (!t) return toast("Escreve a resposta");
-    raw = { text: t };
+    const txt = node.querySelector("textarea").value.trim();
+    if (!txt) return toast(t("Escreve a resposta"));
+    raw = { text: txt };
   }
-  btn.disabled = true; btn.textContent = "A avaliar…";
+  btn.disabled = true; btn.textContent = t("A avaliar…");
   try {
     const r = await api(`/practice/items/${it.id}/answer`, { method: "POST", body: { raw } });
     const g = node.querySelector(".grade");
     g.style.display = "block";
     g.className = "grade " + (r.correct ? "ok" : "no");
-    g.innerHTML = `<b>${r.correct ? "✓ Certo" : "✗ Rever"}</b> · raciocínio ${(r.reasoning_score * 100).toFixed(0)}% · <b>${r.xp_delta >= 0 ? "+" : ""}${r.xp_delta} EP</b>` +
+    g.innerHTML = `<b>${r.correct ? t("✓ Certo") : t("✗ Rever")}</b> · ${t("raciocínio")} ${(r.reasoning_score * 100).toFixed(0)}% · <b>${r.xp_delta >= 0 ? "+" : ""}${r.xp_delta} EP</b>` +
       (r.feedback ? `<br>${esc(r.feedback)}` : "");
-    btn.textContent = "Respondido";
+    btn.textContent = t("Respondido");
     if (_run) {
       _run.answered++; if (r.correct) _run.correct++; _run.ep += r.xp_delta;
       const pr = $("#runProg"), bar = $("#runBar");
@@ -1423,13 +1423,13 @@ async function submitItem(it, node) {
       if (_run.answered === _run.total && $("#runSummary")) {
         const pct = Math.round((100 * _run.correct) / _run.total);
         $("#runSummary").innerHTML = `<div class="grade ${pct >= 50 ? "ok" : "no"}" style="margin-top:14px">
-          <b>Teste concluído!</b> ${_run.correct}/${_run.total} certas (${pct}%) · <b>${_run.ep >= 0 ? "+" : ""}${_run.ep} EP</b></div>`;
+          <b>${t("Teste concluído!")}</b> ${t("{c}/{n} certas ({p}%)", { c: _run.correct, n: _run.total, p: pct })} · <b>${_run.ep >= 0 ? "+" : ""}${_run.ep} EP</b></div>`;
         $("#runSummary").scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
     if (r.ranked_up) playRankUp(r.rank);
     refreshChip();
-  } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = "Responder"; }
+  } catch (e) { toast(e.message); btn.disabled = false; btn.textContent = t("Responder"); }
 }
 
 /* ===================================================================== */
@@ -1445,31 +1445,37 @@ function rankFill(xp) {
 async function vProfile() {
   const v = $("#view");
   const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
-  v.innerHTML = `<div class="view__head"><h1>Meu perfil</h1><p>${esc(USER.display_name)} · ${esc(subjName)}</p></div>
+  v.innerHTML = `<div class="view__head"><h1>${t("Meu perfil")}</h1><p>${esc(USER.display_name)} · ${esc(subjName)}</p></div>
     <div class="card" id="pg">…</div>
-    <div class="card"><h3 style="font-size:16px;margin-bottom:10px">Histórico de duelos</h3><div id="dhist">…</div></div>
-    <div class="card"><h3 style="font-size:16px;margin-bottom:10px">Uso da IA</h3><div id="us">…</div></div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Histórico de duelos")}</h3><div id="dhist">…</div></div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Uso da IA")}</h3><div id="us">…</div></div>
     <div class="card">
-      <h3 style="font-size:16px;margin-bottom:4px">Segurança</h3>
-      <p class="muted" style="font-size:13px;margin-bottom:12px">${icon("lock", 13)} Palavra-passe protegida com Argon2. Alterá-la termina as outras sessões.</p>
+      <h3 style="font-size:16px;margin-bottom:4px">${t("Idioma")}</h3>
+      <p class="muted" style="font-size:13px;margin-bottom:10px">${t("A língua da interface. Novas línguas são fáceis de adicionar.")}</p>
+      <div class="row" id="langPick">${Object.entries(I18N.LANGS).map(([k, n]) => `<button class="btn ${k === I18N.lang ? "" : "btn--ghost"} btn--sm" data-lang="${k}">${n}</button>`).join("")}</div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:16px;margin-bottom:4px">${t("Segurança")}</h3>
+      <p class="muted" style="font-size:13px;margin-bottom:12px">${icon("lock", 13)} ${t("Palavra-passe protegida com Argon2. Alterá-la termina as outras sessões.")}</p>
       <div class="mgbox" style="max-width:420px">
-        <b>${icon("lock", 14)} Alterar palavra-passe</b>
-        <label class="fld"><span class="label">Palavra-passe atual</span><input id="pwCur" type="password" autocomplete="current-password"></label>
-        <label class="fld"><span class="label">Nova palavra-passe (mín. 8)</span><input id="pwNew" type="password" autocomplete="new-password"></label>
-        <label class="fld"><span class="label">Confirmar nova</span><input id="pwNew2" type="password" autocomplete="new-password"></label>
-        <button class="btn btn--sm" id="pwSave" style="align-self:flex-start;margin-top:6px">Alterar</button>
+        <b>${icon("lock", 14)} ${t("Alterar palavra-passe")}</b>
+        <label class="fld"><span class="label">${t("Palavra-passe atual")}</span><input id="pwCur" type="password" autocomplete="current-password"></label>
+        <label class="fld"><span class="label">${t("Nova palavra-passe (mín. 8)")}</span><input id="pwNew" type="password" autocomplete="new-password"></label>
+        <label class="fld"><span class="label">${t("Confirmar nova")}</span><input id="pwNew2" type="password" autocomplete="new-password"></label>
+        <button class="btn btn--sm" id="pwSave" style="align-self:flex-start;margin-top:6px">${t("Alterar")}</button>
       </div>
     </div>
     ${friendsCard()}`;
   mountFriends(document.querySelector("#view .frcard"));
+  $("#langPick").querySelectorAll("[data-lang]").forEach((b) => (b.onclick = () => I18N.set(b.dataset.lang)));
   $("#pwSave").onclick = async () => {
     const cur = $("#pwCur").value, n = $("#pwNew").value, n2 = $("#pwNew2").value;
-    if (n.length < 8) return toast("Nova palavra-passe: mínimo 8 caracteres");
-    if (n !== n2) return toast("As palavras-passe não coincidem");
+    if (n.length < 8) return toast(t("Nova palavra-passe: mínimo 8 caracteres"));
+    if (n !== n2) return toast(t("As palavras-passe não coincidem"));
     try {
       await api("/me/password", { method: "POST", body: { current_password: cur, new_password: n } });
       $("#pwCur").value = ""; $("#pwNew").value = ""; $("#pwNew2").value = "";
-      toast("Palavra-passe alterada");
+      toast(t("Palavra-passe alterada"));
     } catch (e) { toast(e.message); }
   };
   try {
@@ -1485,19 +1491,19 @@ async function vProfile() {
           <div class="rkstep ${n === p.rank ? "is-cur" : ""} ${p.xp < ep ? "is-locked" : ""}" title="${n} · ${ep} EP">
             ${rankLogo(n, 34)}<span>${n}</span><b>${ep} EP</b></div>`).join("");
         const hint = next
-          ? `Faltam <b>${next[1] - p.xp} EP</b> para <b>${next[0]}</b>.`
-          : "Rank máximo alcançado!";
+          ? t("Faltam <b>{n} EP</b> para <b>{rank}</b>.", { n: next[1] - p.xp, rank: next[0] })
+          : t("Rank máximo alcançado!");
         return `<div class="rankladder">${ladder}</div><p class="muted" style="font-size:13px;margin-top:2px">${hint}</p>`;
       })()}
-      <div class="stat"><div><span class="label">EP</span><b>${p.xp}</b></div><div><span class="label">Streak</span><b style="display:inline-flex;align-items:center;gap:4px">${p.streak}${icon("flame", 15)}</b></div><div><span class="label">Rating duelos</span><b id="pgElo">—</b></div><div><span class="label">V / D / E</span><b id="pgWdl">—</b></div></div>
-      <h3 style="margin:18px 0 6px;font-size:16px">Fundo do emblema</h3>
-      <p class="muted" style="font-size:13px;margin-bottom:8px">Desbloqueias mais cores ao subir de rank.</p>
+      <div class="stat"><div><span class="label">EP</span><b>${p.xp}</b></div><div><span class="label">${t("Streak")}</span><b style="display:inline-flex;align-items:center;gap:4px">${p.streak}${icon("flame", 15)}</b></div><div><span class="label">${t("Rating duelos")}</span><b id="pgElo">—</b></div><div><span class="label">${t("V / D / E")}</span><b id="pgWdl">—</b></div></div>
+      <h3 style="margin:18px 0 6px;font-size:16px">${t("Fundo do emblema")}</h3>
+      <p class="muted" style="font-size:13px;margin-bottom:8px">${t("Desbloqueias mais cores ao subir de rank.")}</p>
       <div class="bg-pick" id="bgPick">${sw("", !USER.background)}${unlocked.map((n) => sw(n, USER.background === n)).join("")}</div>
-      <h3 style="margin:18px 0 8px;font-size:16px">Temas a melhorar</h3>
+      <h3 style="margin:18px 0 8px;font-size:16px">${t("Temas a melhorar")}</h3>
       ${(p.weak_concepts || []).length
-        ? `<table><tr><th>Tema</th><th>Mestria</th></tr>` +
+        ? `<table><tr><th>${t("Tema")}</th><th>${t("Mestria")}</th></tr>` +
           p.weak_concepts.map((w) => `<tr><td>${esc(w.name || "") || conceptName(w.concept_id)}</td><td>${(w.mastery * 100).toFixed(0)}%</td></tr>`).join("") + `</table>`
-        : `<p class="muted">Ainda sem dados — faz uns exercícios na Prática.</p>`}`;
+        : `<p class="muted">${t("Ainda sem dados — faz uns exercícios na Prática.")}</p>`}`;
     $("#bgPick").querySelectorAll(".bg-sw").forEach((b) => (b.onclick = () => setMyBackground(b.dataset.bg)));
     try {
       const r = await api(`/duels/rating`);
@@ -1508,19 +1514,19 @@ async function vProfile() {
   try {
     const ds = (await api("/duels")).filter((d) => d.status === "complete" || d.status === "forfeited").slice(0, 10);
     $("#dhist").innerHTML = ds.length
-      ? `<table><tr><th>Oponente</th><th>Resultado</th><th>Pontos</th><th>Modo</th></tr>` + ds.map((d) => {
-          const res = d.is_draw ? `<span class="badge-pend">Empate</span>` : d.won ? `<span class="badge-ok">Vitória</span>` : `<span class="badge-no">Derrota</span>`;
-          return `<tr><td>${esc(d.opponent_name)}</td><td>${res}</td><td>${d.my_points}–${d.opp_points}</td><td class="muted">${d.ranked ? "Ranked" : "Amigável"}</td></tr>`;
+      ? `<table><tr><th>${t("Oponente")}</th><th>${t("Resultado")}</th><th>${t("Pontos")}</th><th>${t("Modo")}</th></tr>` + ds.map((d) => {
+          const res = d.is_draw ? `<span class="badge-pend">${t("Empate")}</span>` : d.won ? `<span class="badge-ok">${t("Vitória")}</span>` : `<span class="badge-no">${t("Derrota")}</span>`;
+          return `<tr><td>${esc(d.opponent_name)}</td><td>${res}</td><td>${d.my_points}–${d.opp_points}</td><td class="muted">${d.ranked ? t("Ranked") : t("Amigável")}</td></tr>`;
         }).join("") + `</table>`
-      : `<p class="muted">Ainda sem duelos concluídos — desafia um amigo nos Duelos.</p>`;
+      : `<p class="muted">${t("Ainda sem duelos concluídos — desafia um amigo nos Duelos.")}</p>`;
   } catch (e) { $("#dhist").innerHTML = `<p class="muted">—</p>`; }
   try {
     const u = await api("/me/usage");
     $("#us").innerHTML = `<div class="stat">
-      <div><span class="label">Tokens in</span><b>${u.tokens_in}</b></div>
-      <div><span class="label">Tokens out</span><b>${u.tokens_out}</b></div>
-      <div><span class="label">Custo</span><b>${u.cost_eur} €</b></div>
-      <div><span class="label">Tutor restante hoje</span><b>${u.tutor_messages_remaining_today ?? "∞"}</b></div>
+      <div><span class="label">${t("Tokens in")}</span><b>${u.tokens_in}</b></div>
+      <div><span class="label">${t("Tokens out")}</span><b>${u.tokens_out}</b></div>
+      <div><span class="label">${t("Custo")}</span><b>${u.cost_eur} €</b></div>
+      <div><span class="label">${t("Tutor restante hoje")}</span><b>${u.tutor_messages_remaining_today ?? "∞"}</b></div>
     </div>`;
   } catch (e) { $("#us").innerHTML = `<p class="err">${e.message}</p>`; }
 }
@@ -1544,8 +1550,8 @@ let _adminTab = "geral";
 async function vAdmin() {
   const v = $("#view");
   v.innerHTML = `
-    <div class="view__head"><h1>Administração</h1><p>Gestão de contas, conteúdo e progressão.</p></div>
-    <div class="tabs" id="adminTabs">${ADMIN_TABS.map(([k, l]) => `<button class="tab ${k === _adminTab ? "is-active" : ""}" data-tab="${k}">${esc(l)}</button>`).join("")}</div>
+    <div class="view__head"><h1>${t("Administração")}</h1><p>${t("Gestão de contas, conteúdo e progressão.")}</p></div>
+    <div class="tabs" id="adminTabs">${ADMIN_TABS.map(([k, l]) => `<button class="tab ${k === _adminTab ? "is-active" : ""}" data-tab="${k}">${esc(t(l))}</button>`).join("")}</div>
     <div id="adminPanel"></div>`;
   $("#adminTabs").querySelectorAll(".tab").forEach((b) => (b.onclick = () => { _adminTab = b.dataset.tab; vAdmin(); }));
   await showAdminTab(_adminTab);
@@ -1570,7 +1576,7 @@ function iconPicker(cur, onPick) {
   $("#modal").innerHTML = `
     <div class="modal__backdrop"></div>
     <div class="modal__panel" style="max-width:380px">
-      <div class="modal__hd"><h3>Escolher ícone</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__hd"><h3>${t("Escolher ícone")}</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
       <div class="modal__body"><div class="icon-grid">${SUBJECT_ICONS.map((k) => `<button class="icon-sw ${k === cur ? "on" : ""}" data-k="${k}" title="${k}">${icon(k, 24)}</button>`).join("")}</div></div>
     </div>`;
   $("#modal").classList.add("show");
@@ -1586,10 +1592,10 @@ function bindIconPick(btn) {
 async function showAdminTab(tab) {
   const p = $("#adminPanel");
   if (tab === "geral") {
-    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:12px">Plataforma</h3><div class="statgrid" id="agStats">…</div></div>`;
+    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:12px">${t("Plataforma")}</h3><div class="statgrid" id="agStats">…</div></div>`;
     try {
       const s = await api("/admin/stats");
-      const tile = (label, val, warn) => `<div class="stattile ${warn && val > 0 ? "stattile--warn" : ""}"><b>${val}</b><span>${label}</span></div>`;
+      const tile = (label, val, warn) => `<div class="stattile ${warn && val > 0 ? "stattile--warn" : ""}"><b>${val}</b><span>${t(label)}</span></div>`;
       $("#agStats").innerHTML =
         tile("Contas", s.users) + tile("Professores", s.teachers) + tile("Disciplinas", s.subjects) +
         tile("Materiais", s.materials) + tile("Materiais pendentes", s.materials_pending, true) +
@@ -1601,14 +1607,14 @@ async function showAdminTab(tab) {
   if (tab === "disciplinas") {
     p.innerHTML = `
       <div class="card">
-        <h3 style="font-size:16px;margin-bottom:10px">Disciplinas</h3>
+        <h3 style="font-size:16px;margin-bottom:10px">${t("Disciplinas")}</h3>
         <div class="row" style="margin-bottom:12px;align-items:flex-end">
-          <label class="fld"><span class="label">Chave</span><input id="ndKey" placeholder="ex: matematica" style="max-width:150px"></label>
-          <label class="fld"><span class="label">Nome</span><input id="ndName" placeholder="ex: Matemática" style="max-width:190px"></label>
-          <label class="fld"><span class="label">Ícone</span><button type="button" class="iconpick" id="ndIconBtn" data-icon="book">${icon("book", 20)}</button></label>
-          <button class="btn btn--sm" id="ndAdd">${icon("plus", 15)} Adicionar</button>
+          <label class="fld"><span class="label">${t("Chave")}</span><input id="ndKey" placeholder="${t("ex: matematica")}" style="max-width:150px"></label>
+          <label class="fld"><span class="label">${t("Nome")}</span><input id="ndName" placeholder="${t("ex: Matemática")}" style="max-width:190px"></label>
+          <label class="fld"><span class="label">${t("Ícone")}</span><button type="button" class="iconpick" id="ndIconBtn" data-icon="book">${icon("book", 20)}</button></label>
+          <button class="btn btn--sm" id="ndAdd">${icon("plus", 15)} ${t("Adicionar")}</button>
         </div>
-        ${searchBar("subjSearch", "Procurar disciplina…")}
+        ${searchBar("subjSearch", t("Procurar disciplina…"))}
         <div id="subjTable"></div>
       </div>`;
     bindIconPick($("#ndIconBtn"));
@@ -1616,7 +1622,7 @@ async function showAdminTab(tab) {
     wireAddDiscipline();
     wireTableSearch($("#subjSearch"), $("#subjTable"));
   } else if (tab === "contas") {
-    p.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="font-size:16px">Contas</h3><button class="btn btn--ghost btn--sm" id="csvUsers">${icon("doc", 14)} Exportar CSV</button></div>${searchBar("userSearch", "Procurar por nome ou email…")}<div id="adm">…</div></div>`;
+    p.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="font-size:16px">${t("Contas")}</h3><button class="btn btn--ghost btn--sm" id="csvUsers">${icon("doc", 14)} ${t("Exportar CSV")}</button></div>${searchBar("userSearch", t("Procurar por nome ou email…"))}<div id="adm">…</div></div>`;
     await renderUsers();
     wireTableSearch($("#userSearch"), $("#adm"));
     $("#csvUsers").onclick = async () => {
@@ -1633,28 +1639,28 @@ async function showAdminTab(tab) {
       } catch (e) { toast(e.message); }
     };
   } else if (tab === "ranks") {
-    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:10px">EP por rank</h3>
+    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("EP por rank")}</h3>
       <div class="tier-layout"><div><div class="tier-edit" id="tierEdit"></div>
-        <button class="btn btn--sm" id="tierSave" style="margin-top:12px">Guardar limiares</button></div>
+        <button class="btn btn--sm" id="tierSave" style="margin-top:12px">${t("Guardar limiares")}</button></div>
         <div class="tier-preview" id="tierPreview"></div></div></div>`;
     renderTierEditor();
   } else if (tab === "conversas") {
     p.innerHTML = `<div class="card">
-      <h3 style="font-size:16px;margin-bottom:4px">${icon("trash", 16)} Conversas apagadas</h3>
-      <p class="muted" style="font-size:13px;margin-bottom:10px">Ocultadas pelos alunos. Recuperáveis 6 meses; depois apagadas permanentemente.</p>
-      ${searchBar("delSearch", "Procurar por conversa ou aluno…")}<div id="delChats">…</div></div>`;
+      <h3 style="font-size:16px;margin-bottom:4px">${icon("trash", 16)} ${t("Conversas apagadas")}</h3>
+      <p class="muted" style="font-size:13px;margin-bottom:10px">${t("Ocultadas pelos alunos. Recuperáveis 6 meses; depois apagadas permanentemente.")}</p>
+      ${searchBar("delSearch", t("Procurar por conversa ou aluno…"))}<div id="delChats">…</div></div>`;
     await renderDeletedChats();
     wireTableSearch($("#delSearch"), $("#delChats"));
   }
 }
 
 function renderSubjectsAdmin() {
-  $("#subjTable").innerHTML = `<table><tr><th>Ícone</th><th>Nome</th><th>Chave</th><th></th></tr>` +
+  $("#subjTable").innerHTML = `<table><tr><th>${t("Ícone")}</th><th>${t("Nome")}</th><th>${t("Chave")}</th><th></th></tr>` +
     SUBJECTS.map((s) => `<tr data-key="${s.key}">
       <td><button type="button" class="iconpick s-icon" data-icon="${subjectIconKey(s.icon)}">${subjectIcon(s.icon, 20)}</button></td>
       <td><input class="s-name" value="${esc(s.name)}"></td>
       <td><span class="muted">${esc(s.key)}</span></td>
-      <td><button class="btn btn--sm s-save">Guardar</button></td>
+      <td><button class="btn btn--sm s-save">${t("Guardar")}</button></td>
     </tr>`).join("") + `</table>`;
   $("#subjTable").querySelectorAll("tr[data-key]").forEach((tr) => {
     bindIconPick(tr.querySelector(".s-icon"));
@@ -1662,7 +1668,7 @@ function renderSubjectsAdmin() {
       try {
         await api(`/admin/subjects/${tr.dataset.key}`, { method: "PATCH", body: {
           name: tr.querySelector(".s-name").value.trim(), icon: tr.querySelector(".s-icon").dataset.icon } });
-        toast("Disciplina guardada");
+        toast(t("Disciplina guardada"));
         await loadSubjects(); renderSubjectsAdmin();
       } catch (e) { toast(e.message); }
     };
@@ -1672,19 +1678,19 @@ function renderSubjectsAdmin() {
 async function renderDeletedChats() {
   let rows;
   try { rows = await api("/admin/tutor/deleted"); } catch (e) { $("#delChats").innerHTML = `<p class="err">${e.message}</p>`; return; }
-  if (!rows.length) { $("#delChats").innerHTML = `<p class="muted" style="font-size:13px">Sem conversas apagadas.</p>`; return; }
-  const fmt = (iso) => iso ? new Date(iso).toLocaleDateString("pt-PT") : "—";
-  $("#delChats").innerHTML = `<table><tr><th>Conversa</th><th>Aluno</th><th>Msgs</th><th>Apagada</th><th>Purga</th><th></th></tr>` +
+  if (!rows.length) { $("#delChats").innerHTML = `<p class="muted" style="font-size:13px">${t("Sem conversas apagadas.")}</p>`; return; }
+  const fmt = (iso) => iso ? new Date(iso).toLocaleDateString(I18N.lang === "pt" ? "pt-PT" : I18N.lang) : "—";
+  $("#delChats").innerHTML = `<table><tr><th>${t("Conversa")}</th><th>${t("Aluno")}</th><th>${t("Msgs")}</th><th>${t("Apagada")}</th><th>${t("Purga")}</th><th></th></tr>` +
     rows.map((r) => `<tr data-id="${r.id}">
-      <td><b>${esc(r.title || "Conversa")}</b></td>
+      <td><b>${esc(r.title || t("Conversa"))}</b></td>
       <td>${esc(r.owner)}</td>
       <td>${r.messages}</td>
       <td>${fmt(r.deleted_at)}</td>
-      <td>${r.expired ? `<span class="badge-pend">a purgar</span>` : fmt(r.purges_at)}</td>
-      <td><button class="btn btn--ghost btn--sm" data-restore="${r.id}">${icon("restore", 14)} Recuperar</button></td>
+      <td>${r.expired ? `<span class="badge-pend">${t("a purgar")}</span>` : fmt(r.purges_at)}</td>
+      <td><button class="btn btn--ghost btn--sm" data-restore="${r.id}">${icon("restore", 14)} ${t("Recuperar")}</button></td>
     </tr>`).join("") + `</table>`;
   $("#delChats").querySelectorAll("[data-restore]").forEach((b) => (b.onclick = async () => {
-    try { await api(`/admin/tutor/deleted/${b.dataset.restore}/restore`, { method: "POST" }); toast("Conversa recuperada"); renderDeletedChats(); }
+    try { await api(`/admin/tutor/deleted/${b.dataset.restore}/restore`, { method: "POST" }); toast(t("Conversa recuperada")); renderDeletedChats(); }
     catch (e) { toast(e.message); }
   }));
 }
@@ -1692,13 +1698,13 @@ async function renderDeletedChats() {
 function wireAddDiscipline() {
   $("#ndAdd").onclick = async () => {
     const key = $("#ndKey").value.trim(), name = $("#ndName").value.trim();
-    if (!key || !name) return toast("Chave + nome");
+    if (!key || !name) return toast(t("Chave + nome"));
     try {
       await api("/admin/subjects", { method: "POST", body: { key, name, icon: $("#ndIconBtn").dataset.icon } });
       $("#ndKey").value = ""; $("#ndName").value = "";
       $("#ndIconBtn").dataset.icon = "book"; $("#ndIconBtn").innerHTML = icon("book", 20);
       await loadSubjects(); renderSubjectsAdmin();
-      toast("Disciplina criada");
+      toast(t("Disciplina criada"));
     } catch (e) { toast(e.message); }
   };
 }
@@ -1717,7 +1723,7 @@ function renderTierEditor() {
        <span style="display:inline-flex;align-items:center;gap:8px">${rankLogo(n, 28, "white")} <b>${n}</b></span>
        <span class="row" style="gap:6px">
          <input class="tier-ep" data-name="${n}" type="number" min="0" value="${ep}" style="width:96px">
-         <button class="btn btn--ghost btn--sm tier-play" data-rank="${n}" title="Pré-visualizar">▶</button>
+         <button class="btn btn--ghost btn--sm tier-play" data-rank="${n}" title="${t("Pré-visualizar")}">▶</button>
        </span>
      </div>`
   ).join("");
@@ -1729,7 +1735,7 @@ function renderTierEditor() {
     try {
       const r = await api("/admin/ranks", { method: "PATCH", body: { tiers } });
       RANKS = r.map((t) => [t.name, t.ep]);
-      toast("Limiares atualizados");
+      toast(t("Limiares atualizados"));
       renderTierEditor(); renderUsers(); refreshChip();
     } catch (e) { toast(e.message); }
   };
@@ -1738,7 +1744,7 @@ async function renderUsers() {
   try {
     const users = await api("/admin/users");
     const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
-    $("#adm").innerHTML = `<h3 style="font-size:16px;margin-bottom:10px">Contas</h3><table><tr><th>Conta</th><th>Role</th><th>Plano</th><th>Fundo</th><th>EP (${esc(subjName)})</th><th></th></tr>` +
+    $("#adm").innerHTML = `<h3 style="font-size:16px;margin-bottom:10px">${t("Contas")}</h3><table><tr><th>${t("Conta")}</th><th>${t("Role")}</th><th>${t("Plano")}</th><th>${t("Fundo")}</th><th>EP (${esc(subjName)})</th><th></th></tr>` +
       users.map((u) => `<tr data-id="${u.id}">
         <td><b>${esc(u.display_name)}</b><br><span class="muted">${esc(u.username || u.email)}</span></td>
         <td><select class="u-role">${["student", "teacher", "admin"].map((r) => `<option ${r === u.role ? "selected" : ""}>${r}</option>`).join("")}</select></td>
@@ -1746,9 +1752,9 @@ async function renderUsers() {
         <td><select class="u-bg"><option value="" ${!u.background ? "selected" : ""}>auto</option>${RANKS.map(([n]) => `<option ${u.background === n ? "selected" : ""}>${n}</option>`).join("")}</select></td>
         <td class="row" style="gap:6px">
           <input class="u-xp" type="number" min="0" placeholder="EP" style="width:90px">
-          <button class="btn btn--sm u-prog">Definir EP</button>
+          <button class="btn btn--sm u-prog">${t("Definir EP")}</button>
         </td>
-        <td class="row"><button class="btn btn--sm u-save">Guardar</button><button class="btn btn--ghost btn--sm u-del">Apagar</button></td>
+        <td class="row"><button class="btn btn--sm u-save">${t("Guardar")}</button><button class="btn btn--ghost btn--sm u-del">${t("Apagar")}</button></td>
       </tr>`).join("") + `</table>`;
     $("#adm").querySelectorAll("tr[data-id]").forEach((tr) => {
       const id = tr.dataset.id;
@@ -1759,12 +1765,12 @@ async function renderUsers() {
             plan: tr.querySelector(".u-plan").value,
             set_background: true, background: tr.querySelector(".u-bg").value || null,
           } });
-          toast("Guardado");
+          toast(t("Guardado"));
         } catch (e) { toast(e.message); }
       };
       tr.querySelector(".u-prog").onclick = async () => {
         const xpStr = tr.querySelector(".u-xp").value;
-        if (xpStr === "") return toast("Define os EP");
+        if (xpStr === "") return toast(t("Define os EP"));
         try {
           const res = await api(`/admin/users/${id}/progress`, { method: "PATCH", body: { subject: SUBJECT, xp: +xpStr } });
           toast(`OK → ${res.xp} EP · ${res.rank}`);
@@ -1772,7 +1778,7 @@ async function renderUsers() {
         } catch (e) { toast(e.message); }
       };
       tr.querySelector(".u-del").onclick = async () => {
-        if (!confirm("Apagar esta conta?")) return;
+        if (!confirm(t("Apagar esta conta?"))) return;
         try { await api(`/admin/users/${id}`, { method: "DELETE" }); renderUsers(); } catch (e) { toast(e.message); }
       };
     });
@@ -1810,13 +1816,13 @@ async function vDuels() {
   const v = $("#view");
   const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
   v.innerHTML = `
-    <div class="view__head"><h1>Duelos</h1><p>Desafia amigos: cada um escolhe um material da mesma disciplina e duelam-se em perguntas. A IA julga cada ronda. Vitória 2 pts · empate 1 pt.</p></div>
+    <div class="view__head"><h1>${t("Duelos")}</h1><p>${t("Desafia amigos: cada um escolhe um material da mesma disciplina e duelam-se em perguntas. A IA julga cada ronda. Vitória 2 pts · empate 1 pt.")}</p></div>
     <div class="card" id="rankedCard">…</div>
     <div class="duel-lobby">
       ${friendsCard()}
       <div class="card">
-        <h3 style="font-size:16px;margin-bottom:4px">${icon("trophy", 16)} Os meus duelos</h3>
-        <p class="muted" style="font-size:13px;margin-bottom:10px">Desafios criados na disciplina <b>${esc(subjName)}</b>.</p>
+        <h3 style="font-size:16px;margin-bottom:4px">${icon("trophy", 16)} ${t("Os meus duelos")}</h3>
+        <p class="muted" style="font-size:13px;margin-bottom:10px">${t("Desafios criados na disciplina")} <b>${esc(subjName)}</b>.</p>
         <div id="duBox">…</div>
       </div>
     </div>`;
@@ -1842,21 +1848,21 @@ async function renderRanked() {
   box.innerHTML = `
     <span class="rk__bk rk__bk--tl"></span><span class="rk__bk rk__bk--br"></span>
     <div class="rk__head">
-      <div class="rk__title">DUELOS&nbsp;<span>RANKED</span></div>
+      <div class="rk__title">${t("DUELOS")}&nbsp;<span>${t("RANKED")}</span></div>
       <div class="rk__disc">${subjectIcon(subj.icon, 16)} ${esc(subj.name)}</div>
     </div>
     <div class="rk__body">
       <div class="rk__rating">
         <div class="rk__diamond"><b>${r.rating}</b></div>
         <div class="rk__rec">
-          <span class="rk__reclabel">RATING</span>
-          <span class="rk__recnums"><b style="color:var(--green)">${r.wins}V</b> · <b style="color:var(--red)">${r.losses}D</b> · ${r.draws}E</span>
+          <span class="rk__reclabel">${t("RATING")}</span>
+          <span class="rk__recnums"><b style="color:var(--green)">${r.wins}${t("V")}</b> · <b style="color:var(--red)">${r.losses}${t("D")}</b> · ${r.draws}${t("E")}</span>
         </div>
       </div>
       <div id="mmBox" class="rk__action"></div>
     </div>
     ${lb.length ? `<div class="rk__lb">
-      <div class="rk__lbtitle">${icon("trophy", 14)} CLASSIFICAÇÃO</div>
+      <div class="rk__lbtitle">${icon("trophy", 14)} ${t("CLASSIFICAÇÃO")}</div>
       ${lb.slice(0, 6).map((x, i) => `<div class="rk__lbrow ${x.name === USER.display_name ? "is-me" : ""}">
         <span class="rk__rank">${i + 1}</span><span class="rk__pname">${esc(x.name)}</span>
         <span class="rk__pwl muted">${x.wins}/${x.losses}/${x.draws}</span><span class="rk__prating">${x.rating}</span></div>`).join("")}
@@ -1870,14 +1876,14 @@ function renderMMBox() {
     mm.innerHTML = `
       <div class="rk-search">
         <div class="rk-search__ring"><div class="loader__ring"></div></div>
-        <div class="rk-search__txt"><div class="rk-search__t">À PROCURA DE OPONENTE</div><div class="rk-search__w" id="mmWait"></div></div>
+        <div class="rk-search__txt"><div class="rk-search__t">${t("À PROCURA DE OPONENTE")}</div><div class="rk-search__w" id="mmWait"></div></div>
       </div>
-      <button class="rk-cancel" id="mmCancel">Cancelar procura</button>`;
+      <button class="rk-cancel" id="mmCancel">${t("Cancelar procura")}</button>`;
     $("#mmCancel").onclick = () => { stopMatchmaking(); renderRanked(); };
   } else {
     mm.innerHTML = `
-      <button class="rk-cta" id="mmFind"><span class="rk-cta__ic">${icon("trophy", 30)}</span><span>Procurar Oponente</span></button>
-      <p class="rk-cta__note">Encontra um adversário do teu nível e sobe na classificação.</p>`;
+      <button class="rk-cta" id="mmFind"><span class="rk-cta__ic">${icon("trophy", 30)}</span><span>${t("Procurar Oponente")}</span></button>
+      <p class="rk-cta__note">${t("Encontra um adversário do teu nível e sobe na classificação.")}</p>`;
     $("#mmFind").onclick = startMatchmaking;
   }
 }
@@ -1902,10 +1908,10 @@ async function pollMatchmaking() {
 /* ---- reusable friends panel (used by Duels lobby + Profile) ---- */
 function friendsCard() {
   return `<div class="card frcard">
-    <h3 style="font-size:16px;margin-bottom:10px">${icon("user", 16)} Amigos</h3>
+    <h3 style="font-size:16px;margin-bottom:10px">${icon("user", 16)} ${t("Amigos")}</h3>
     <div class="row" style="margin-bottom:12px">
-      <input class="fr-id" placeholder="email ou utilizador do amigo" autocomplete="off">
-      <button class="btn btn--sm fr-add">${icon("plus", 14)} Adicionar</button>
+      <input class="fr-id" placeholder="${t("email ou utilizador do amigo")}" autocomplete="off">
+      <button class="btn btn--sm fr-add">${icon("plus", 14)} ${t("Adicionar")}</button>
     </div>
     <div class="fr-box">…</div>
   </div>`;
@@ -1916,8 +1922,8 @@ function mountFriends(card) {
   const input = card.querySelector(".fr-id");
   card.querySelector(".fr-add").onclick = async () => {
     const id = input.value.trim();
-    if (!id) return toast("Escreve um email ou utilizador");
-    try { await api("/friends/requests", { method: "POST", body: { identifier: id } }); input.value = ""; toast("Pedido enviado"); renderFriends(card); }
+    if (!id) return toast(t("Escreve um email ou utilizador"));
+    try { await api("/friends/requests", { method: "POST", body: { identifier: id } }); input.value = ""; toast(t("Pedido enviado")); renderFriends(card); }
     catch (e) { toast(e.message); }
   };
   renderFriends(card);
@@ -1932,22 +1938,22 @@ async function renderFriends(card) {
   const reqRow = (r) => `<div class="fr-row">
     <span>${icon("user", 14)} <b>${esc(r.display_name)}</b> <span class="muted" style="font-size:12px">${esc(r.username || "")}</span></span>
     <span class="row" style="gap:6px">
-      <button class="btn btn--sm" data-acc="${r.id}">Aceitar</button>
-      <button class="btn btn--ghost btn--sm" data-dec="${r.id}">Recusar</button>
+      <button class="btn btn--sm" data-acc="${r.id}">${t("Aceitar")}</button>
+      <button class="btn btn--ghost btn--sm" data-dec="${r.id}">${t("Recusar")}</button>
     </span></div>`;
   const frRow = (f) => `<div class="fr-row">
     <span>${icon("user", 14)} <b>${esc(f.display_name)}</b> <span class="muted" style="font-size:12px">${esc(f.username || "")}</span></span>
     <span class="row" style="gap:6px">
-      <button class="btn btn--sm" data-duel="${f.user_id}">${icon("trophy", 13)} Desafiar</button>
-      <button class="btn btn--ghost btn--sm" data-unfr="${f.user_id}" title="Remover">✕</button>
+      <button class="btn btn--sm" data-duel="${f.user_id}">${icon("trophy", 13)} ${t("Desafiar")}</button>
+      <button class="btn btn--ghost btn--sm" data-unfr="${f.user_id}" title="${t("Remover")}">✕</button>
     </span></div>`;
   box.innerHTML =
-    (d.incoming.length ? `<div class="fr-sec"><span class="label">Pedidos recebidos</span>${d.incoming.map(reqRow).join("")}</div>` : "") +
-    (d.outgoing.length ? `<div class="fr-sec"><span class="label">Pedidos enviados</span>${d.outgoing.map((r) => `<div class="fr-row"><span>${icon("user", 14)} <b>${esc(r.display_name)}</b></span><span class="muted" style="font-size:12px">pendente…</span></div>`).join("")}</div>` : "") +
-    `<div class="fr-sec"><span class="label">Amigos</span>${d.friends.length ? d.friends.map(frRow).join("") : `<p class="muted" style="font-size:13px">Sem amigos ainda — adiciona pelo email/utilizador.</p>`}</div>`;
+    (d.incoming.length ? `<div class="fr-sec"><span class="label">${t("Pedidos recebidos")}</span>${d.incoming.map(reqRow).join("")}</div>` : "") +
+    (d.outgoing.length ? `<div class="fr-sec"><span class="label">${t("Pedidos enviados")}</span>${d.outgoing.map((r) => `<div class="fr-row"><span>${icon("user", 14)} <b>${esc(r.display_name)}</b></span><span class="muted" style="font-size:12px">${t("pendente…")}</span></div>`).join("")}</div>` : "") +
+    `<div class="fr-sec"><span class="label">${t("Amigos")}</span>${d.friends.length ? d.friends.map(frRow).join("") : `<p class="muted" style="font-size:13px">${t("Sem amigos ainda — adiciona pelo email/utilizador.")}</p>`}</div>`;
   box.querySelectorAll("[data-acc]").forEach((b) => (b.onclick = async () => { try { await api(`/friends/requests/${b.dataset.acc}/accept`, { method: "POST" }); renderFriends(card); } catch (e) { toast(e.message); } }));
   box.querySelectorAll("[data-dec]").forEach((b) => (b.onclick = async () => { try { await api(`/friends/requests/${b.dataset.dec}/decline`, { method: "POST" }); renderFriends(card); } catch (e) { toast(e.message); } }));
-  box.querySelectorAll("[data-unfr]").forEach((b) => (b.onclick = async () => { if (!confirm("Remover este amigo?")) return; try { await api(`/friends/${b.dataset.unfr}`, { method: "DELETE" }); renderFriends(card); } catch (e) { toast(e.message); } }));
+  box.querySelectorAll("[data-unfr]").forEach((b) => (b.onclick = async () => { if (!confirm(t("Remover este amigo?"))) return; try { await api(`/friends/${b.dataset.unfr}`, { method: "DELETE" }); renderFriends(card); } catch (e) { toast(e.message); } }));
   box.querySelectorAll("[data-duel]").forEach((b) => (b.onclick = () => challengeFriend(b.dataset.duel)));
 }
 
@@ -1957,7 +1963,7 @@ function challengeFriend(opponentId) {
   $("#modal").innerHTML = `
     <div class="modal__backdrop"></div>
     <div class="modal__panel" style="max-width:380px">
-      <div class="modal__hd"><h3>Duelo — escolher disciplina</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__hd"><h3>${t("Duelo — escolher disciplina")}</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
       <div class="modal__body"><div class="subjpick">
         ${SUBJECTS.map((s) => `<button class="subjpick__it ${s.key === SUBJECT ? "is-active" : ""}" data-subj="${s.key}">${subjectIcon(s.icon, 18)}<span>${esc(s.name)}</span></button>`).join("")}
       </div></div>
@@ -1974,7 +1980,7 @@ function challengeFriend(opponentId) {
 async function createDuel(opponentId, subject) {
   try {
     const r = await api("/duels", { method: "POST", body: { opponent_id: opponentId, subject } });
-    toast("Desafio enviado!");
+    toast(t("Desafio enviado!"));
     openDuel(r.id);
   } catch (e) { toast(e.message); }
 }
@@ -1982,32 +1988,32 @@ async function createDuel(opponentId, subject) {
 async function renderDuelList() {
   let duels;
   try { duels = await api("/duels"); } catch (e) { $("#duBox").innerHTML = `<p class="err">${e.message}</p>`; return; }
-  if (!duels.length) { $("#duBox").innerHTML = `<p class="muted" style="font-size:13px">Sem duelos. Desafia um amigo.</p>`; return; }
+  if (!duels.length) { $("#duBox").innerHTML = `<p class="muted" style="font-size:13px">${t("Sem duelos. Desafia um amigo.")}</p>`; return; }
   const STATUS = {
-    pending: "Convite pendente", setup: "A preparar", active: "A decorrer",
-    complete: "Terminado", declined: "Recusado", forfeited: "Desistência", cancelled: "Cancelado",
+    pending: t("Convite pendente"), setup: t("A preparar"), active: t("A decorrer"),
+    complete: t("Terminado"), declined: t("Recusado"), forfeited: t("Desistência"), cancelled: t("Cancelado"),
   };
   $("#duBox").innerHTML = duels.map((d) => {
     let badge = STATUS[d.status] || d.status;
     if (d.status === "complete" || d.status === "forfeited")
-      badge = d.is_draw ? "Empate" : (d.won ? "Vitória" : "Derrota");
+      badge = d.is_draw ? t("Empate") : (d.won ? t("Vitória") : t("Derrota"));
     const cls = (d.status === "complete" || d.status === "forfeited") ? (d.is_draw ? "" : (d.won ? "win" : "loss")) : "";
     const incoming = d.status === "pending" && !d.is_challenger;
     const myTurn = d.needs_my_action && ["setup", "active"].includes(d.status);
     return `<div class="du-row ${myTurn || incoming ? "du-row--act" : ""}">
-      <span><b>vs ${esc(d.opponent_name)}</b> <span class="du-badge ${cls}">${badge}</span>${d.ranked ? ` <span class="du-badge du-badge--ranked">Ranked</span>` : ""}${myTurn ? ` <span class="du-badge du-badge--act">A tua vez</span>` : ""}
+      <span><b>vs ${esc(d.opponent_name)}</b> <span class="du-badge ${cls}">${badge}</span>${d.ranked ? ` <span class="du-badge du-badge--ranked">${t("Ranked")}</span>` : ""}${myTurn ? ` <span class="du-badge du-badge--act">${t("A tua vez")}</span>` : ""}
         ${["active", "complete", "forfeited"].includes(d.status) ? `<span class="muted" style="font-size:12px"> · ${d.my_points}–${d.opp_points}</span>` : ""}</span>
       <span class="row" style="gap:6px">
-        ${incoming ? `<button class="btn btn--sm" data-acc="${d.id}">Aceitar</button><button class="btn btn--ghost btn--sm" data-dec="${d.id}">Recusar</button>`
-          : d.status === "pending" && d.is_challenger ? `<button class="btn btn--ghost btn--sm" data-open="${d.id}">Ver</button><button class="btn btn--ghost btn--sm" data-cancel="${d.id}">Cancelar</button>`
-          : (["setup", "active"].includes(d.status) ? `<button class="btn btn--sm" data-open="${d.id}">Entrar</button>`
-          : `<button class="btn btn--ghost btn--sm" data-open="${d.id}">Ver</button>`)}
+        ${incoming ? `<button class="btn btn--sm" data-acc="${d.id}">${t("Aceitar")}</button><button class="btn btn--ghost btn--sm" data-dec="${d.id}">${t("Recusar")}</button>`
+          : d.status === "pending" && d.is_challenger ? `<button class="btn btn--ghost btn--sm" data-open="${d.id}">${t("Ver")}</button><button class="btn btn--ghost btn--sm" data-cancel="${d.id}">${t("Cancelar")}</button>`
+          : (["setup", "active"].includes(d.status) ? `<button class="btn btn--sm" data-open="${d.id}">${t("Entrar|duelo")}</button>`
+          : `<button class="btn btn--ghost btn--sm" data-open="${d.id}">${t("Ver")}</button>`)}
       </span></div>`;
   }).join("");
   $("#duBox").querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openDuel(b.dataset.open)));
   $("#duBox").querySelectorAll("[data-acc]").forEach((b) => (b.onclick = async () => { try { await api(`/duels/${b.dataset.acc}/accept`, { method: "POST" }); openDuel(b.dataset.acc); } catch (e) { toast(e.message); } }));
   $("#duBox").querySelectorAll("[data-dec]").forEach((b) => (b.onclick = async () => { try { await api(`/duels/${b.dataset.dec}/decline`, { method: "POST" }); renderDuelList(); } catch (e) { toast(e.message); } }));
-  $("#duBox").querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { try { await api(`/duels/${b.dataset.cancel}/cancel`, { method: "POST" }); toast("Desafio cancelado"); renderDuelList(); } catch (e) { toast(e.message); } }));
+  $("#duBox").querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { try { await api(`/duels/${b.dataset.cancel}/cancel`, { method: "POST" }); toast(t("Desafio cancelado")); renderDuelList(); } catch (e) { toast(e.message); } }));
 }
 
 /* ---- arena (polls server) ---- */
@@ -2015,10 +2021,10 @@ function openDuel(id) {
   stopDuelPolling(); stopMatchmaking();
   _duelId = id; _duelSig = ""; _duelSecs = null;
   $("#view").innerHTML = `<div class="view__head" style="display:flex;align-items:center;justify-content:space-between">
-      <div><h1>Duelo</h1><p class="muted" id="duelSub">A carregar…</p></div>
-      <button class="btn btn--ghost btn--sm" id="duBack">← Voltar</button>
+      <div><h1>${t("Duelo")}</h1><p class="muted" id="duelSub">${t("A carregar…")}</p></div>
+      <button class="btn btn--ghost btn--sm" id="duBack">${t("← Voltar")}</button>
     </div>
-    <div id="duelArena"><div class="loader"><div class="loader__ring"></div><span>A carregar…</span></div></div>`;
+    <div id="duelArena"><div class="loader"><div class="loader__ring"></div><span>${t("A carregar…")}</span></div></div>`;
   $("#duBack").onclick = () => go("duels");
   pollDuel();
   _duelPoll = setInterval(pollDuel, 2000);
@@ -2044,63 +2050,63 @@ async function pollDuel() {
 function renderDuelArena(d) {
   $("#duelSub").textContent = `${esc(d.my_name)} vs ${esc(d.opponent_name)} · ${esc(d.subject_name)}`;
   const arena = $("#duelArena");
-  const score = `<div class="du-score"><div class="du-score__me"><span class="label">Tu</span><b>${d.my_points}</b></div><div class="du-score__x">–</div><div class="du-score__opp"><span class="label">${esc(d.opponent_name)}</span><b>${d.opp_points}</b></div></div>`;
+  const score = `<div class="du-score"><div class="du-score__me"><span class="label">${t("Tu")}</span><b>${d.my_points}</b></div><div class="du-score__x">–</div><div class="du-score__opp"><span class="label">${esc(d.opponent_name)}</span><b>${d.opp_points}</b></div></div>`;
   const timer = (lbl) => `<div class="du-timer"><span class="label">${lbl}</span><span id="duelTimer" class="du-timer__v">${fmtClock(_duelSecs)}</span></div>`;
-  const forfeitBtn = `<button class="btn btn--ghost btn--sm" id="duForfeit" style="color:var(--red)">Desistir</button>`;
+  const forfeitBtn = `<button class="btn btn--ghost btn--sm" id="duForfeit" style="color:var(--red)">${t("Desistir")}</button>`;
   const hist = historyHtml(d);
 
-  const cancelBtn = `<button class="btn btn--ghost btn--sm" id="duCancel">Cancelar desafio</button>`;
+  const cancelBtn = `<button class="btn btn--ghost btn--sm" id="duCancel">${t("Cancelar desafio")}</button>`;
   let body = "";
   if (d.status === "pending") {
-    body = `<div class="du-wait">${icon("trophy", 28)}<p>À espera que <b>${esc(d.opponent_name)}</b> aceite o desafio…</p><p class="muted" style="font-size:12.5px">Podes cancelar sem consequências enquanto ele não aceitar.</p>${cancelBtn}</div>`;
+    body = `<div class="du-wait">${icon("trophy", 28)}<p>${t("À espera que <b>{name}</b> aceite o desafio…", { name: esc(d.opponent_name) })}</p><p class="muted" style="font-size:12.5px">${t("Podes cancelar sem consequências enquanto ele não aceitar.")}</p>${cancelBtn}</div>`;
   } else if (d.status === "declined") {
-    body = `<div class="du-wait"><p>Desafio recusado.</p></div>`;
+    body = `<div class="du-wait"><p>${t("Desafio recusado.")}</p></div>`;
     stopDuelPolling();
   } else if (d.status === "cancelled") {
-    body = `<div class="du-wait"><p>Desafio cancelado — sem consequências.</p></div>`;
+    body = `<div class="du-wait"><p>${t("Desafio cancelado — sem consequências.")}</p></div>`;
     stopDuelPolling();
   } else if (d.status === "setup") {
-    const mine = d.my_material_id ? `<span class="badge-ok">${icon("check", 12)} escolhido</span>` : `<button class="btn btn--sm" id="duPick">${icon("book", 14)} Escolher material</button>`;
-    const opp = d.opp_material_picked ? `<span class="badge-ok">${icon("check", 12)} escolhido</span>` : `<span class="badge-pend">à espera</span>`;
-    body = `<div class="card"><h3 style="font-size:16px;margin-bottom:6px">Preparação</h3>
-      <p class="muted" style="font-size:13px;margin-bottom:12px">Cada jogador escolhe um material de <b>${esc(d.subject_name)}</b>. O duelo começa quando ambos escolherem (sorteio de quem começa).</p>
-      <div class="du-prep"><div class="du-prep__row"><span>O teu material</span>${mine}</div><div class="du-prep__row"><span>${esc(d.opponent_name)}</span>${opp}</div></div>
+    const mine = d.my_material_id ? `<span class="badge-ok">${icon("check", 12)} ${t("escolhido")}</span>` : `<button class="btn btn--sm" id="duPick">${icon("book", 14)} ${t("Escolher material")}</button>`;
+    const opp = d.opp_material_picked ? `<span class="badge-ok">${icon("check", 12)} ${t("escolhido")}</span>` : `<span class="badge-pend">${t("à espera")}</span>`;
+    body = `<div class="card"><h3 style="font-size:16px;margin-bottom:6px">${t("Preparação")}</h3>
+      <p class="muted" style="font-size:13px;margin-bottom:12px">${t("Cada jogador escolhe um material de <b>{subj}</b>. O duelo começa quando ambos escolherem (sorteio de quem começa).", { subj: esc(d.subject_name) })}</p>
+      <div class="du-prep"><div class="du-prep__row"><span>${t("O teu material")}</span>${mine}</div><div class="du-prep__row"><span>${esc(d.opponent_name)}</span>${opp}</div></div>
       <div style="margin-top:14px">${forfeitBtn}</div></div>`;
   } else if (d.status === "active") {
     const c = d.current || {};
     let phase = "";
     if (d.phase === "question") {
       if (c.i_am_asker) {
-        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("pencil", 14)} Cria a tua pergunta</span>${timer("Tempo")}
-          <textarea id="duQText" rows="3" placeholder="Escreve uma pergunta sobre o teu material…"></textarea>
-          <button class="btn btn--sm" id="duQSend" style="align-self:flex-start;margin-top:8px">Enviar pergunta</button></div>`;
+        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("pencil", 14)} ${t("Cria a tua pergunta")}</span>${timer(t("Tempo"))}
+          <textarea id="duQText" rows="3" placeholder="${t("Escreve uma pergunta sobre o teu material…")}"></textarea>
+          <button class="btn btn--sm" id="duQSend" style="align-self:flex-start;margin-top:8px">${t("Enviar pergunta")}</button></div>`;
       } else {
-        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("user", 14)} ${esc(c.asker_name)} está a criar a pergunta…</span>${timer("Tempo")}<div class="loader"><div class="loader__ring"></div><span>Aguarda</span></div></div>`;
+        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("user", 14)} ${t("{name} está a criar a pergunta…", { name: esc(c.asker_name) })}</span>${timer(t("Tempo"))}<div class="loader"><div class="loader__ring"></div><span>${t("Aguarda")}</span></div></div>`;
       }
     } else if (d.phase === "answer") {
-      const q = `<div class="du-q"><span class="label">Pergunta de ${esc(c.asker_name)}</span><div class="du-q__t">${esc(c.question)}</div></div>`;
+      const q = `<div class="du-q"><span class="label">${t("Pergunta de {name}", { name: esc(c.asker_name) })}</span><div class="du-q__t">${esc(c.question)}</div></div>`;
       if (!c.my_answered) {
-        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("flame", 14)} Responde! (em simultâneo)</span>${timer("Tempo")}${q}
-          <textarea id="duAnsText" rows="4" placeholder="A tua resposta…"></textarea>
-          <button class="btn btn--sm" id="duAnsSend" style="align-self:flex-start;margin-top:8px">Enviar resposta</button></div>`;
+        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("flame", 14)} ${t("Responde! (em simultâneo)")}</span>${timer(t("Tempo"))}${q}
+          <textarea id="duAnsText" rows="4" placeholder="${t("A tua resposta…")}"></textarea>
+          <button class="btn btn--sm" id="duAnsSend" style="align-self:flex-start;margin-top:8px">${t("Enviar resposta")}</button></div>`;
       } else {
-        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("check", 14)} Resposta enviada</span>${timer("Tempo")}${q}
-          <p class="muted">${c.opp_answered ? "Ambos responderam — a avaliar…" : `À espera de <b>${esc(d.opponent_name)}</b>…`}</p></div>`;
+        phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("check", 14)} ${t("Resposta enviada")}</span>${timer(t("Tempo"))}${q}
+          <p class="muted">${c.opp_answered ? t("Ambos responderam — a avaliar…") : t("À espera de <b>{name}</b>…", { name: esc(d.opponent_name) })}</p></div>`;
       }
     } else if (d.phase === "judging") {
-      phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("sparkle", 14)} A IA está a avaliar a ronda…</span><div class="loader"><div class="loader__ring"></div><span>A julgar</span></div></div>`;
+      phase = `<div class="card du-phase"><span class="du-phase__tag">${icon("sparkle", 14)} ${t("A IA está a avaliar a ronda…")}</span><div class="loader"><div class="loader__ring"></div><span>${t("A julgar")}</span></div></div>`;
     }
-    body = `${score}<div class="du-round-lbl">Ronda ${d.current_round + 1} de ${d.total_rounds}</div>${phase}${hist}<div style="margin-top:12px">${forfeitBtn}</div>`;
+    body = `${score}<div class="du-round-lbl">${t("Ronda {i} de {n}", { i: d.current_round + 1, n: d.total_rounds })}</div>${phase}${hist}<div style="margin-top:12px">${forfeitBtn}</div>`;
   } else if (d.status === "complete" || d.status === "forfeited") {
     const r = d.result;
-    const txt = d.forfeited ? (d.i_forfeited ? "Desististe" : `${esc(d.opponent_name)} desistiu`) :
-      (r === "win" ? "Venceste!" : r === "loss" ? "Derrota" : "Empate");
+    const txt = d.forfeited ? (d.i_forfeited ? t("Desististe") : t("{name} desistiu", { name: esc(d.opponent_name) })) :
+      (r === "win" ? t("Venceste!") : r === "loss" ? t("Derrota") : t("Empate"));
     const ratingLine = (d.ranked && d.rating_delta != null)
       ? `<p class="du-rating ${d.rating_delta >= 0 ? "up" : "down"}">${icon("sparkle", 14)} Rating ${d.rating_delta >= 0 ? "+" : ""}${d.rating_delta}</p>` : "";
     const again = d.ranked
-      ? `<button class="btn btn--sm" id="duAgain" data-mode="ranked">${icon("trophy", 14)} Nova partida ranked</button>`
-      : `<button class="btn btn--sm" id="duAgain" data-mode="rematch">${icon("swords", 14)} Desforra</button>`;
-    body = `${d.ranked ? `<div class="du-ranked-tag">${icon("sparkle", 12)} Ranked</div>` : ""}${score}<div class="du-result du-result--${r}">${icon(r === "win" ? "trophy" : "shield", 30)}<h2>${txt}</h2><p class="muted">${d.my_points}–${d.opp_points}</p>${ratingLine}<div style="margin-top:12px">${again}</div></div>${hist}`;
+      ? `<button class="btn btn--sm" id="duAgain" data-mode="ranked">${icon("trophy", 14)} ${t("Nova partida ranked")}</button>`
+      : `<button class="btn btn--sm" id="duAgain" data-mode="rematch">${icon("swords", 14)} ${t("Desforra")}</button>`;
+    body = `${d.ranked ? `<div class="du-ranked-tag">${icon("sparkle", 12)} ${t("Ranked")}</div>` : ""}${score}<div class="du-result du-result--${r}">${icon(r === "win" ? "trophy" : "shield", 30)}<h2>${txt}</h2><p class="muted">${d.my_points}–${d.opp_points}</p>${ratingLine}<div style="margin-top:12px">${again}</div></div>${hist}`;
     if (r === "win" && !d.forfeited) { try { playPop(); } catch {} }
     stopDuelPolling();
   }
@@ -2108,14 +2114,14 @@ function renderDuelArena(d) {
 
   // wire actions
   if ($("#duCancel")) $("#duCancel").onclick = async () => {
-    try { await api(`/duels/${d.id}/cancel`, { method: "POST" }); toast("Desafio cancelado"); go("duels"); }
+    try { await api(`/duels/${d.id}/cancel`, { method: "POST" }); toast(t("Desafio cancelado")); go("duels"); }
     catch (e) { toast(e.message); }
   };
   if ($("#duAgain")) $("#duAgain").onclick = async () => {
     if ($("#duAgain").dataset.mode === "ranked") { go("duels"); setTimeout(() => startMatchmaking(), 400); return; }
     try {
       const nd = await api("/duels", { method: "POST", body: { opponent_id: d.opponent_id, subject: d.subject } });
-      toast("Desforra enviada — à espera do adversário");
+      toast(t("Desforra enviada — à espera do adversário"));
       openDuel(nd.id);
     } catch (e) { toast(e.message); }
   };
@@ -2124,10 +2130,10 @@ function renderDuelArena(d) {
     if (!d.ranked && d.status === "setup") {
       try {
         await api(`/duels/${d.id}/cancel`, { method: "POST" });
-        toast("Saíste sem consequências"); go("duels"); return;
+        toast(t("Saíste sem consequências")); go("duels"); return;
       } catch {}
     }
-    if (!confirm("Desistir do duelo? O adversário ganha.")) return;
+    if (!confirm(t("Desistir do duelo? O adversário ganha."))) return;
     try { await api(`/duels/${d.id}/forfeit`, { method: "POST" }); _duelSig = ""; pollDuel(); } catch (e) { toast(e.message); }
   };
   if ($("#duPick")) $("#duPick").onclick = () => openDuelMaterialPicker(d.subject, async (mid) => {
@@ -2140,7 +2146,7 @@ function renderDuelArena(d) {
     qT.oninput = () => (_duelDraft = { key: dk, text: qT.value });
     qT.onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("#duQSend").click(); };
     $("#duQSend").onclick = async () => {
-      const text = qT.value.trim(); if (!text) return toast("Escreve a pergunta");
+      const text = qT.value.trim(); if (!text) return toast(t("Escreve a pergunta"));
       $("#duQSend").disabled = true;
       try { await api(`/duels/${d.id}/question`, { method: "POST", body: { text } }); _duelDraft = { key: "", text: "" }; _duelSig = ""; pollDuel(); }
       catch (e) { toast(e.message); $("#duQSend").disabled = false; }
@@ -2153,7 +2159,7 @@ function renderDuelArena(d) {
     aT.oninput = () => (_duelDraft = { key: dk, text: aT.value });
     aT.onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("#duAnsSend").click(); };
     $("#duAnsSend").onclick = async () => {
-      const text = aT.value.trim(); if (!text) return toast("Escreve a resposta");
+      const text = aT.value.trim(); if (!text) return toast(t("Escreve a resposta"));
       $("#duAnsSend").disabled = true;
       try { await api(`/duels/${d.id}/answer`, { method: "POST", body: { text } }); _duelDraft = { key: "", text: "" }; _duelSig = ""; pollDuel(); }
       catch (e) { toast(e.message); $("#duAnsSend").disabled = false; }
@@ -2163,13 +2169,13 @@ function renderDuelArena(d) {
 
 function historyHtml(d) {
   if (!d.history.length) return "";
-  return `<div class="du-hist"><span class="label">Rondas anteriores</span>${d.history.map((r) => `
+  return `<div class="du-hist"><span class="label">${t("Rondas anteriores")}</span>${d.history.map((r) => `
     <details class="du-hist__r du-hist__r--${r.outcome}">
-      <summary>Ronda ${r.ordinal + 1} · ${r.outcome === "win" ? "ganhaste" : r.outcome === "loss" ? "perdeste" : "empate"} <span class="muted">(+${r.my_delta}/+${r.opp_delta})</span></summary>
+      <summary>${t("Ronda {n}", { n: r.ordinal + 1 })} · ${r.outcome === "win" ? t("ganhaste") : r.outcome === "loss" ? t("perdeste") : t("empate")} <span class="muted">(+${r.my_delta}/+${r.opp_delta})</span></summary>
       <div class="du-hist__body">
-        <p><b>Pergunta (${esc(r.asker_name)}):</b> ${esc(r.question)}</p>
-        <p><b>Tu:</b> ${esc(r.my_answer) || "<span class='muted'>(sem resposta)</span>"}</p>
-        <p><b>${esc(d.opponent_name)}:</b> ${esc(r.opp_answer) || "<span class='muted'>(sem resposta)</span>"}</p>
+        <p><b>${t("Pergunta")} (${esc(r.asker_name)}):</b> ${esc(r.question)}</p>
+        <p><b>${t("Tu")}:</b> ${esc(r.my_answer) || `<span class='muted'>${t("(sem resposta)")}</span>`}</p>
+        <p><b>${esc(d.opponent_name)}:</b> ${esc(r.opp_answer) || `<span class='muted'>${t("(sem resposta)")}</span>`}</p>
         ${r.reason ? `<p class="muted">${icon("sparkle", 12)} ${esc(r.reason)}</p>` : ""}
       </div>
     </details>`).join("")}</div>`;
@@ -2181,10 +2187,10 @@ async function openDuelMaterialPicker(subjectKey, onPick) {
   $("#modal").innerHTML = `
     <div class="modal__backdrop"></div>
     <div class="modal__panel">
-      <div class="modal__hd"><h3>Escolher material para o duelo</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__hd"><h3>${t("Escolher material para o duelo")}</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
       <div class="modal__body">
         ${mats.length ? `<div class="mkt-grid" id="pickGrid">${mats.map(matPickCard).join("")}</div>`
-          : `<p class="muted">Sem materiais nesta disciplina. Cria materiais primeiro em Materiais.</p>`}
+          : `<p class="muted">${t("Sem materiais nesta disciplina. Cria materiais primeiro em Materiais.")}</p>`}
       </div>
     </div>`;
   $("#modal").classList.add("show");

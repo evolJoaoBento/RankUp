@@ -38,6 +38,9 @@ Per-subject EP, rank badges with unlockable background colours, streaks, weak-to
 
 ![Profile](docs/screenshots/profile.png)
 
+### 🌍 Localizable
+The whole interface runs through a tiny i18n layer (`web/i18n.js`): the Portuguese source strings are the translation keys (gettext-style), so adding a language is **one dictionary** — missing entries safely fall back to Portuguese. English ships out of the box; users switch language on their profile (or it follows the browser). Ambiguous strings support `"texto|contexto"` disambiguation.
+
 ### 🛠 Admin panel
 Tabbed admin area with a platform-overview dashboard (accounts, pending materials, duels, …) and searchable table editors for accounts, disciplines (with SVG icon picker) and conversations (including soft-deleted chat recovery), plus AI usage metering per user.
 

@@ -18,21 +18,21 @@
 <div id="auth" class="auth">
   <div class="auth__card">
     <div class="brand brand--big"><svg class="ic" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13 L12 6 L19 13"/><path d="M5 18 L12 11 L19 18" opacity=".5"/></svg> RankUp</div>
-    <p class="auth__sub">Aprende a sério. Ranks que se conquistam.</p>
+    <p class="auth__sub" data-i18n="Aprende a sério. Ranks que se conquistam.">Aprende a sério. Ranks que se conquistam.</p>
     <div class="seg">
-      <button id="segLogin" class="seg__btn is-active">Entrar</button>
-      <button id="segReg" class="seg__btn">Criar conta</button>
+      <button id="segLogin" class="seg__btn is-active" data-i18n="Entrar">Entrar</button>
+      <button id="segReg" class="seg__btn" data-i18n="Criar conta">Criar conta</button>
     </div>
     <form id="authForm" class="auth__form">
-      <input id="afName" type="text" placeholder="Nome" autocomplete="name" style="display:none" />
+      <input id="afName" type="text" placeholder="Nome" data-i18n-ph="Nome" autocomplete="name" style="display:none" />
       <input id="afEmail" type="email" placeholder="Email" autocomplete="email" style="display:none" />
-      <input id="afId" type="text" placeholder="Email ou utilizador" autocomplete="username" required />
+      <input id="afId" type="text" placeholder="Email ou utilizador" data-i18n-ph="Email ou utilizador" autocomplete="username" required />
       <div class="pwwrap">
-        <input id="afPass" type="password" placeholder="Palavra-passe" autocomplete="current-password" required />
-        <button type="button" class="pweye" id="afEye" title="Mostrar palavra-passe" aria-label="Mostrar palavra-passe"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <input id="afPass" type="password" placeholder="Palavra-passe" data-i18n-ph="Palavra-passe" autocomplete="current-password" required />
+        <button type="button" class="pweye" id="afEye" title="Mostrar palavra-passe" data-i18n-title="Mostrar palavra-passe" aria-label="Mostrar palavra-passe"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
-      <label class="remember"><input type="checkbox" id="afRemember" checked /> Manter sessão iniciada</label>
-      <button class="btn" type="submit" id="afSubmit">Entrar</button>
+      <label class="remember"><input type="checkbox" id="afRemember" checked /> <span data-i18n="Manter sessão iniciada">Manter sessão iniciada</span></label>
+      <button class="btn" type="submit" id="afSubmit" data-i18n="Entrar">Entrar</button>
       <div id="afErr" class="err"></div>
     </form>
   </div>
@@ -44,10 +44,10 @@
     <div class="brand"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13 L12 6 L19 13"/><path d="M5 18 L12 11 L19 18" opacity=".5"/></svg> RankUp</div>
     <div id="subjSel" class="subjsw" title="Disciplina"></div>
     <nav class="nav" id="nav">
-      <button class="nav__i is-active" data-v="tutor"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.5 13.5 8.5 15.5 10.5 10.5Z"/></svg> Learn</button>
-      <button class="nav__i" data-v="practice"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0Z"/><path d="M7 6H4v1.5a3 3 0 0 0 3 3"/><path d="M17 6h3v1.5a3 3 0 0 1-3 3"/><path d="M9 19h6"/><path d="M12 13v6"/></svg> Ranked</button>
-      <button class="nav__i" data-v="materials"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2Z"/><path d="M5 17.5h12"/></svg> Materiais</button>
-      <button class="nav__i" data-v="duels"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/><line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/></svg> Duelos<span class="nav__dot" id="duelDot" hidden></span></button>
+      <button class="nav__i is-active" data-v="tutor"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.5 13.5 8.5 15.5 10.5 10.5Z"/></svg> <span data-i18n="Learn">Learn</span></button>
+      <button class="nav__i" data-v="practice"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0Z"/><path d="M7 6H4v1.5a3 3 0 0 0 3 3"/><path d="M17 6h3v1.5a3 3 0 0 1-3 3"/><path d="M9 19h6"/><path d="M12 13v6"/></svg> <span data-i18n="Ranked">Ranked</span></button>
+      <button class="nav__i" data-v="materials"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2Z"/><path d="M5 17.5h12"/></svg> <span data-i18n="Materiais">Materiais</span></button>
+      <button class="nav__i" data-v="duels"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/><line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/></svg> <span data-i18n="Duelos">Duelos</span><span class="nav__dot" id="duelDot" hidden></span></button>
       <button class="nav__i" data-v="admin" id="navAdmin" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v5c0 4-3 7-7 9-4-2-7-5-7-9V6Z"/></svg> Admin</button>
     </nav>
   </header>
@@ -55,7 +55,7 @@
     <div class="rail__top" id="railTop"></div>
     <div class="rail__friends" id="railFriends"></div>
     <div class="rail__foot">
-      <button id="logout" class="usermenu__exit" title="Terminar sessão">Sair</button>
+      <button id="logout" class="usermenu__exit" title="Terminar sessão" data-i18n-title="Terminar sessão" data-i18n="Sair">Sair</button>
       <div class="rail__toggle" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
     </div>
   </aside>
@@ -74,12 +74,13 @@
       <div class="rankup__spark" id="ruSpark"></div>
     </div>
     <div class="rankup__name" id="ruName"></div>
-    <div class="rankup__sub" id="ruSub">Novo rank!</div>
+    <div class="rankup__sub" id="ruSub" data-i18n="Novo rank!">Novo rank!</div>
   </div>
 </div>
 
 <div id="modal" class="modal"></div>
 <div id="toast" class="toast"></div>
-<script src="/app.js?v=38"></script>
+<script src="/i18n.js?v=1"></script>
+<script src="/app.js?v=39"></script>
 </body>
 </html>
