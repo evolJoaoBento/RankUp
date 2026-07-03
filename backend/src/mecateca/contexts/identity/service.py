@@ -45,6 +45,17 @@ async def check_login_rate(ip: str) -> None:
         await db.commit()
 
 
+async def clear_login_attempts(ip: str) -> None:
+    """A successful login proves the client isn't brute-forcing — reset its window.
+    Without this, a shared IP (school NAT) locks a whole classroom out after 10
+    perfectly valid logins."""
+    from mecateca.db.engine import get_sessionmaker
+
+    async with get_sessionmaker()() as db:
+        await db.execute(delete(LoginAttempt).where(LoginAttempt.ip == ip))
+        await db.commit()
+
+
 async def get_by_email(db: AsyncSession, email: str) -> User | None:
     res = await db.execute(select(User).where(User.email == email.lower()))
     return res.scalar_one_or_none()

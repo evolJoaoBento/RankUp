@@ -35,8 +35,11 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
 
 @router.post("/auth/login", response_model=TokenPair)
 async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_db)):
-    await service.check_login_rate(request.client.host if request.client else "?")
-    return await service.authenticate(db, body.identifier, body.password)
+    ip = request.client.host if request.client else "?"
+    await service.check_login_rate(ip)
+    tokens = await service.authenticate(db, body.identifier, body.password)
+    await service.clear_login_attempts(ip)  # success resets the window (shared/NAT IPs)
+    return tokens
 
 
 @router.post("/auth/refresh", response_model=TokenPair)
