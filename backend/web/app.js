@@ -1094,6 +1094,8 @@ async function startTest(id) {
   $("#run").innerHTML = `<div class="card"><p class="muted">${t("A carregar…")}</p></div>`;
   try {
     const s = await api(`/tests/${id}/start`, { method: "POST" });
+    // shuffle question order per attempt (options keep server order — grading is by index)
+    for (let i = s.items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s.items[i], s.items[j]] = [s.items[j], s.items[i]]; }
     _run = { id, total: s.items.length, answered: 0, correct: 0, ep: 0 };
     const card = el(`<div class="card">
       <div class="row" style="justify-content:space-between;align-items:center"><h3 style="font-size:16px">${t("Teste em curso")}</h3><span class="muted" id="runProg">0 / ${s.items.length}</span></div>
@@ -1609,12 +1611,13 @@ async function showAdminTab(tab) {
     p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:12px">${t("Plataforma")}</h3><div class="statgrid" id="agStats">…</div></div>`;
     try {
       const s = await api("/admin/stats");
-      const tile = (label, val, warn) => `<div class="stattile ${warn && val > 0 ? "stattile--warn" : ""}"><b>${val}</b><span>${t(label)}</span></div>`;
+      const tile = (label, val, warn, goTab) => `<div class="stattile ${warn && val > 0 ? "stattile--warn" : ""} ${goTab ? "stattile--link" : ""}" ${goTab ? `data-tab="${goTab}"` : ""}><b>${val}</b><span>${t(label)}</span></div>`;
       $("#agStats").innerHTML =
-        tile("Contas", s.users) + tile("Professores", s.teachers) + tile("Disciplinas", s.subjects) +
+        tile("Contas", s.users, false, "contas") + tile("Professores", s.teachers, false, "contas") + tile("Disciplinas", s.subjects, false, "disciplinas") +
         tile("Materiais", s.materials) + tile("Materiais pendentes", s.materials_pending, true) +
-        tile("Testes", s.tests) + tile("Conversas", s.conversations) +
-        tile("Conversas apagadas", s.deleted_conversations) + tile("Duelos", s.duels);
+        tile("Testes", s.tests) + tile("Conversas", s.conversations, false, "conversas") +
+        tile("Conversas apagadas", s.deleted_conversations, false, "conversas") + tile("Duelos", s.duels);
+      $("#agStats").querySelectorAll("[data-tab]").forEach((el2) => (el2.onclick = () => { _adminTab = el2.dataset.tab; vAdmin(); }));
     } catch (e) { $("#agStats").innerHTML = `<p class="err">${e.message}</p>`; }
     return;
   }
