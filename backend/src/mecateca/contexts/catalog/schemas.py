@@ -166,8 +166,8 @@ class CreateTestIn(BaseModel):
 class GenerateTestIn(BaseModel):
     topic: str = Field(min_length=1, max_length=200)
     concept: str | None = None     # concept key to attach (else first)
-    count: int = 3
-    difficulty: int = 2
+    count: int = Field(3, ge=1, le=15)
+    difficulty: int = Field(2, ge=1, le=3)
 
 
 class PatchTestIn(BaseModel):

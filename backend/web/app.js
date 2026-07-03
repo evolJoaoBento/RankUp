@@ -818,7 +818,7 @@ async function vPractice() {
         <b>${icon("sparkle", 16)} Gerar teste com IA</b>
         <label class="fld"><span class="label">Tópico</span><input id="gTopic" placeholder="ex: ética de Kant"></label>
         <div class="row">
-          <label class="fld"><span class="label">Nº de perguntas</span><select id="gCount" style="max-width:130px">${[3,5,8].map(n=>`<option ${n===3?"selected":""}>${n}</option>`).join("")}</select></label>
+          <label class="fld"><span class="label">Nº de perguntas</span><select id="gCount" style="max-width:130px">${[3,5,8,10].map(n=>`<option ${n===3?"selected":""}>${n}</option>`).join("")}</select></label>
           <label class="fld"><span class="label">Dificuldade</span><select id="gDiff" style="max-width:130px">${[[1,"Fácil"],[2,"Médio"],[3,"Difícil"]].map(([v,t])=>`<option value="${v}" ${v===2?"selected":""}>${t}</option>`).join("")}</select></label>
           <label class="fld"><span class="label">Tema</span><select id="gConcept" style="max-width:200px"></select></label>
         </div>
@@ -2086,6 +2086,7 @@ function renderDuelArena(d) {
     const dk = "q" + d.current_round;
     if (_duelDraft.key === dk) qT.value = _duelDraft.text;
     qT.oninput = () => (_duelDraft = { key: dk, text: qT.value });
+    qT.onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("#duQSend").click(); };
     $("#duQSend").onclick = async () => {
       const text = qT.value.trim(); if (!text) return toast("Escreve a pergunta");
       $("#duQSend").disabled = true;
@@ -2098,6 +2099,7 @@ function renderDuelArena(d) {
     const dk = "a" + d.current_round;
     if (_duelDraft.key === dk) aT.value = _duelDraft.text;
     aT.oninput = () => (_duelDraft = { key: dk, text: aT.value });
+    aT.onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("#duAnsSend").click(); };
     $("#duAnsSend").onclick = async () => {
       const text = aT.value.trim(); if (!text) return toast("Escreve a resposta");
       $("#duAnsSend").disabled = true;
