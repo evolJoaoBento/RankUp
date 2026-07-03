@@ -487,7 +487,8 @@ async function renderRail() {
     mountFriends(fr.querySelector(".frcard"));
     $("#logout").style.display = "";
   } else {
-    top.innerHTML = `<div class="rail__avatar" title="${esc(USER.display_name)}">${rankLogo(p.rank, 44, USER.background)}</div>`;
+    top.innerHTML = `<div class="rail__avatar" title="${esc(USER.display_name)}">${rankLogo(p.rank, 44, USER.background)}</div>
+      ${p.streak ? `<div class="rail__streak" title="Streak: ${p.streak} dia(s)">${p.streak}${icon("flame", 12)}</div>` : ""}`;
     let d = { friends: [] };
     try { d = await api("/friends"); } catch {}
     fr.innerHTML = d.friends.length

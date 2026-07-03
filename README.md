@@ -1,5 +1,7 @@
 # RankUp
 
+[![CI](https://github.com/evolJoaoBento/RankUp/actions/workflows/ci.yml/badge.svg)](https://github.com/evolJoaoBento/RankUp/actions/workflows/ci.yml)
+
 **Aprende a sério. Ranks que se conquistam.**
 
 RankUp is a gamified learning platform for schools. Students study with an AI Socratic tutor, take ranked tests from a marketplace, duel friends in real-time question battles, and climb a Valorant-style rank ladder — from **Wood** to **Ascended** — by earning EP for *reasoning*, not just right answers.
@@ -9,10 +11,10 @@ RankUp is a gamified learning platform for schools. Students study with an AI So
 ## Features
 
 ### 🧠 Socratic AI Tutor
-A chat tutor that never gives the answer — it guides the student towards it. Conversations are grounded in teacher-approved study materials, saved per subject, and recoverable for 6 months after deletion.
+A chat tutor that never gives the answer — it guides the student towards it. Conversations are grounded in teacher-approved study materials, saved per subject, renamable in place, and recoverable for 6 months after deletion. Empty chats offer quick-start prompts.
 
 ### 🏆 Ranked test marketplace
-Teachers (or the AI) create tests; students take them and earn EP for their reasoning. Tests are linked to the materials that ground them, searchable, and show who submitted and who approved each one.
+Teachers (or the AI) create tests; students take them and earn EP for their reasoning. Tests are linked to the materials that ground them, searchable, and show who submitted and who approved each one. Test runs have a live progress bar and completion summary; every subject has an EP ladder that always shows your own position. Flashcard decks flip on click (or spacebar) with full keyboard navigation.
 
 ![Ranked](docs/screenshots/practice.png)
 
@@ -20,8 +22,9 @@ Teachers (or the AI) create tests; students take them and earn EP for their reas
 Two players pick one material each from the same discipline and take turns authoring questions (2 min) that both answer simultaneously (3 min). An AI judge picks the most correct answer each round — win 2 pts, draw 1 pt each. Includes:
 
 - **Ranked matchmaking** with Elo rating (K=32, chess-style) and a widening search window
-- **Friend duels** — challenge anyone on your friends list
+- **Friend duels** — challenge anyone on your friends list, rematch in one click
 - Coin-flip first turn, forfeit at any time, live leaderboard
+- "Your turn" highlights and a red action counter on the nav
 
 ![Duels](docs/screenshots/duels.png)
 
@@ -36,7 +39,9 @@ Per-subject EP, rank badges with unlockable background colours, streaks, weak-to
 ![Profile](docs/screenshots/profile.png)
 
 ### 🛠 Admin panel
-Tabbed admin area with searchable table editors for accounts, disciplines (with SVG icon picker) and conversations (including soft-deleted chat recovery), plus AI usage metering per user.
+Tabbed admin area with a platform-overview dashboard (accounts, pending materials, duels, …) and searchable table editors for accounts, disciplines (with SVG icon picker) and conversations (including soft-deleted chat recovery), plus AI usage metering per user.
+
+![Admin](docs/screenshots/admin.png)
 
 ## Architecture
 
