@@ -8,7 +8,68 @@ window.I18N = (() => {
   const LANGS = { pt: "Português", en: "English" };
 
   const DICTS = {
+    // pt: translations INTO Portuguese for the few backend messages written in English
+    pt: {
+      "invalid credentials": "Credenciais inválidas",
+      "email already registered": "Este email já está registado",
+      "current password is wrong": "A palavra-passe atual está errada",
+      "new password must differ": "A nova palavra-passe tem de ser diferente da atual",
+      "invalid token": "Sessão expirada — entra de novo",
+      "invalid refresh token": "Sessão expirada — entra de novo",
+      "user not found": "Utilizador não encontrado",
+      "session not found": "Conversa não encontrada",
+      "not your session": "Esta conversa não é tua",
+      "material not found": "Material não encontrado",
+      "not your material": "Este material não é teu",
+      "test not found": "Teste não encontrado",
+      "not your test": "Este teste não é teu",
+      "test has no questions yet": "O teste ainda não tem perguntas",
+      "question not found": "Pergunta não encontrada",
+      "item not found": "Item não encontrado",
+      "not your item": "Este item não é teu",
+      "mcq needs options and answer_index": "Escolha múltipla precisa de opções e do índice da resposta certa",
+    },
     en: {
+      // backend messages (source strings live in the API)
+      "Demasiadas tentativas. Tenta mais tarde.": "Too many attempts. Try again later.",
+      "invalid credentials": "Invalid credentials",
+      "email already registered": "This email is already registered",
+      "current password is wrong": "The current password is wrong",
+      "new password must differ": "The new password must be different",
+      "invalid token": "Session expired — sign in again",
+      "invalid refresh token": "Session expired — sign in again",
+      "duelo não encontrado": "Duel not found",
+      "não fazes parte deste duelo": "You're not part of this duel",
+      "material não encontrado": "Material not found",
+      "o material não pertence à disciplina do duelo": "The material doesn't belong to the duel's subject",
+      "não te podes desafiar a ti próprio": "You can't challenge yourself",
+      "adversário não encontrado": "Opponent not found",
+      "só podes desafiar amigos": "You can only challenge friends",
+      "este duelo já não está pendente": "This duel is no longer pending",
+      "só o adversário pode aceitar": "Only the opponent can accept",
+      "este duelo já não pode ser recusado": "This duel can no longer be declined",
+      "duelos ranked não podem ser cancelados": "Ranked duels can't be cancelled",
+      "só quem desafiou pode cancelar o convite": "Only the challenger can cancel the invite",
+      "o duelo já está bloqueado — só podes desistir": "The duel is locked — you can only forfeit",
+      "este duelo já não pode ser cancelado": "This duel can no longer be cancelled",
+      "ainda não é hora de escolher material": "It's not time to pick a material yet",
+      "não é a fase de criar pergunta": "It's not the question phase",
+      "não és quem cria a pergunta nesta ronda": "You're not the one asking this round",
+      "escreve a pergunta": "Write the question",
+      "não é a fase de responder": "It's not the answer phase",
+      "ronda inválida": "Invalid round",
+      "já respondeste": "You already answered",
+      "este duelo já terminou": "This duel is already over",
+      "utilizador não encontrado": "User not found",
+      "não te podes adicionar a ti próprio": "You can't add yourself",
+      "já são amigos": "You're already friends",
+      "pedido já enviado": "Request already sent",
+      "pedido não encontrado": "Request not found",
+      "não são amigos": "You're not friends",
+      "ficheiro demasiado grande": "File too large",
+      "a disciplina ainda não tem conceitos": "This subject has no topics yet",
+      "a IA não devolveu perguntas": "The AI returned no questions",
+      "Revê o conceito e tenta de novo.": "Review the concept and try again.",
       // auth
       "Aprende a sério. Ranks que se conquistam.": "Learn for real. Ranks you earn.",
       "Entrar": "Sign in",
@@ -362,7 +423,7 @@ window.I18N = (() => {
   // the context never renders — Portuguese output strips it automatically.
   const base = (s) => (s.includes("|") ? s.slice(0, s.indexOf("|")) : s);
   const t = (s, vars) => {
-    let out = (lang !== "pt" && DICTS[lang] && DICTS[lang][s]) || base(s);
+    let out = (DICTS[lang] && DICTS[lang][s]) || base(s);
     if (vars) for (const k in vars) out = out.split(`{${k}}`).join(vars[k]);
     return out;
   };

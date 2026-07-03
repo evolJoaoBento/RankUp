@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from mecateca.adapters.llm.base import LLMMessage, LLMProvider, LLMRequest, Usage
+from mecateca.shared.lang import reply_language_line
 
 
 @dataclass
@@ -49,7 +50,7 @@ class AIReasoningGrader:
     def __init__(self, provider: LLMProvider):
         self._provider = provider
 
-    async def grade(self, raw: dict, payload: dict, rubric: list | None, material: str | None = None) -> Grade:
+    async def grade(self, raw: dict, payload: dict, rubric: list | None, material: str | None = None, lang: str = "pt") -> Grade:
         prompt = payload.get("prompt") or payload.get("stem", "")
         student = raw.get("text", "")
         criteria = "\n".join(
@@ -61,7 +62,7 @@ class AIReasoningGrader:
             + (" e o MATERIAL DE REFERÊNCIA (fonte da verdade)" if material else "") + ". "
             "Dá reasoning_score entre 0 e 1 pela qualidade do raciocínio mostrado "
             "(não só pela conclusão). 'correct' indica se demonstra compreensão suficiente. "
-            "Feedback curto, em português de Portugal."
+            "Feedback curto. " + reply_language_line(lang)
         )
         ref = f"\n\nMaterial de referência:\n{material}" if material else ""
         user = f"Pergunta: {prompt}\n\nRubrica:\n{criteria}{ref}\n\nResposta do aluno:\n{student}"

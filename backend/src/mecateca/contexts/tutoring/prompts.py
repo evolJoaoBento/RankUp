@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from mecateca.contexts.catalog.models import Concept
+from mecateca.shared.lang import reply_language_line
 
 # Always-on context: the tutor knows which app it lives in and how it works.
 APP_CONTEXT = (
@@ -17,7 +18,7 @@ BASE = (
     "És um tutor socrático da RankUp. Orientas a aprendizagem com perguntas; "
     "NUNCA dás a resposta final nem resolves o exercício pelo aluno. "
     "Fazes uma pergunta de cada vez, devolves o raciocínio ao aluno e reforças o esforço. "
-    "Respondes em português de Portugal, conciso. Usa markdown simples quando ajudar (negrito, listas)."
+    "És conciso. Usa markdown simples quando ajudar (negrito, listas)."
 )
 
 
@@ -29,10 +30,11 @@ def _material_block(materials: list | None) -> str:
             + "\n\n".join(chunks))
 
 
-def build_system(concept: Concept | None, materials: list | None = None) -> str:
+def build_system(concept: Concept | None, materials: list | None = None, lang: str = "pt") -> str:
+    base = BASE + " " + reply_language_line(lang)
     if concept is None:
-        return APP_CONTEXT + "\n\n" + BASE + _material_block(materials)
-    parts = [APP_CONTEXT, "", BASE, f"\nTópico: {concept.name}."]
+        return APP_CONTEXT + "\n\n" + base + _material_block(materials)
+    parts = [APP_CONTEXT, "", base, f"\nTópico: {concept.name}."]
     if concept.summary:
         parts.append(f"Contexto: {concept.summary}")
     if concept.objectives:

@@ -83,7 +83,7 @@ async def start_from_test(
     return session, items
 
 
-async def grade_question(db: AsyncSession, provider: LLMProvider, question_id: uuid.UUID, raw: dict) -> dict:
+async def grade_question(db: AsyncSession, provider: LLMProvider, question_id: uuid.UUID, raw: dict, lang: str = "pt") -> dict:
     """Grade a single answer for flashcard practice — NO progression / EP awarded."""
     q = await db.get(QuestionTemplate, question_id)
     if q is None:
@@ -99,7 +99,7 @@ async def grade_question(db: AsyncSession, provider: LLMProvider, question_id: u
         if q.material_id:
             mat = await db.get(Material, q.material_id)
             material_body = await catalog_service.material_full_text(db, mat) if mat else None
-        grade = await AIReasoningGrader(provider).grade(raw, q.payload, criteria, material_body)
+        grade = await AIReasoningGrader(provider).grade(raw, q.payload, criteria, material_body, lang)
         answer = {"reference": (material_body or "")[:1200]}
     return {"correct": grade.correct, "reasoning_score": float(grade.reasoning_score),
             "feedback": grade.feedback, "answer": answer}
@@ -131,6 +131,7 @@ async def submit_answer(
     user_id: uuid.UUID,
     item_id: uuid.UUID,
     raw: dict,
+    lang: str = "pt",
 ) -> AnswerResult:
     item = await db.get(PracticeItem, item_id)
     if item is None:
@@ -170,7 +171,7 @@ async def submit_answer(
         if template and template.material_id:
             mat = await db.get(Material, template.material_id)
             material_body = await catalog_service.material_full_text(db, mat) if mat else None
-        grade = await AIReasoningGrader(provider).grade(raw, item.payload, criteria, material_body)
+        grade = await AIReasoningGrader(provider).grade(raw, item.payload, criteria, material_body, lang)
 
     answer = Answer(
         item_id=item.id,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mecateca.contexts.assessment import service
@@ -16,6 +16,7 @@ from mecateca.contexts.assessment.schemas import (
 from mecateca.contexts.identity.models import User
 from mecateca.db.session import get_db
 from mecateca.deps import current_user, get_llm_provider, require_role
+from mecateca.shared.lang import norm_lang
 
 router = APIRouter(tags=["assessment"])
 
@@ -70,19 +71,21 @@ async def get(session_id: uuid.UUID, user: User = Depends(current_user), db: Asy
 async def grade_question(
     question_id: uuid.UUID,
     body: AnswerIn,
+    request: Request,
     user: User = Depends(current_user),
     provider=Depends(get_llm_provider),
     db: AsyncSession = Depends(get_db),
 ):
-    return await service.grade_question(db, provider, question_id, body.raw)
+    return await service.grade_question(db, provider, question_id, body.raw, norm_lang(request.headers.get("x-lang")))
 
 
 @router.post("/practice/items/{item_id}/answer", response_model=AnswerResult)
 async def answer(
     item_id: uuid.UUID,
     body: AnswerIn,
+    request: Request,
     user: User = Depends(current_user),
     provider=Depends(get_llm_provider),
     db: AsyncSession = Depends(get_db),
 ):
-    return await service.submit_answer(db, provider, user.id, item_id, body.raw)
+    return await service.submit_answer(db, provider, user.id, item_id, body.raw, norm_lang(request.headers.get("x-lang")))

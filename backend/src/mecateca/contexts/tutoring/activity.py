@@ -22,7 +22,7 @@ class SocraticChatActivity:
         self._provider = provider
 
     async def stream_reply(
-        self, db: AsyncSession, session: TutorSession, user_text: str
+        self, db: AsyncSession, session: TutorSession, user_text: str, lang: str = "pt"
     ) -> tuple[AsyncIterator[str], "list[str]", "_UsageHolder"]:
         concept = None
         # the session is grounded on a chosen material (if any), including its attachments
@@ -46,7 +46,7 @@ class SocraticChatActivity:
         msgs = [LLMMessage(m.role, m.content) for m in history]
         msgs.append(LLMMessage("user", user_text))
 
-        req = LLMRequest(task="tutor_socratic", system=build_system(concept, materials), messages=msgs)
+        req = LLMRequest(task="tutor_socratic", system=build_system(concept, materials, lang), messages=msgs)
         provider_stream = await self._provider.stream(req)
 
         collected: list[str] = []

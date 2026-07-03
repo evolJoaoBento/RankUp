@@ -4,7 +4,7 @@ import json
 import uuid
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +25,7 @@ from mecateca.contexts.tutoring.schemas import (
 )
 from mecateca.db.engine import get_sessionmaker
 from mecateca.db.session import get_db
+from mecateca.shared.lang import norm_lang
 from mecateca.deps import current_user, get_llm_provider, require_role
 
 router = APIRouter(tags=["tutoring"])
@@ -83,9 +84,11 @@ async def history(session_id: uuid.UUID, user: User = Depends(current_user), db:
 async def post_message(
     session_id: uuid.UUID,
     body: MessageIn,
+    request: Request,
     user: User = Depends(current_user),
     provider=Depends(get_llm_provider),
 ):
+    lang = norm_lang(request.headers.get("x-lang"))
     # Own DB session for the lifetime of the stream (request-scoped one closes early).
     sm = get_sessionmaker()
 
@@ -100,7 +103,7 @@ async def post_message(
             await db.flush()
 
             activity = SocraticChatActivity(provider)
-            gen, collected, holder = await activity.stream_reply(db, session, body.text)
+            gen, collected, holder = await activity.stream_reply(db, session, body.text, lang)
 
             async for chunk in gen:
                 yield _sse("token", {"text": chunk})

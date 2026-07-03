@@ -47,7 +47,7 @@ async function api(path, opts = {}) {
   return res.status === 204 ? null : res.json();
 }
 function _fetch(path, { method = "GET", body } = {}) {
-  const headers = { "content-type": "application/json" };
+  const headers = { "content-type": "application/json", "x-lang": (window.I18N || {}).lang || "pt" };
   if (TOKEN) headers.authorization = `Bearer ${TOKEN}`;
   return fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
 }
@@ -55,8 +55,9 @@ function _fetch(path, { method = "GET", body } = {}) {
 const $ = (s) => document.querySelector(s);
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; };
 function toast(msg) {
-  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2200);
+  // t() maps known backend PT messages to the active language; unknown text passes through
+  const box = $("#toast"); box.textContent = window.I18N ? t(msg) : msg; box.classList.add("show");
+  setTimeout(() => box.classList.remove("show"), 2200);
 }
 const esc = (s) => (s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -454,7 +455,7 @@ $("#authForm").onsubmit = async (e) => {
     const tok = await api("/auth/login", { method: "POST", body: { identifier, password } });
     saveTokens(tok.access, tok.refresh);
     await boot();
-  } catch (err) { $("#afErr").textContent = err.message; }
+  } catch (err) { $("#afErr").textContent = t(err.message); }
 };
 
 $("#logout").onclick = () => { store.clear(); location.reload(); };
@@ -1198,7 +1199,7 @@ async function checkCard(c) {
       const opts = r.answer.options || c.options || [];
       detail = `<p><b>${t("Resposta certa:")}</b> ${esc(opts[r.answer.answer_index] ?? "—")}</p>` + (r.answer.why ? `<p class="muted">${esc(r.answer.why)}</p>` : "");
     } else {
-      detail = (r.feedback ? `<p>${esc(r.feedback)}</p>` : "") + (r.answer.reference ? `<p class="muted" style="font-size:13px"><b>${t("Referência:")}</b> ${esc(r.answer.reference.slice(0, 400))}…</p>` : "");
+      detail = (r.feedback ? `<p>${esc(t(r.feedback))}</p>` : "") + (r.answer.reference ? `<p class="muted" style="font-size:13px"><b>${t("Referência:")}</b> ${esc(r.answer.reference.slice(0, 400))}…</p>` : "");
     }
     $("#fcResult").innerHTML = `
       <div class="fc-grade ${score >= 60 ? "ok" : "no"}">${score}%</div>
@@ -1413,7 +1414,7 @@ async function submitItem(it, node) {
     g.style.display = "block";
     g.className = "grade " + (r.correct ? "ok" : "no");
     g.innerHTML = `<b>${r.correct ? t("✓ Certo") : t("✗ Rever")}</b> · ${t("raciocínio")} ${(r.reasoning_score * 100).toFixed(0)}% · <b>${r.xp_delta >= 0 ? "+" : ""}${r.xp_delta} EP</b>` +
-      (r.feedback ? `<br>${esc(r.feedback)}` : "");
+      (r.feedback ? `<br>${esc(t(r.feedback))}` : "");
     btn.textContent = t("Respondido");
     if (_run) {
       _run.answered++; if (r.correct) _run.correct++; _run.ep += r.xp_delta;
