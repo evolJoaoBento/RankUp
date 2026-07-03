@@ -848,16 +848,24 @@ async function renderEpLeaderboard() {
   if (!box || !lb.length) return;
   const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
   box.style.display = "";
-  box.innerHTML = `
-    <h3 style="font-size:16px;margin-bottom:10px">${icon("trophy", 16)} Classificação · ${esc(subjName)}</h3>
-    <div class="lbrows">${lb.map((r, i) => `
-      <div class="lbrow ${r.display_name === USER.display_name ? "is-me" : ""}">
-        <span class="lbrow__pos">${i + 1}</span>
+  const row = (r, pos, me) => `
+      <div class="lbrow ${me ? "is-me" : ""}">
+        <span class="lbrow__pos">${pos}</span>
         ${rankLogo(r.rank, 26)}
         <span class="lbrow__name">${esc(r.display_name)}</span>
         <span class="lbrow__streak">${r.streak}${icon("flame", 12)}</span>
         <span class="lbrow__ep">${r.xp} EP</span>
-      </div>`).join("")}</div>`;
+      </div>`;
+  let html = lb.map((r, i) => row(r, i + 1, r.display_name === USER.display_name)).join("");
+  if (!lb.some((r) => r.display_name === USER.display_name)) {
+    try {
+      const me = await api(`/leaderboards/${SUBJECT}/me`);
+      if (me.position) html += `<div class="lbrow lbrow--gap">…</div>` + row({ ...me, display_name: USER.display_name }, me.position, true);
+    } catch {}
+  }
+  box.innerHTML = `
+    <h3 style="font-size:16px;margin-bottom:10px">${icon("trophy", 16)} Classificação · ${esc(subjName)}</h3>
+    <div class="lbrows">${html}</div>`;
 }
 
 async function renderTests(teacher) {

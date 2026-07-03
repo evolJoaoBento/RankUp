@@ -42,6 +42,11 @@ async def leaderboard(
     return await service.leaderboard(db, subject, limit)
 
 
+@router.get("/leaderboards/{subject}/me")
+async def leaderboard_me(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.my_position(db, subject, user.id) or {"position": None}
+
+
 @router.get("/ranks", dependencies=[Depends(current_user)])
 async def ranks(profile: str = "standard", db: AsyncSession = Depends(get_db)):
     from mecateca.contexts.progression import tiers as tiers_mod

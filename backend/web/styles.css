@@ -190,6 +190,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .lbrow__name{flex:1;font-weight:600;font-size:14.5px}
 .lbrow__streak{display:inline-flex;align-items:center;gap:3px;font-size:13px;color:var(--muted)}
 .lbrow__ep{font-weight:700;font-size:14.5px;min-width:70px;text-align:right}
+.lbrow--gap{justify-content:center;color:var(--muted);background:transparent !important;padding:1px}
 .searchbar{flex:0 1 340px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font:inherit;font-size:14px;color:var(--ink)}
 .searchbar:focus{outline:none;border-color:var(--gold)}
 .dots:after{content:'…';animation:dots 1.2s steps(4) infinite}

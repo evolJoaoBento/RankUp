@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mecateca.contexts.catalog import service as catalog_service
@@ -101,3 +101,26 @@ async def leaderboard(db: AsyncSession, subject_key: str, limit: int = 20) -> li
         {"display_name": name, "xp": p.xp, "rank": p.rank, "streak": p.streak}
         for p, name in rows
     ]
+
+
+async def my_position(db: AsyncSession, subject_key: str, user_id) -> dict | None:
+    """1-based ladder position of the user in a subject, or None if unranked."""
+    subject = await catalog_service.get_subject(db, subject_key)
+    season = await _all_time(db)
+    if season is None:
+        return None
+    prog = await db.get(UserSubjectProgress, (user_id, subject.id, season.id))
+    if prog is None:
+        return None
+    higher = (
+        await db.execute(
+            select(func.count())
+            .select_from(UserSubjectProgress)
+            .where(
+                UserSubjectProgress.subject_id == subject.id,
+                UserSubjectProgress.season_id == season.id,
+                UserSubjectProgress.xp > prog.xp,
+            )
+        )
+    ).scalar_one()
+    return {"position": higher + 1, "xp": prog.xp, "rank": prog.rank, "streak": prog.streak}
