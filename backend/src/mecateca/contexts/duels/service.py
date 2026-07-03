@@ -326,6 +326,28 @@ async def _tick(db: AsyncSession, provider: LLMProvider, duel: Duel) -> None:
         await _judge_round(db, provider, duel, rnd)
 
 
+async def tick_expired(db: AsyncSession, provider: LLMProvider, limit: int = 20) -> int:
+    """Background sweeper: resolve duels whose phase deadline passed even if
+    neither player has the app open (reads do this lazily; this covers the rest)."""
+    duels = list(
+        (
+            await db.execute(
+                select(Duel)
+                .where(
+                    Duel.status == "active",
+                    Duel.phase.in_(("question", "answer")),
+                    Duel.phase_deadline.is_not(None),
+                    Duel.phase_deadline < now(),
+                )
+                .limit(limit)
+            )
+        ).scalars()
+    )
+    for d in duels:
+        await _tick(db, provider, d)
+    return len(duels)
+
+
 # --------------------------------------------------------------------------- #
 # views
 # --------------------------------------------------------------------------- #

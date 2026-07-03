@@ -76,7 +76,24 @@ async def lifespan(app: FastAPI):
                 await db.commit()
         finally:
             await lock_conn.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": _STARTUP_LOCK_KEY})
+
+    # duel sweeper: resolves expired phase deadlines even when nobody has the
+    # arena open (reads still tick lazily; this covers abandoned duels)
+    async def _duel_sweeper() -> None:
+        from mecateca.contexts.duels import service as duels_service
+        from mecateca.deps import get_llm_provider
+        while True:
+            await asyncio.sleep(60)
+            try:
+                async with get_sessionmaker()() as db:
+                    await duels_service.tick_expired(db, get_llm_provider())
+                    await db.commit()
+            except Exception:  # noqa: BLE001 — the sweeper must survive anything
+                pass
+
+    sweeper = asyncio.create_task(_duel_sweeper())
     yield
+    sweeper.cancel()
 
 
 def create_app() -> FastAPI:
