@@ -16,7 +16,7 @@ router = APIRouter(tags=["progression"])
 
 
 class AdminEpIn(BaseModel):
-    subject: str = "philosophy"
+    subject: str  # any discipline key — nothing is philosophy-specific
     xp: int
 
 

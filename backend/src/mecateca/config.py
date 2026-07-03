@@ -21,6 +21,10 @@ class Settings(BaseSettings):
 
     free_tutor_msgs_per_day: int = 20
 
+    # seed the demo discipline (Philosophy) + its curriculum tests at boot.
+    # Schools running their own content can turn this off.
+    seed_demo: bool = True
+
     # where uploaded material assets (pdf/markdown/files) are stored on disk
     upload_dir: str = "var/uploads"
     max_upload_mb: int = 25

@@ -68,8 +68,9 @@ async def lifespan(app: FastAPI):
                 await identity_service.seed_admin(db)
                 from mecateca.contexts.progression import tiers as tiers_mod
                 await tiers_mod.seed_tiers(db, "standard")
-                from mecateca.contexts.catalog import seed_philosophy
-                await seed_philosophy.seed(db)  # idempotent: curriculum tests
+                if get_settings().seed_demo:  # demo discipline — off for real deployments
+                    from mecateca.contexts.catalog import seed_philosophy
+                    await seed_philosophy.seed(db)  # idempotent: curriculum tests
                 from mecateca.contexts.tutoring import service as tutor_service
                 await tutor_service.purge_expired(db)  # hard-delete chats past the grace window
                 await db.commit()

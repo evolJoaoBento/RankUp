@@ -2,7 +2,7 @@
 const API = "/api/v1";
 let RANKS = [["Wood", 0], ["Stone", 60], ["Flint", 140], ["Coal", 240], ["Iron", 360], ["Bronze", 500], ["Silver", 680], ["Gold", 900], ["Platinum", 1160], ["Emerald", 1480], ["Sapphire", 1860], ["Ruby", 2320], ["Diamond", 2880], ["Radiant", 3560], ["Ascended", 4400]];
 let USER = null;
-let SUBJECT = "philosophy";
+let SUBJECT = localStorage.getItem("mt_subject") || "";  // loadSubjects falls back to the first subject
 let SUBJECTS = [];
 let CURRENT_VIEW = "tutor";
 // discipline icon keys (map to ICONS above) — actual SVG line art, not emoji
@@ -531,7 +531,7 @@ async function loadSubjects() {
   $("#subjBtn").onclick = (e) => { e.stopPropagation(); const m = $("#subjMenu"); m.hidden = !m.hidden; };
   $("#subjMenu").querySelectorAll(".subjsw__item").forEach((b) => (b.onclick = () => {
     $("#subjMenu").hidden = true;
-    if (b.dataset.key !== SUBJECT) { SUBJECT = b.dataset.key; tutorConcepts = []; CONCEPT_NAMES = {}; preloadConcepts(); }
+    if (b.dataset.key !== SUBJECT) { SUBJECT = b.dataset.key; localStorage.setItem("mt_subject", SUBJECT); tutorConcepts = []; CONCEPT_NAMES = {}; preloadConcepts(); }
     loadSubjects(); refreshChip(); go(CURRENT_VIEW);
   }));
   if (!window._subjOutsideWired) {
@@ -1633,7 +1633,7 @@ async function showAdminTab(tab) {
       } catch (e) { toast(e.message); }
     };
   } else if (tab === "ranks") {
-    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:10px">EP por rank (Filosofia)</h3>
+    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:10px">EP por rank</h3>
       <div class="tier-layout"><div><div class="tier-edit" id="tierEdit"></div>
         <button class="btn btn--sm" id="tierSave" style="margin-top:12px">Guardar limiares</button></div>
         <div class="tier-preview" id="tierPreview"></div></div></div>`;
@@ -1737,7 +1737,8 @@ function renderTierEditor() {
 async function renderUsers() {
   try {
     const users = await api("/admin/users");
-    $("#adm").innerHTML = `<h3 style="font-size:16px;margin-bottom:10px">Contas</h3><table><tr><th>Conta</th><th>Role</th><th>Plano</th><th>Fundo</th><th>EP (Filosofia)</th><th></th></tr>` +
+    const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
+    $("#adm").innerHTML = `<h3 style="font-size:16px;margin-bottom:10px">Contas</h3><table><tr><th>Conta</th><th>Role</th><th>Plano</th><th>Fundo</th><th>EP (${esc(subjName)})</th><th></th></tr>` +
       users.map((u) => `<tr data-id="${u.id}">
         <td><b>${esc(u.display_name)}</b><br><span class="muted">${esc(u.username || u.email)}</span></td>
         <td><select class="u-role">${["student", "teacher", "admin"].map((r) => `<option ${r === u.role ? "selected" : ""}>${r}</option>`).join("")}</select></td>

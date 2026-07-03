@@ -2,7 +2,8 @@
 
 FastAPI modular monolith serving the API **and** the SPA (`web/`). AI Socratic tutor,
 ranked test marketplace, duels with Elo matchmaking, friends, progression ranks.
-Ships **Philosophy**; new subjects are created in the admin panel or imported as YAML packs.
+Fully subject-agnostic: disciplines are created in the admin panel or imported as YAML
+packs. A Philosophy demo pack is seeded at boot (`MECATECA_SEED_DEMO=0` to disable).
 
 See the [root README](../README.md) for the feature tour and architecture map.
 
