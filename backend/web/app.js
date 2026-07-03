@@ -1616,9 +1616,22 @@ async function showAdminTab(tab) {
     wireAddDiscipline();
     wireTableSearch($("#subjSearch"), $("#subjTable"));
   } else if (tab === "contas") {
-    p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:10px">Contas</h3>${searchBar("userSearch", "Procurar por nome ou email…")}<div id="adm">…</div></div>`;
+    p.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="font-size:16px">Contas</h3><button class="btn btn--ghost btn--sm" id="csvUsers">${icon("doc", 14)} Exportar CSV</button></div>${searchBar("userSearch", "Procurar por nome ou email…")}<div id="adm">…</div></div>`;
     await renderUsers();
     wireTableSearch($("#userSearch"), $("#adm"));
+    $("#csvUsers").onclick = async () => {
+      try {
+        const users = await api("/admin/users");
+        const cols = ["display_name", "username", "email", "role", "plan"];
+        const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const csv = [cols.join(";")].concat(users.map((u) => cols.map((c) => csvCell(u[c])).join(";"))).join("\r\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+        a.download = "rankup-contas.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) { toast(e.message); }
+    };
   } else if (tab === "ranks") {
     p.innerHTML = `<div class="card"><h3 style="font-size:16px;margin-bottom:10px">EP por rank (Filosofia)</h3>
       <div class="tier-layout"><div><div class="tier-edit" id="tierEdit"></div>
