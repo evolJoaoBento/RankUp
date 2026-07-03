@@ -38,6 +38,12 @@ async function tryRefresh() {
 async function api(path, opts = {}) {
   let res = await _fetch(path, opts);
   if (res.status === 401 && (await tryRefresh())) res = await _fetch(path, opts);
+  if (res.status === 401 && TOKEN && !path.startsWith("/auth/")) {
+    // refresh failed -> session is dead; land the user on the login screen
+    store.clear();
+    location.reload();
+    throw new Error("invalid token");
+  }
   if (opts.stream) return res;
   if (!res.ok) {
     let msg = res.statusText;

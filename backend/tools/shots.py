@@ -17,6 +17,7 @@ async def main(views: list[str]) -> None:
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page(viewport={"width": 1320, "height": 920}, device_scale_factor=2)
+        await page.add_init_script("localStorage.setItem('mt_lang', 'pt')")  # docs stay pt-PT
         await page.goto(BASE, wait_until="networkidle")
         # login (admin/admin)
         await page.fill("#afId", "admin")
