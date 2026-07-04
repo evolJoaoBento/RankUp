@@ -493,6 +493,7 @@ async function renderRail() {
       <span class="umprofile__info">
         <b>${esc(USER.display_name)}</b>
         <span class="muted" style="display:inline-flex;align-items:center;gap:5px;font-size:13px">${p.rank} · ${p.xp} EP · ${p.streak}${icon("flame", 13)}</span>
+        <span class="muted" style="font-size:12.5px" title="${t("Objetivo diário: 5 respostas")}">🎯 ${t("Hoje")}: ${Math.min(p.answers_today || 0, 5)}/5${(p.answers_today || 0) >= 5 ? " ✓" : ""}</span>
         <span class="umprofile__link">${t("Ver perfil →")}</span>
       </span></button>`;
     $("#umProfileBtn").onclick = () => go("profile");
@@ -601,7 +602,7 @@ function go(view) {
 /* ===================================================================== */
 /* TUTOR                                                                 */
 /* ===================================================================== */
-let tutorSid = null, tutorConcepts = [], PENDING_MATERIAL = null;
+let tutorSid = null, tutorConcepts = [], PENDING_MATERIAL = null, PENDING_PRACTICE = null;
 async function vTutor() {
   const v = $("#view");
   v.innerHTML = `
@@ -810,6 +811,7 @@ async function vPractice() {
   const teacher = USER.role === "teacher" || USER.role === "admin";
   v.innerHTML = `
     <div class="view__head"><h1>${t("Ranked")}</h1><p>${t("Escolhe um teste do marketplace. EP ganha-se pelo raciocínio, não só pela resposta certa.")}</p></div>
+    <div id="revBanner"></div>
     <div class="card lbcard" id="epLb" style="display:none"></div>
     ${teacher ? `<div class="card" id="classCard" style="display:none"></div>` : ""}
     <div class="card">
@@ -873,7 +875,9 @@ async function vPractice() {
   }
   renderTests(teacher);
   renderEpLeaderboard();
+  renderReviewBanner();
   if (teacher) renderClassView();
+  if (PENDING_PRACTICE) { const c = PENDING_PRACTICE; PENDING_PRACTICE = null; startFocusedPractice(c); }
 }
 
 // teacher-only radar: class-wide weakest topics for the active discipline
@@ -1134,21 +1138,51 @@ function renderAssets(matId, assets) {
 }
 
 let _run = null;
+// shared runner for marketplace tests, review sessions and focused practice
+function renderRunSession(s, title, retryId = null) {
+  // shuffle question order per attempt (options keep server order — grading is by index)
+  for (let i = s.items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s.items[i], s.items[j]] = [s.items[j], s.items[i]]; }
+  _run = { id: retryId, total: s.items.length, answered: 0, correct: 0, ep: 0 };
+  const card = el(`<div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center"><h3 style="font-size:16px">${esc(title)}</h3><span class="muted" id="runProg">0 / ${s.items.length}</span></div>
+    <div class="bar" style="margin:10px 0 16px"><div class="bar__f" id="runBar" style="width:0%"></div></div>
+    <div id="runItems"></div><div id="runSummary"></div></div>`);
+  $("#run").innerHTML = ""; $("#run").appendChild(card);
+  s.items.forEach((it, idx) => $("#runItems").appendChild(renderItem(it, idx)));
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 async function startTest(id) {
   $("#run").innerHTML = `<div class="card"><p class="muted">${t("A carregar…")}</p></div>`;
   try {
     const s = await api(`/tests/${id}/start`, { method: "POST" });
-    // shuffle question order per attempt (options keep server order — grading is by index)
-    for (let i = s.items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s.items[i], s.items[j]] = [s.items[j], s.items[i]]; }
-    _run = { id, total: s.items.length, answered: 0, correct: 0, ep: 0 };
-    const card = el(`<div class="card">
-      <div class="row" style="justify-content:space-between;align-items:center"><h3 style="font-size:16px">${t("Teste em curso")}</h3><span class="muted" id="runProg">0 / ${s.items.length}</span></div>
-      <div class="bar" style="margin:10px 0 16px"><div class="bar__f" id="runBar" style="width:0%"></div></div>
-      <div id="runItems"></div><div id="runSummary"></div></div>`);
-    $("#run").innerHTML = ""; $("#run").appendChild(card);
-    s.items.forEach((it, idx) => $("#runItems").appendChild(renderItem(it, idx)));
-    card.scrollIntoView({ behavior: "smooth", block: "start" });
+    renderRunSession(s, t("Teste em curso"), id);
   } catch (e) { $("#run").innerHTML = `<div class="card"><p class="err">${e.message}</p></div>`; }
+}
+
+async function startReviewSession() {
+  try {
+    const s = await api("/practice/review", { method: "POST", body: { subject: SUBJECT, count: 5 } });
+    renderRunSession(s, t("Revisão — erros anteriores"));
+  } catch (e) { toast(e.message); }
+}
+
+async function startFocusedPractice(concept) {
+  try {
+    const s = await api("/practice/sessions", { method: "POST", body: { subject: SUBJECT, concept, difficulty: 2, count: 5 } });
+    renderRunSession(s, t("Prática focada"));
+  } catch (e) { toast(e.message); }
+}
+
+// banner on Ranked: questions whose last attempt was wrong
+async function renderReviewBanner() {
+  const b = $("#revBanner"); if (!b) return;
+  let c = 0;
+  try { c = (await api(`/practice/review/count?subject=${SUBJECT}`)).count; } catch {}
+  b.innerHTML = c ? `<div class="card revcard">
+      <span>${icon("flame", 18)} <b>${t("Tens {n} pergunta(s) para rever", { n: c })}</b> — ${t("erraste-as da última vez.")}</span>
+      <button class="btn btn--sm" id="revGo">${t("Rever agora")}</button></div>` : "";
+  if (c) $("#revGo").onclick = startReviewSession;
 }
 
 /* ===================================================================== */
@@ -1496,7 +1530,17 @@ async function submitItem(it, node) {
     g.style.display = "block";
     g.className = "grade " + (r.correct ? "ok" : "no");
     g.innerHTML = `<b>${r.correct ? t("✓ Certo") : t("✗ Rever")}</b> · ${t("raciocínio")} ${(r.reasoning_score * 100).toFixed(0)}% · <b>${r.xp_delta >= 0 ? "+" : ""}${r.xp_delta} EP</b>` +
-      (r.feedback ? `<br>${esc(t(r.feedback))}` : "");
+      (r.feedback ? `<br>${esc(t(r.feedback))}` : "") +
+      (r.why ? `<br><b>${t("Porquê:")}</b> ${esc(r.why)}` : "");
+    // reveal the right option (and the wrong pick) — corrective feedback on the spot
+    if (r.answer_index != null) {
+      node.querySelectorAll(".opt").forEach((o, i) => {
+        const inp = o.querySelector("input");
+        if (i === r.answer_index) o.classList.add("opt--right");
+        else if (inp.checked) o.classList.add("opt--wrong");
+        inp.disabled = true;
+      });
+    }
     btn.textContent = t("Respondido");
     if (_run) {
       _run.answered++; if (r.correct) _run.correct++; _run.ep += r.xp_delta;
@@ -1507,8 +1551,9 @@ async function submitItem(it, node) {
         const pct = Math.round((100 * _run.correct) / _run.total);
         $("#runSummary").innerHTML = `<div class="grade ${pct >= 50 ? "ok" : "no"}" style="margin-top:14px">
           <b>${t("Teste concluído!")}</b> ${t("{c}/{n} certas ({p}%)", { c: _run.correct, n: _run.total, p: pct })} · <b>${_run.ep >= 0 ? "+" : ""}${_run.ep} EP</b>
-          <div style="margin-top:10px"><button class="btn btn--sm" id="runAgain">${t("Repetir teste")}</button></div></div>`;
-        $("#runAgain").onclick = () => startTest(_run.id);
+          <div style="margin-top:10px">${_run.id ? `<button class="btn btn--sm" id="runAgain">${t("Repetir teste")}</button>` : ""}</div></div>`;
+        if (_run.id && $("#runAgain")) $("#runAgain").onclick = () => startTest(_run.id);
+        renderReviewBanner();  // count may have changed after this run
         $("#runSummary").scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
@@ -1590,9 +1635,10 @@ async function vProfile() {
       <div class="bg-pick" id="bgPick">${sw("", !USER.background)}${unlocked.map((n) => sw(n, USER.background === n)).join("")}</div>
       <h3 style="margin:18px 0 8px;font-size:16px">${t("Temas a melhorar")}</h3>
       ${(p.weak_concepts || []).length
-        ? `<table><tr><th>${t("Tema")}</th><th>${t("Mestria")}</th></tr>` +
-          p.weak_concepts.map((w) => `<tr><td>${esc(w.name || "") || conceptName(w.concept_id)}</td><td>${(w.mastery * 100).toFixed(0)}%</td></tr>`).join("") + `</table>`
+        ? `<table><tr><th>${t("Tema")}</th><th>${t("Mestria")}</th><th></th></tr>` +
+          p.weak_concepts.map((w) => `<tr><td>${esc(w.name || "") || conceptName(w.concept_id)}</td><td>${(w.mastery * 100).toFixed(0)}%</td><td>${w.key ? `<button class="btn btn--ghost btn--sm" data-prac="${esc(w.key)}">${t("Praticar")}</button>` : ""}</td></tr>`).join("") + `</table>`
         : `<p class="muted">${t("Ainda sem dados — faz uns exercícios na Prática.")}</p>`}`;
+    $("#pg").querySelectorAll("[data-prac]").forEach((b) => (b.onclick = () => { PENDING_PRACTICE = b.dataset.prac; go("practice"); }));
     $("#bgPick").querySelectorAll(".bg-sw").forEach((b) => (b.onclick = () => setMyBackground(b.dataset.bg)));
     try {
       const r = await api(`/duels/rating?subject=${SUBJECT}`);

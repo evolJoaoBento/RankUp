@@ -43,3 +43,7 @@ class AnswerResult(BaseModel):
     ranked_up: bool
     streak: int
     already_answered: bool = False
+    # mcq only, revealed AFTER answering: which option was right and why —
+    # immediate corrective feedback is where the learning happens
+    answer_index: int | None = None
+    why: str = ""

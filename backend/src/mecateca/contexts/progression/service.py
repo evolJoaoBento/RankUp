@@ -63,7 +63,7 @@ async def progress(db: AsyncSession, user_id: uuid.UUID, subject_key: str) -> di
 
     weak = (
         await db.execute(
-            select(UserConceptMastery, Concept.name)
+            select(UserConceptMastery, Concept.name, Concept.key)
             .join(Concept, Concept.id == UserConceptMastery.concept_id)
             .where(
                 UserConceptMastery.user_id == user_id,
@@ -73,14 +73,28 @@ async def progress(db: AsyncSession, user_id: uuid.UUID, subject_key: str) -> di
             .limit(5)
         )
     ).all()
+
+    from sqlalchemy import func as _f
+
+    from mecateca.contexts.assessment.models import Answer
+    answers_today = (
+        await db.execute(
+            select(_f.count()).select_from(Answer).where(
+                Answer.user_id == user_id,
+                Answer.created_at >= _f.date_trunc("day", _f.now()),
+            )
+        )
+    ).scalar_one()
+
     return {
         "subject": subject_key,
         "xp": prog.xp if prog else 0,
         "rank": prog.rank if prog else lowest,
         "streak": prog.streak if prog else 0,
+        "answers_today": int(answers_today),
         "weak_concepts": [
-            {"concept_id": str(w.concept_id), "name": name, "mastery": float(w.mastery)}
-            for w, name in weak
+            {"concept_id": str(w.concept_id), "name": name, "key": key, "mastery": float(w.mastery)}
+            for w, name, key in weak
         ],
     }
 

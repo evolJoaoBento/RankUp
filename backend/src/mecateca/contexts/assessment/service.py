@@ -83,6 +83,90 @@ async def start_from_test(
     return session, items
 
 
+def _latest_answer_per_template(user_id: uuid.UUID):
+    """Subquery: (template_id, latest answer time) for a user."""
+    from sqlalchemy import func
+
+    return (
+        select(
+            PracticeItem.question_template_id.label("tid"),
+            func.max(Answer.created_at).label("last"),
+        )
+        .join(Answer, Answer.item_id == PracticeItem.id)
+        .where(Answer.user_id == user_id, PracticeItem.question_template_id.is_not(None))
+        .group_by(PracticeItem.question_template_id)
+        .subquery()
+    )
+
+
+async def _due_review_templates(
+    db: AsyncSession, user_id: uuid.UUID, subject_key: str, limit: int
+) -> list[QuestionTemplate]:
+    """Templates whose LATEST answer by this user was wrong — oldest miss first,
+    so early gaps resurface before yesterday's."""
+    sv = await catalog_service.current_version(db, subject_key)
+    latest = _latest_answer_per_template(user_id)
+    rows = (
+        await db.execute(
+            select(QuestionTemplate, latest.c.last)
+            .join(latest, latest.c.tid == QuestionTemplate.id)
+            .join(PracticeItem, PracticeItem.question_template_id == QuestionTemplate.id)
+            .join(
+                Answer,
+                (Answer.item_id == PracticeItem.id) & (Answer.created_at == latest.c.last),
+            )
+            .where(
+                Answer.user_id == user_id,
+                Answer.correct.is_(False),
+                QuestionTemplate.subject_version_id == sv.id,
+            )
+            .order_by(latest.c.last.asc())
+            .limit(limit * 2)  # join can duplicate; dedupe below
+        )
+    ).all()
+    seen: set = set()
+    out: list[QuestionTemplate] = []
+    for tpl, _ts in rows:
+        if tpl.id in seen:
+            continue
+        seen.add(tpl.id)
+        out.append(tpl)
+        if len(out) >= limit:
+            break
+    return out
+
+
+async def review_count(db: AsyncSession, user_id: uuid.UUID, subject_key: str) -> int:
+    return len(await _due_review_templates(db, user_id, subject_key, 50))
+
+
+async def start_review(
+    db: AsyncSession, user_id: uuid.UUID, subject_key: str, count: int = 5
+) -> tuple[PracticeSession, list[PracticeItem]]:
+    """Review session: re-asks the questions the student last got WRONG."""
+    templates = await _due_review_templates(db, user_id, subject_key, count)
+    if not templates:
+        raise NotFound("nada para rever — tudo certo à primeira")
+    sv = await catalog_service.current_version(db, subject_key)
+    session = PracticeSession(
+        user_id=user_id, subject_version_id=sv.id,
+        difficulty=max(t.difficulty for t in templates), status="open",
+    )
+    db.add(session)
+    await db.flush()
+    items = []
+    for i, tpl in enumerate(templates):
+        item = PracticeItem(
+            session_id=session.id, concept_id=tpl.concept_id, question_template_id=tpl.id,
+            kind=tpl.kind, difficulty=tpl.difficulty, payload=_public_payload(tpl.kind, tpl.payload),
+            rubric_id=tpl.rubric_id, ordinal=i,
+        )
+        db.add(item)
+        items.append(item)
+    await db.flush()
+    return session, items
+
+
 async def grade_question(db: AsyncSession, provider: LLMProvider, question_id: uuid.UUID, raw: dict, lang: str = "pt") -> dict:
     """Grade a single answer for flashcard practice — NO progression / EP awarded."""
     q = await db.get(QuestionTemplate, question_id)
@@ -161,9 +245,10 @@ async def submit_answer(
     ep_wrong = template.ep_wrong if template else 0
 
     # grade
+    mcq_payload = None
     if item.kind == "mcq":
-        payload = template.payload if template else item.payload
-        grade: Grade = MCQGrader().grade(raw, payload)
+        mcq_payload = template.payload if template else item.payload
+        grade: Grade = MCQGrader().grade(raw, mcq_payload)
     else:
         rubric = await db.get(Rubric, item.rubric_id) if item.rubric_id else None
         criteria = rubric.criteria if rubric else None
@@ -211,6 +296,8 @@ async def submit_answer(
         rank=res.rank,
         ranked_up=res.ranked_up,
         streak=res.streak,
+        answer_index=mcq_payload.get("answer_index") if mcq_payload else None,
+        why=str(mcq_payload.get("why", "")) if mcq_payload else "",
     )
 
 

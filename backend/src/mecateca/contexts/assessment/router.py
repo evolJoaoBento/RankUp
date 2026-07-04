@@ -21,6 +21,22 @@ from mecateca.shared.lang import norm_lang
 router = APIRouter(tags=["assessment"])
 
 
+@router.get("/practice/review/count")
+async def review_count(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return {"count": await service.review_count(db, user.id, subject)}
+
+
+@router.post("/practice/review", response_model=PracticeSessionOut)
+async def start_review(
+    body: StartPracticeIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)
+):
+    session, items = await service.start_review(db, user.id, body.subject, body.count)
+    return PracticeSessionOut(
+        id=session.id, subject_version_id=session.subject_version_id,
+        difficulty=session.difficulty, items=_items_out(items),
+    )
+
+
 @router.get("/me/results")
 async def my_results(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     return await service.my_results(db, user.id)

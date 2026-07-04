@@ -77,6 +77,32 @@ async def test_my_results_lists_graded_sessions(client, auth):
 
 
 @pytest.mark.asyncio
+async def test_review_resurfaces_wrong_answers(client, auth):
+    r = await client.post(
+        "/api/v1/practice/sessions", headers=auth,
+        json={"subject": "philosophy", "difficulty": 2, "count": 5},
+    )
+    mcq = next(i for i in r.json()["items"] if i["kind"] == "mcq")
+    stem = mcq["payload"]["stem"]
+    # deliberately wrong (index 99 never matches the key)
+    r2 = await client.post(
+        f"/api/v1/practice/items/{mcq['id']}/answer", headers=auth,
+        json={"raw": {"selected_index": 99}},
+    )
+    assert r2.json()["correct"] is False
+    # the miss must reveal the right option + why for corrective feedback
+    assert r2.json()["answer_index"] is not None
+
+    rc = await client.get("/api/v1/practice/review/count?subject=philosophy", headers=auth)
+    assert rc.json()["count"] >= 1
+
+    rev = await client.post("/api/v1/practice/review", headers=auth, json={"subject": "philosophy"})
+    assert rev.status_code == 200
+    stems = [i["payload"].get("stem") or i["payload"].get("prompt") for i in rev.json()["items"]]
+    assert stem in stems  # the missed question came back
+
+
+@pytest.mark.asyncio
 async def test_reasoning_grading_offline(client, auth):
     r = await client.post(
         "/api/v1/practice/sessions",
