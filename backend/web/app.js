@@ -553,6 +553,23 @@ async function refreshChip() {
   window._prog = p;
   await renderRail();
   updateDuelBadge();
+  checkAchievements();
+}
+
+// toast newly unlocked achievements (first run just seeds the snapshot)
+async function checkAchievements() {
+  try {
+    const list = await api("/me/achievements");
+    const prev = new Set(JSON.parse(localStorage.getItem("mt_ach") || "[]"));
+    const unlocked = list.filter((a) => a.unlocked).map((a) => a.key);
+    if (prev.size) {
+      unlocked.filter((k) => !prev.has(k)).forEach((k) => {
+        const meta = ACH_META[k];
+        if (meta) { toast(`🏆 ${t("Conquista desbloqueada")}: ${t(meta[1])}`); try { playPop(); } catch {} }
+      });
+    }
+    localStorage.setItem("mt_ach", JSON.stringify(unlocked));
+  } catch {}
 }
 
 // red counter on the Duelos nav item: invites + duels waiting on me

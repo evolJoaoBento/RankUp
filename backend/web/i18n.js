@@ -262,6 +262,7 @@ window.I18N = (() => {
       "Meu perfil": "My profile",
       "Últimos resultados": "Recent results",
       "Conquistas": "Achievements",
+      "Conquista desbloqueada": "Achievement unlocked",
       "Desbloqueada": "Unlocked",
       "Primeira resposta": "First answer",
       "Responde à tua primeira pergunta.": "Answer your first question.",
