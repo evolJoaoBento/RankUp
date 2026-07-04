@@ -157,6 +157,10 @@ class CardOut(BaseModel):
     options: list[str] = Field(default_factory=list)  # mcq only
 
 
+class AnnouncementIn(BaseModel):
+    text: str = Field(min_length=1, max_length=500)
+
+
 class CreateTestIn(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = ""

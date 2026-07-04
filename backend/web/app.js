@@ -621,6 +621,7 @@ async function vTutor() {
   const v = $("#view");
   v.innerHTML = `
     <div class="view__head"><h1>${t("Tutor Socrático")}</h1><p>${t("Orienta-te a pensar — nunca dá a resposta. As conversas ficam guardadas.")}</p></div>
+    <div id="annBox"></div>
     <div id="revBanner"></div>
     <div class="tutor">
       <aside class="chats">
@@ -642,6 +643,7 @@ async function vTutor() {
   $("#tNew").onclick = () => openMaterialPicker((id) => newTutor(id));
   $("#tPick").onclick = () => openMaterialPicker((id) => newTutor(id));
   $("#chatForm").onsubmit = sendTutor;
+  renderAnnouncements();
   renderReviewBanner();
   await loadChatList();
   if (PENDING_MATERIAL) {  // arrived from Materiais → ground on that material
@@ -925,6 +927,7 @@ async function renderEpLeaderboard() {
   const row = (r, pos, me) => `
       <div class="lbrow ${me ? "is-me" : ""}">
         <span class="lbrow__pos">${pos}</span>
+        ${userAvatar(r, 24)}
         ${rankLogo(r.rank, 26)}
         <span class="lbrow__name">${esc(r.display_name)}</span>
         <span class="lbrow__streak">${r.streak}${icon("flame", 12)}</span>
@@ -1189,6 +1192,38 @@ async function startFocusedPractice(concept) {
     const s = await api("/practice/sessions", { method: "POST", body: { subject: SUBJECT, concept, difficulty: 2, count: 5 } });
     renderRunSession(s, t("Prática focada"));
   } catch (e) { toast(e.message); }
+}
+
+// teacher announcements for the active discipline (Learn view)
+async function renderAnnouncements() {
+  const box = $("#annBox"); if (!box) return;
+  let list = [];
+  try { list = await api(`/subjects/${SUBJECT}/announcements`); } catch {}
+  const teacher = USER.role === "teacher" || USER.role === "admin";
+  if (!list.length && !teacher) { box.innerHTML = ""; return; }
+  const dfmt = (iso) => new Date(iso).toLocaleDateString(I18N.lang === "pt" ? "pt-PT" : I18N.lang);
+  box.innerHTML = `<div class="card anncard">
+    <h3 style="font-size:15px;margin-bottom:8px">📣 ${t("Avisos")}</h3>
+    ${list.slice(0, 5).map((a) => `<div class="ann">
+      ${userAvatar({ avatar: a.avatar, display_name: a.author }, 26)}
+      <div class="ann__b"><p>${esc(a.text)}</p><small>${esc(a.author)} · ${dfmt(a.when)}</small></div>
+      ${(USER.role === "admin" || a.author_id === USER.id) ? `<button class="iconbtn" data-anndel="${a.id}" title="${t("Apagar")}">${icon("trash", 14)}</button>` : ""}
+    </div>`).join("") || `<p class="muted" style="font-size:13px">${t("Sem avisos.")}</p>`}
+    ${teacher ? `<form class="row" id="annForm" style="margin-top:8px">
+      <input id="annText" maxlength="500" placeholder="${t("Escreve um aviso para a turma…")}" style="flex:1">
+      <button class="btn btn--sm">${t("Publicar aviso")}</button></form>` : ""}
+  </div>`;
+  box.querySelectorAll("[data-anndel]").forEach((b) => (b.onclick = async () => {
+    if (!confirm(t("Apagar este aviso?"))) return;
+    try { await api(`/announcements/${b.dataset.anndel}`, { method: "DELETE" }); renderAnnouncements(); }
+    catch (e) { toast(e.message); }
+  }));
+  if ($("#annForm")) $("#annForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const txt = $("#annText").value.trim(); if (!txt) return;
+    try { await api(`/subjects/${SUBJECT}/announcements`, { method: "POST", body: { text: txt } }); renderAnnouncements(); }
+    catch (err) { toast(err.message); }
+  };
 }
 
 // banner on Ranked: questions whose last attempt was wrong
@@ -2106,7 +2141,7 @@ async function renderRanked() {
     ${lb.length ? `<div class="rk__lb">
       <div class="rk__lbtitle">${icon("trophy", 14)} ${t("CLASSIFICAÇÃO")}</div>
       ${lb.slice(0, 6).map((x, i) => `<div class="rk__lbrow ${x.name === USER.display_name ? "is-me" : ""}">
-        <span class="rk__rank">${i + 1}</span><span class="rk__pname">${esc(x.name)}</span>
+        <span class="rk__rank">${i + 1}</span>${userAvatar({ avatar: x.avatar, display_name: x.name }, 22)}<span class="rk__pname">${esc(x.name)}</span>
         <span class="rk__pwl muted">${x.wins}/${x.losses}/${x.draws}</span><span class="rk__prating">${x.rating}</span></div>`).join("")}
     </div>` : ""}`;
   renderMMBox();

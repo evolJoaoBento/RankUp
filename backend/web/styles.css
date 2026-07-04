@@ -178,6 +178,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .chatitem--edit{font:inherit;font-size:14px;border:1px solid var(--gold);outline:none}
 .rail__streak{display:flex;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:700;color:#b8641d;margin-top:4px}
 .uav{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border-radius:50%;border:1px solid var(--gold-soft);background:linear-gradient(135deg,var(--panel),var(--panel2));color:var(--gold);font-family:'Century Gothic','Jost',sans-serif;font-weight:700}
+.anncard{border-color:var(--gold-soft)}
+.ann{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.ann:last-of-type{border-bottom:0}
+.ann__b{flex:1}
+.ann__b p{font-size:14px;margin:0}
+.ann__b small{color:var(--muted);font-size:11.5px}
 .av-pick{display:flex;flex-wrap:wrap;gap:8px}
 .av-sw{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--gold);display:grid;place-items:center;cursor:pointer;font-family:'Century Gothic','Jost',sans-serif;font-weight:700;font-size:16px;transition:.15s}
 .av-sw:hover{border-color:var(--gold);transform:translateY(-1px)}

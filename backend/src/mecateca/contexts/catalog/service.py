@@ -606,3 +606,45 @@ async def graph(db: AsyncSession, key: str) -> tuple[SubjectVersion, list[Concep
         (await db.execute(select(ConceptEdge).where(ConceptEdge.subject_version_id == sv.id))).scalars()
     )
     return sv, concepts, edges
+
+
+# --------------------------------------------------------------------------- #
+# teacher announcements
+# --------------------------------------------------------------------------- #
+async def list_announcements(db: AsyncSession, subject_key: str, limit: int = 10) -> list[dict]:
+    from mecateca.contexts.catalog.models import Announcement
+    from mecateca.contexts.identity.models import User
+
+    subject = await get_subject(db, subject_key)
+    rows = (
+        await db.execute(
+            select(Announcement, User)
+            .outerjoin(User, User.id == Announcement.author_id)
+            .where(Announcement.subject_id == subject.id)
+            .order_by(Announcement.created_at.desc())
+            .limit(limit)
+        )
+    ).all()
+    return [
+        {
+            "id": str(a.id),
+            "text": a.text,
+            "when": a.created_at.isoformat(),
+            "author": u.display_name if u else "?",
+            "author_id": str(a.author_id) if a.author_id else None,
+            "avatar": u.avatar if u else "",
+        }
+        for a, u in rows
+    ]
+
+
+async def post_announcement(db: AsyncSession, subject_key: str, author, text: str) -> dict:
+    from mecateca.contexts.catalog.models import Announcement
+
+    subject = await get_subject(db, subject_key)
+    a = Announcement(subject_id=subject.id, author_id=author.id, text=text.strip())
+    db.add(a)
+    await db.flush()
+    await db.refresh(a)  # created_at comes from the DB server default
+    return {"id": str(a.id), "text": a.text, "when": a.created_at.isoformat(),
+            "author": author.display_name, "author_id": str(author.id), "avatar": author.avatar}

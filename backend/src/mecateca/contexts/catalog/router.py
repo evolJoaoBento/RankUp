@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mecateca.contexts.catalog import pack_loader, service
 from mecateca.contexts.catalog.schemas import (
     AddConceptIn,
+    AnnouncementIn,
     AddMaterialIn,
     AddQuestionIn,
     CardOut,
@@ -33,7 +34,7 @@ from mecateca.contexts.catalog.schemas import (
 from mecateca.contexts.identity.models import User
 from mecateca.db.session import get_db
 from mecateca.deps import current_user, get_llm_provider, require_role
-from mecateca.shared.errors import NotFound
+from mecateca.shared.errors import Forbidden, NotFound
 
 
 async def _authors(db: AsyncSession, ids: list) -> dict:
@@ -289,6 +290,33 @@ async def edit_subject(key: str, body: PatchSubjectIn, db: AsyncSession = Depend
     s = await service.update_subject(db, key, body.name, body.icon)
     sv = await service.current_version(db, key)
     return _subject_out(s, sv)
+
+
+# ---- teacher announcements (per discipline) ----
+@router.get("/subjects/{key}/announcements", dependencies=[Depends(current_user)])
+async def list_announcements(key: str, db: AsyncSession = Depends(get_db)):
+    return await service.list_announcements(db, key)
+
+
+@router.post("/subjects/{key}/announcements")
+async def post_announcement(
+    key: str, body: AnnouncementIn,
+    user: User = Depends(require_role("teacher", "admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    return await service.post_announcement(db, key, user, body.text)
+
+
+@router.delete("/announcements/{ann_id}", status_code=204)
+async def delete_announcement(ann_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    from mecateca.contexts.catalog.models import Announcement
+
+    a = await db.get(Announcement, ann_id)
+    if a is None:
+        raise NotFound("aviso não encontrado")
+    if user.role != "admin" and a.author_id != user.id:
+        raise Forbidden("só o autor ou um admin pode apagar")
+    await db.delete(a)
 
 
 @router.post("/admin/subjects/{key}/concepts", response_model=ConceptOut, dependencies=[Depends(require_role("admin"))])

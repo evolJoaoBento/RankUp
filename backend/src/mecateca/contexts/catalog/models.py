@@ -125,6 +125,20 @@ class MaterialFavorite(Base):
     )
 
 
+class Announcement(PkMixin, TimestampMixin, Base):
+    """Teacher broadcast for a discipline — shows on every student's Learn view."""
+
+    __tablename__ = "announcement"
+
+    subject_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("subject.id", ondelete="CASCADE"), index=True
+    )
+    author_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="SET NULL"), default=None
+    )
+    text: Mapped[str] = mapped_column(String(500))
+
+
 class Test(PkMixin, TimestampMixin, Base):
     """A marketplace test = a named set of questions, authored by a teacher."""
     __tablename__ = "test"

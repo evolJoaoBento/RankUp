@@ -638,7 +638,7 @@ async def leaderboard(db: AsyncSession, subject_key: str, top: int = 20) -> list
     subject = await catalog_service.get_subject(db, subject_key)
     rows = (
         await db.execute(
-            select(DuelRating, User.display_name)
+            select(DuelRating, User.display_name, User.avatar)
             .join(User, User.id == DuelRating.user_id)
             .where(DuelRating.games > 0, DuelRating.subject_id == subject.id)
             .order_by(DuelRating.rating.desc())
@@ -646,8 +646,8 @@ async def leaderboard(db: AsyncSession, subject_key: str, top: int = 20) -> list
         )
     ).all()
     return [
-        {"name": n, "rating": r.rating, "wins": r.wins, "losses": r.losses, "draws": r.draws}
-        for r, n in rows
+        {"name": n, "avatar": av, "rating": r.rating, "wins": r.wins, "losses": r.losses, "draws": r.draws}
+        for r, n, av in rows
     ]
 
 

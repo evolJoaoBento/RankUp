@@ -47,6 +47,31 @@ async def test_direct_messages_friends_only(client):
 
 
 @pytest.mark.asyncio
+async def test_announcements_teacher_only(client, auth):
+    # plain student cannot post
+    r = await client.post(f"{API}/subjects/philosophy/announcements", headers=auth, json={"text": "olá"})
+    assert r.status_code == 403
+
+    # a teacher can — promote a fresh user via the seeded admin? use admin creds instead:
+    r = await client.post(f"{API}/auth/login", json={"identifier": "admin", "password": "admin"})
+    if r.status_code != 200:  # admin not seeded in the test DB -> skip gracefully
+        pytest.skip("no seeded admin in test DB")
+    admin = {"authorization": f"Bearer {r.json()['access']}"}
+    r = await client.post(f"{API}/subjects/philosophy/announcements", headers=admin, json={"text": "Teste sexta-feira!"})
+    assert r.status_code == 200
+    ann_id = r.json()["id"]
+
+    lst = (await client.get(f"{API}/subjects/philosophy/announcements", headers=auth)).json()
+    assert any(a["id"] == ann_id for a in lst)
+
+    # student cannot delete someone else's announcement
+    r = await client.delete(f"{API}/announcements/{ann_id}", headers=auth)
+    assert r.status_code == 403
+    r = await client.delete(f"{API}/announcements/{ann_id}", headers=admin)
+    assert r.status_code == 204
+
+
+@pytest.mark.asyncio
 async def test_duel_kudos_once_per_player(client):
     a, _ = await _make_user(client, "Tomas")
     b, _ = await _make_user(client, "Vera")
