@@ -602,11 +602,12 @@ function go(view) {
 /* ===================================================================== */
 /* TUTOR                                                                 */
 /* ===================================================================== */
-let tutorSid = null, tutorConcepts = [], PENDING_MATERIAL = null, PENDING_PRACTICE = null;
+let tutorSid = null, tutorConcepts = [], PENDING_MATERIAL = null, PENDING_PRACTICE = null, PENDING_REVIEW = false;
 async function vTutor() {
   const v = $("#view");
   v.innerHTML = `
     <div class="view__head"><h1>${t("Tutor Socrático")}</h1><p>${t("Orienta-te a pensar — nunca dá a resposta. As conversas ficam guardadas.")}</p></div>
+    <div id="revBanner"></div>
     <div class="tutor">
       <aside class="chats">
         <button class="btn btn--sm" id="tNew" style="width:100%">${t("+ Nova conversa")}</button>
@@ -627,6 +628,7 @@ async function vTutor() {
   $("#tNew").onclick = () => openMaterialPicker((id) => newTutor(id));
   $("#tPick").onclick = () => openMaterialPicker((id) => newTutor(id));
   $("#chatForm").onsubmit = sendTutor;
+  renderReviewBanner();
   await loadChatList();
   if (PENDING_MATERIAL) {  // arrived from Materiais → ground on that material
     const id = PENDING_MATERIAL; PENDING_MATERIAL = null;
@@ -878,6 +880,7 @@ async function vPractice() {
   renderReviewBanner();
   if (teacher) renderClassView();
   if (PENDING_PRACTICE) { const c = PENDING_PRACTICE; PENDING_PRACTICE = null; startFocusedPractice(c); }
+  if (PENDING_REVIEW) { PENDING_REVIEW = false; startReviewSession(); }
 }
 
 // teacher-only radar: class-wide weakest topics for the active discipline
@@ -1182,7 +1185,10 @@ async function renderReviewBanner() {
   b.innerHTML = c ? `<div class="card revcard">
       <span>${icon("flame", 18)} <b>${t("Tens {n} pergunta(s) para rever", { n: c })}</b> — ${t("erraste-as da última vez.")}</span>
       <button class="btn btn--sm" id="revGo">${t("Rever agora")}</button></div>` : "";
-  if (c) $("#revGo").onclick = startReviewSession;
+  if (c) $("#revGo").onclick = () => {
+    if ($("#run")) startReviewSession();          // already on Ranked
+    else { PENDING_REVIEW = true; go("practice"); }  // e.g. from Learn
+  };
 }
 
 /* ===================================================================== */
