@@ -1323,7 +1323,10 @@ async function reloadEditor() {
     <div class="modal__panel">
       <div class="modal__hd">
         <h3>${t("Editar teste")}</h3>
-        <button class="iconbtn" id="mClose">${icon("plus", 18)}</button>
+        <span class="row" style="gap:8px">
+          <button class="btn btn--ghost btn--sm" id="etPrint">${icon("doc", 14)} ${t("Imprimir")}</button>
+          <button class="iconbtn" id="mClose">${icon("plus", 18)}</button>
+        </span>
       </div>
       <div class="modal__body">
         <div class="mgbox">
@@ -1341,6 +1344,7 @@ async function reloadEditor() {
   $("#mClose").querySelector("svg").style.transform = "rotate(45deg)";
   $("#mClose").onclick = () => { closeModal(); renderTests(true); };
   $("#modal .modal__backdrop").onclick = () => { closeModal(); renderTests(true); };
+  $("#etPrint").onclick = () => printTest(tf);
   $("#etSave").onclick = async () => {
     try {
       await api(`/tests/${_editCtx.testId}`, { method: "PATCH", body: { title: $("#etTitle").value.trim(), description: $("#etDesc").value.trim(), is_public: $("#etPub").checked } });
@@ -1353,6 +1357,38 @@ async function reloadEditor() {
     wireQRow($("#qList").lastElementChild);
   };
   $("#qList").querySelectorAll(".qedit").forEach(wireQRow);
+}
+
+// paper version of a test: questions + optional answer key, straight to print
+function printTest(tf) {
+  const withKey = confirm(t("Incluir chave de correção na última página?"));
+  const letters = "abcdefghij";
+  const qHtml = (q, i) => `
+    <div class="q"><b>${i + 1}.</b> ${esc(q.stem || q.prompt || "")}
+      ${q.kind === "mcq"
+        ? `<ol type="a">${(q.options || []).map((o) => `<li>${esc(o)}</li>`).join("")}</ol>`
+        : `<div class="lines"></div><div class="lines"></div><div class="lines"></div>`}
+    </div>`;
+  const key = withKey
+    ? `<div class="key"><h2>${t("Chave de correção")} — ${esc(tf.title)}</h2><ol>${tf.questions.map((q) =>
+        `<li>${q.kind === "mcq" ? (letters[q.answer_index] ?? "?") : t("resposta aberta")}</li>`).join("")}</ol></div>`
+    : "";
+  const w = window.open("", "_blank");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(tf.title)}</title><style>
+    body{font-family:Georgia,serif;color:#111;margin:2.2cm;font-size:13pt;line-height:1.5}
+    h1{font-size:17pt;margin:0 0 2px} .sub{color:#555;font-size:11pt;margin:0 0 6px}
+    .meta{border-bottom:1.5px solid #111;padding-bottom:8px;margin-bottom:18px;font-size:11pt}
+    .q{margin:0 0 16px;page-break-inside:avoid} ol{margin:6px 0 0 8px}
+    .lines{border-bottom:1px solid #999;height:26px}
+    .key{page-break-before:always}
+  </style></head><body>
+    <h1>${esc(tf.title)}</h1>
+    <p class="sub">${esc(tf.description || "")}</p>
+    <div class="meta">${t("Nome")}: ______________________________ &nbsp;&nbsp; ${t("Data")}: ____ / ____ / ______</div>
+    ${tf.questions.map(qHtml).join("")}
+    ${key}
+  </body></html>`);
+  w.document.close(); w.focus(); w.print();
 }
 
 /* ---- material picker modal (used by Practice) ---- */

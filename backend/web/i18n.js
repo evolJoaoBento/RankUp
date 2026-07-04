@@ -204,6 +204,11 @@ window.I18N = (() => {
       "Respondido ✓": "Answered ✓",
       // test editor
       "Editar teste": "Edit test",
+      "Imprimir": "Print",
+      "Incluir chave de correção na última página?": "Include the answer key on the last page?",
+      "Chave de correção": "Answer key",
+      "resposta aberta": "open answer",
+      "Data": "Date",
       "Título": "Title",
       "Pública (visível a todos)": "Public (visible to everyone)",
       "Guardar detalhes": "Save details",
