@@ -393,6 +393,7 @@ window.I18N = (() => {
       "Conta atualizada": "Account updated",
       "esse nome de utilizador já está ocupado": "that username is already taken",
       "Mensagens": "Messages",
+      "Mensagem": "Message",
       "Avisos": "Announcements",
       "Sem avisos.": "No announcements.",
       "Escreve um aviso para a turma…": "Write an announcement for the class…",

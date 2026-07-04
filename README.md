@@ -43,6 +43,7 @@ Learning sticks better together — and everything social is **friends-only**, w
 - **Profiles with personality**: pick one of 16 line-art avatars (no uploads to moderate), change your display name and claim a unique username
 - **Direct messages** between friends: chat threads with unread badges on the friends list and the account rail
 - **Kudos** 👏: one sportsmanship clap per player after every duel, counted on the profile
+- **Teacher announcements** 📣: per-discipline notices at the top of every student's Learn view
 - **Friends system**: add by email/username, accept/decline, challenge to duels straight from the list
 - **Achievements**: 12 badges (first answer → duel champion) computed live from real activity, with unlock toasts
 

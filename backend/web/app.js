@@ -2434,7 +2434,8 @@ function renderDuelArena(d) {
       : `<button class="btn btn--sm" id="duAgain" data-mode="rematch">${icon("swords", 14)} ${t("Desforra")}</button>`;
     const kudosBtn = d.kudos_given ? `<span class="badge-ok">👏 ${t("Kudos enviados")}</span>`
       : `<button class="btn btn--ghost btn--sm" id="duKudos">👏 ${t("Dar kudos a {name}", { name: esc(d.opponent_name) })}</button>`;
-    body = `${d.ranked ? `<div class="du-ranked-tag">${icon("sparkle", 12)} ${t("Ranked")}</div>` : ""}${score}<div class="du-result du-result--${r}">${icon(r === "win" ? "trophy" : "shield", 30)}<h2>${txt}</h2><p class="muted">${d.my_points}–${d.opp_points}</p>${ratingLine}<div class="row" style="margin-top:12px;justify-content:center;gap:8px">${again}${kudosBtn}</div></div>${hist}`;
+    const msgBtn = `<button class="btn btn--ghost btn--sm" id="duMsg">${icon("chat", 14)} ${t("Mensagem")}</button>`;
+    body = `${d.ranked ? `<div class="du-ranked-tag">${icon("sparkle", 12)} ${t("Ranked")}</div>` : ""}${score}<div class="du-result du-result--${r}">${icon(r === "win" ? "trophy" : "shield", 30)}<h2>${txt}</h2><p class="muted">${d.my_points}–${d.opp_points}</p>${ratingLine}<div class="row" style="margin-top:12px;justify-content:center;gap:8px">${again}${kudosBtn}${d.ranked ? "" : msgBtn}</div></div>${hist}`;
     if (r === "win" && !d.forfeited) { try { playPop(); } catch {} }
     stopDuelPolling();
   }
@@ -2445,6 +2446,7 @@ function renderDuelArena(d) {
     try { await api(`/duels/${d.id}/cancel`, { method: "POST" }); toast(t("Desafio cancelado")); go("duels"); }
     catch (e) { toast(e.message); }
   };
+  if ($("#duMsg")) $("#duMsg").onclick = () => openThread(d.opponent_id, d.opponent_name);
   if ($("#duKudos")) $("#duKudos").onclick = async () => {
     try { await api(`/duels/${d.id}/kudos`, { method: "POST" }); toast(t("Kudos enviados") + " 👏"); _duelSig = ""; pollDuel(); }
     catch (e) { toast(e.message); }
