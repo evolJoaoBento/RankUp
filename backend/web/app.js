@@ -1479,6 +1479,7 @@ async function vProfile() {
   const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
   v.innerHTML = `<div class="view__head"><h1>${t("Meu perfil")}</h1><p>${esc(USER.display_name)} · ${esc(subjName)}</p></div>
     <div class="card" id="pg">…</div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Conquistas")}</h3><div class="ach-grid" id="pach">…</div></div>
     <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Últimos resultados")}</h3><div id="pres">…</div></div>
     <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Histórico de duelos")}</h3><div id="dhist">…</div></div>
     <div class="card"><h3 style="font-size:16px;margin-bottom:10px">${t("Uso da IA")}</h3><div id="us">…</div></div>
@@ -1556,6 +1557,17 @@ async function vProfile() {
     } catch { if ($("#pgSpark")) $("#pgSpark").innerHTML = ""; }
   } catch (e) { $("#pg").innerHTML = `<p class="err">${e.message}</p>`; }
   try {
+    const list = await api("/me/achievements");
+    $("#pach").innerHTML = list.map((ac) => {
+      const [ic, title, desc] = ACH_META[ac.key] || ["star", ac.key, ""];
+      return `<div class="ach ${ac.unlocked ? "" : "ach--locked"}" title="${esc(t(desc))}">
+        <span class="ach__ic">${icon(ic, 22)}</span>
+        <b>${esc(t(title))}</b>
+        <small>${ac.unlocked ? t("Desbloqueada") : `${ac.value}/${ac.target}`}</small>
+      </div>`;
+    }).join("");
+  } catch { $("#pach").innerHTML = `<p class="muted">—</p>`; }
+  try {
     const rs = await api("/me/results");
     const dfmt = (iso) => new Date(iso).toLocaleDateString(I18N.lang === "pt" ? "pt-PT" : I18N.lang);
     $("#pres").innerHTML = rs.length
@@ -1584,6 +1596,22 @@ async function vProfile() {
     </div>`;
   } catch (e) { $("#us").innerHTML = `<p class="err">${e.message}</p>`; }
 }
+// achievement metadata: key -> [icon, title, description] (titles translate via t())
+const ACH_META = {
+  "first-answer": ["check", "Primeira resposta", "Responde à tua primeira pergunta."],
+  "ten-answers": ["pencil", "Estudante ativo", "Responde a 10 perguntas."],
+  "hundred-answers": ["book", "Maratonista", "Responde a 100 perguntas."],
+  "fifty-correct": ["sparkle", "Meio século", "Acerta 50 respostas."],
+  "perfect-test": ["star", "Perfecionista", "Termina um teste (5+ perguntas) com tudo certo."],
+  "streak-5": ["flame", "Em chamas", "Acerta 5 respostas seguidas."],
+  "first-duel": ["swords", "Duelista", "Completa o teu primeiro duelo."],
+  "duel-winner": ["trophy", "Vencedor", "Ganha um duelo."],
+  "duel-champion": ["shield", "Campeão", "Ganha 5 duelos."],
+  "ep-100": ["compass", "A subir", "Chega a 100 EP numa disciplina."],
+  "ep-500": ["globe", "Veterano", "Chega a 500 EP numa disciplina."],
+  "two-subjects": ["scales", "Explorador", "Ganha EP em 2 disciplinas."],
+};
+
 let CONCEPT_NAMES = {};
 function conceptName(id) { return esc(CONCEPT_NAMES[id] || id.slice(0, 8)); }
 

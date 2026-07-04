@@ -177,6 +177,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .toolrow{display:flex;align-items:center;gap:12px;margin:14px 0 0}
 .chatitem--edit{font:inherit;font-size:14px;border:1px solid var(--gold);outline:none}
 .rail__streak{display:flex;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:700;color:#b8641d;margin-top:4px}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ach{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 10px}
+.ach__ic{color:var(--gold)}
+.ach b{font-size:13px}
+.ach small{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.ach--locked{opacity:.5;filter:grayscale(.8)}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .spark{display:flex;align-items:flex-end;gap:4px;height:58px;max-width:520px;padding:4px 0}
 .spark__bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--gold),var(--celest));min-height:3px}
 .spark__bar--zero{background:var(--panel2)}
