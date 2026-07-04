@@ -13,8 +13,16 @@ RankUp is a gamified learning platform for schools. Students study with an AI So
 ### 🧠 Socratic AI Tutor
 A chat tutor that never gives the answer — it guides the student towards it. Conversations are grounded in teacher-approved study materials, saved per subject, renamable in place, and recoverable for 6 months after deletion. Empty chats offer quick-start prompts.
 
+### 🔁 A real learning loop
+Getting a question wrong is where RankUp works hardest:
+
+- Wrong MCQs **reveal the correct option and explain why** on the spot
+- **Review mode** resurfaces the questions whose *latest* attempt was wrong (oldest gap first) — a banner on Learn and Ranked launches a 5-question review run
+- Weak topics on the profile have a **one-click focused practice** button
+- A **daily goal** ("Hoje: n/5") and correct-answer **streaks** keep the habit going
+
 ### 🏆 Ranked test marketplace
-Teachers (or the AI) create tests; students take them and earn EP for their reasoning. Tests are linked to the materials that ground them, searchable, and show who submitted and who approved each one. Test runs have a live progress bar and completion summary; every subject has an EP ladder that always shows your own position. Flashcard decks flip on click (or spacebar) with full keyboard navigation.
+Teachers (or the AI) create tests; students take them and earn EP for their reasoning. Tests are linked to the materials that ground them, searchable, and show who submitted and who approved each one. Test runs shuffle question order per attempt, show a live progress bar and completion summary, and can be retaken in one click; every subject has an EP ladder that always shows your own position. Flashcard decks flip on click (or spacebar) with full keyboard navigation. Teachers can **print any test** as a paper sheet with an optional answer key.
 
 ![Ranked](docs/screenshots/practice.png)
 
@@ -29,13 +37,22 @@ Two players pick one material each from the same discipline and take turns autho
 
 ![Duels](docs/screenshots/duels.png)
 
+### 🧑‍🤝‍🧑 Community
+Learning sticks better together — and everything social is **friends-only**, which keeps it school-safe:
+
+- **Profiles with personality**: pick one of 16 line-art avatars (no uploads to moderate), change your display name and claim a unique username
+- **Direct messages** between friends: chat threads with unread badges on the friends list and the account rail
+- **Kudos** 👏: one sportsmanship clap per player after every duel, counted on the profile
+- **Friends system**: add by email/username, accept/decline, challenge to duels straight from the list
+- **Achievements**: 12 badges (first answer → duel champion) computed live from real activity, with unlock toasts
+
 ### 📚 Materials
 Study references that feed the tutor and ground the tests. Students can submit materials; teachers and admins approve them. Every material shows its author and approver.
 
 ![Materials](docs/screenshots/materials.png)
 
 ### 📈 Progression & profile
-Per-subject EP, rank badges with unlockable background colours, streaks, weak-topic detection, a 14-day EP chart, recent test results, duel history and per-discipline Elo record. Teachers get a class-wide weak-topic radar and per-test stats.
+Per-subject EP, rank badges with unlockable background colours, streaks, weak-topic detection, a 14-day EP chart, recent test results, achievements, kudos, duel history and per-discipline Elo record. Teachers get a class-wide weak-topic radar and per-test stats (attempts, students, % correct).
 
 ![Profile](docs/screenshots/profile.png)
 
@@ -59,8 +76,8 @@ backend/
 │   │   ├── assessment/    # practice sessions, AI grading
 │   │   ├── progression/   # EP, ranks, streaks, leaderboards
 │   │   ├── metering/      # token usage + cost quotas
-│   │   ├── social/        # friends
-│   │   └── duels/         # duel state machine, Elo, matchmaking, AI judge
+│   │   ├── social/        # friends + direct messages
+│   │   └── duels/         # duel state machine, Elo, matchmaking, AI judge, kudos
 │   ├── adapters/llm/      # pluggable LLM providers
 │   └── main.py            # FastAPI app + advisory-locked startup migrations
 ├── web/                   # vanilla JS SPA (no build step)
@@ -68,9 +85,10 @@ backend/
 └── packs/                 # subject content packs (YAML)
 ```
 
-- **Stack:** FastAPI · SQLAlchemy 2 (async) · PostgreSQL 16 · Alembic · vanilla JS SPA
+- **Stack:** FastAPI · SQLAlchemy 2 (async) · PostgreSQL 16 · Alembic · vanilla JS SPA (installable PWA with an offline app shell)
 - **LLM backends** (`MECATECA_LLM_BACKEND`): `gateway` (OpenAI-compatible, e.g. a Claude Code gateway), `anthropic`, `ollama` (local), or `fake` (deterministic, for tests)
-- Multi-instance safe: startup migrations serialized with a Postgres advisory lock; DB-backed login rate limiting; atomic row-claims prevent double-judging duels
+- Multi-instance safe: startup migrations serialized with a Postgres advisory lock; DB-backed rate limiting on login *and* registration (a successful login clears the shared-IP window, so a classroom NAT never locks out); atomic row-claims prevent double-judging duels; a background sweeper resolves abandoned duel deadlines
+- Fully subject-agnostic — disciplines are created in the admin panel or imported as YAML packs; the Philosophy demo seed can be disabled (`MECATECA_SEED_DEMO=0`)
 
 ## Quick start
 

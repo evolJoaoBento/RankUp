@@ -13,6 +13,18 @@ class FriendOut(BaseModel):
     user_id: uuid.UUID
     display_name: str
     username: str | None = None
+    avatar: str = ""
+
+
+class MessageIn(BaseModel):
+    text: str
+
+
+class MessageOut(BaseModel):
+    id: uuid.UUID
+    from_id: uuid.UUID
+    text: str
+    created_at: str
 
 
 class FriendRequestOut(BaseModel):

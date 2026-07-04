@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mecateca.contexts.identity.models import User
 from mecateca.contexts.social import service
-from mecateca.contexts.social.schemas import FriendRequestIn, FriendsView
+from mecateca.contexts.social.schemas import FriendRequestIn, FriendsView, MessageIn, MessageOut
 from mecateca.db.session import get_db
 from mecateca.deps import current_user
 
@@ -35,6 +35,26 @@ async def accept(req_id: uuid.UUID, user: User = Depends(current_user), db: Asyn
 async def decline(req_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     await service.decline(db, user, req_id)
     return await service.overview(db, user)
+
+
+# ---- direct messages (friends only) ----
+def _msg_out(m) -> MessageOut:
+    return MessageOut(id=m.id, from_id=m.from_id, text=m.text, created_at=m.created_at.isoformat())
+
+
+@router.get("/messages/unread")
+async def unread(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.unread(db, user)
+
+
+@router.get("/messages/{other_id}", response_model=list[MessageOut])
+async def thread(other_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return [_msg_out(m) for m in await service.thread(db, user, other_id)]
+
+
+@router.post("/messages/{other_id}", response_model=MessageOut)
+async def send(other_id: uuid.UUID, body: MessageIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return _msg_out(await service.send_message(db, user, other_id, body.text))
 
 
 @router.delete("/friends/{other_id}", response_model=FriendsView)

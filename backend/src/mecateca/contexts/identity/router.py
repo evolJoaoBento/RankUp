@@ -17,6 +17,7 @@ from mecateca.contexts.identity.schemas import (
     RefreshIn,
     RegisterIn,
     TokenPair,
+    UpdateMeIn,
     UpdateUserIn,
     UserOut,
 )
@@ -52,6 +53,11 @@ async def refresh(body: RefreshIn, db: AsyncSession = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 async def me(user: User = Depends(current_user)):
     return user
+
+
+@router.patch("/me", response_model=UserOut)
+async def update_me(body: UpdateMeIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.update_me(db, user, body.display_name, body.username, body.avatar)
 
 
 @router.post("/me/password", status_code=204)

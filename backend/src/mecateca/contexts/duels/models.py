@@ -49,6 +49,9 @@ class Duel(PkMixin, TimestampMixin, Base):
     forfeited_by: Mapped[uuid.UUID | None] = mapped_column(default=None)
 
     ranked: Mapped[bool] = mapped_column(Boolean, default=False)
+    # post-game sportsmanship: each side may send one "kudos" to the other
+    kudos_challenger: Mapped[bool] = mapped_column(Boolean, default=False)  # challenger -> opponent
+    kudos_opponent: Mapped[bool] = mapped_column(Boolean, default=False)    # opponent -> challenger
     challenger_rating_delta: Mapped[int] = mapped_column(Integer, default=0)
     opponent_rating_delta: Mapped[int] = mapped_column(Integer, default=0)
 

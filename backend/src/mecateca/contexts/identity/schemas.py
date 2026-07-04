@@ -40,6 +40,13 @@ class UserOut(BaseModel):
     plan: str
     locale: str
     background: str | None = None
+    avatar: str = ""
+
+
+class UpdateMeIn(BaseModel):
+    display_name: str | None = Field(None, min_length=1, max_length=60)
+    username: str | None = Field(None, min_length=3, max_length=20, pattern=r"^[a-z0-9_.-]+$")
+    avatar: str | None = Field(None, max_length=24)
 
 
 class AdminUserOut(BaseModel):

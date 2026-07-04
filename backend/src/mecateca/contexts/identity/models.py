@@ -20,6 +20,7 @@ class User(PkMixin, TimestampMixin, Base):
     locale: Mapped[str] = mapped_column(String(8), default="pt-PT")
     plan: Mapped[str] = mapped_column(String(16), default="free")  # free|pro
     background: Mapped[str | None] = mapped_column(String(32), default=None)  # chosen rank-colour theme
+    avatar: Mapped[str] = mapped_column(String(24), default="")  # preset SVG avatar key ("" = initial)
 
 
 class RefreshToken(PkMixin, TimestampMixin, Base):

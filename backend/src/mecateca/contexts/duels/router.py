@@ -109,6 +109,17 @@ async def submit_answer(
     return {"ok": True}
 
 
+@router.post("/duels/{duel_id}/kudos")
+async def duel_kudos(duel_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    await service.give_kudos(db, user, duel_id)
+    return {"ok": True}
+
+
+@router.get("/me/kudos")
+async def my_kudos(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return {"received": await service.kudos_received(db, user.id)}
+
+
 @router.post("/duels/{duel_id}/forfeit")
 async def forfeit_duel(duel_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     await service.forfeit(db, user, duel_id)

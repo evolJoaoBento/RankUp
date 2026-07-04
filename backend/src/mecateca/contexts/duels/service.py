@@ -326,6 +326,42 @@ async def _tick(db: AsyncSession, provider: LLMProvider, duel: Duel) -> None:
         await _judge_round(db, provider, duel, rnd)
 
 
+async def give_kudos(db: AsyncSession, user: User, duel_id: uuid.UUID) -> None:
+    """One post-game 👏 per player per duel — costs nothing, builds sportsmanship."""
+    duel = await _owned(db, duel_id, user)
+    if duel.status not in ("complete", "forfeited"):
+        raise AppError("o duelo ainda não terminou")
+    if user.id == duel.challenger_id:
+        if duel.kudos_challenger:
+            raise AppError("já deste kudos neste duelo")
+        duel.kudos_challenger = True
+    else:
+        if duel.kudos_opponent:
+            raise AppError("já deste kudos neste duelo")
+        duel.kudos_opponent = True
+    await db.flush()
+
+
+async def kudos_received(db: AsyncSession, user_id: uuid.UUID) -> int:
+    from sqlalchemy import func
+
+    a = (
+        await db.execute(
+            select(func.count()).select_from(Duel).where(
+                Duel.challenger_id == user_id, Duel.kudos_opponent.is_(True)
+            )
+        )
+    ).scalar_one()
+    b = (
+        await db.execute(
+            select(func.count()).select_from(Duel).where(
+                Duel.opponent_id == user_id, Duel.kudos_challenger.is_(True)
+            )
+        )
+    ).scalar_one()
+    return int(a) + int(b)
+
+
 async def tick_expired(db: AsyncSession, provider: LLMProvider, limit: int = 20) -> int:
     """Background sweeper: resolve duels whose phase deadline passed even if
     neither player has the app open (reads do this lazily; this covers the rest)."""
@@ -452,6 +488,7 @@ async def get_view(db: AsyncSession, provider: LLMProvider, user: User, duel_id:
         "my_role": "challenger" if me_is_challenger else "opponent",
         "opponent_name": names.get(_other(duel, user.id), "?"),
         "opponent_id": str(_other(duel, user.id)),
+        "opponent_avatar": getattr(await db.get(User, _other(duel, user.id)), "avatar", ""),
         "my_name": names.get(user.id, "?"),
         "my_points": my_points,
         "opp_points": opp_points,
@@ -471,6 +508,7 @@ async def get_view(db: AsyncSession, provider: LLMProvider, user: User, duel_id:
         "forfeited": duel.status == "forfeited",
         "i_forfeited": duel.forfeited_by == user.id if duel.forfeited_by else False,
         "ranked": duel.ranked,
+        "kudos_given": duel.kudos_challenger if me_is_challenger else duel.kudos_opponent,
         "rating_delta": (
             (duel.challenger_rating_delta if me_is_challenger else duel.opponent_rating_delta)
             if (duel.ranked and duel.status in ("complete", "forfeited")) else None

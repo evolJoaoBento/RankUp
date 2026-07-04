@@ -56,6 +56,26 @@ async def clear_login_attempts(ip: str) -> None:
         await db.commit()
 
 
+async def update_me(
+    db: AsyncSession, user: User,
+    display_name: str | None, username: str | None, avatar: str | None,
+) -> User:
+    if display_name is not None:
+        user.display_name = display_name.strip()
+    if username is not None:
+        uname = username.strip().lower()
+        taken = (
+            await db.execute(select(User).where(User.username == uname, User.id != user.id))
+        ).scalar_one_or_none()
+        if taken is not None:
+            raise Conflict("esse nome de utilizador já está ocupado")
+        user.username = uname
+    if avatar is not None:
+        user.avatar = avatar.strip()
+    await db.flush()
+    return user
+
+
 async def get_by_email(db: AsyncSession, email: str) -> User | None:
     res = await db.execute(select(User).where(User.email == email.lower()))
     return res.scalar_one_or_none()
