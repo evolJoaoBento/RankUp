@@ -182,6 +182,7 @@ window.I18N = (() => {
       "Rever mais": "Review more",
       "Concluir ✓": "Finish ✓",
       "Nada para rever — tudo em dia!": "Nothing to review — all caught up!",
+      "Ainda sem classificação — responde a perguntas para entrar.": "No standings yet — answer questions to get on the board.",
       "Prática focada": "Focused practice",
       "Tens {n} pergunta(s) para rever": "You have {n} question(s) to review",
       "erraste-as da última vez.": "you got them wrong last time.",

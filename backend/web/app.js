@@ -869,9 +869,11 @@ async function vPractice() {
   const v = $("#view");
   const teacher = USER.role === "teacher" || USER.role === "admin";
   v.innerHTML = `
-    <div class="view__head"><h1>${t("Ranked")}</h1><p>${t("Escolhe um teste do marketplace. EP ganha-se pelo raciocínio, não só pela resposta certa.")}</p></div>
+    <div class="view__head" style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap">
+      <div><h1>${t("Ranked")}</h1><p>${t("Escolhe um teste do marketplace. EP ganha-se pelo raciocínio, não só pela resposta certa.")}</p></div>
+      <button class="btn btn--ghost btn--sm" id="lbOpen">${icon("trophy", 15)} ${t("Classificação")}</button>
+    </div>
     <div id="revBanner"></div>
-    <div class="card lbcard" id="epLb" style="display:none"></div>
     ${teacher ? `<div class="card" id="classCard" style="display:none"></div>` : ""}
     <div class="card">
       <div class="row" style="justify-content:space-between"><h3 style="font-size:16px">${t("Marketplace de testes")}</h3>
@@ -933,7 +935,7 @@ async function vPractice() {
     };
   }
   renderTests(teacher);
-  renderEpLeaderboard();
+  $("#lbOpen").onclick = openLeaderboard;
   renderReviewBanner();
   if (teacher) renderClassView();
   if (PENDING_PRACTICE) { const c = PENDING_PRACTICE; PENDING_PRACTICE = null; startFocusedPractice(c); }
@@ -957,14 +959,22 @@ async function renderClassView() {
     }).join("")}</table>`;
 }
 
-// per-subject EP ladder shown on the Ranked view
-async function renderEpLeaderboard() {
+// per-subject EP ladder — modal opened from the Ranked view button
+async function openLeaderboard() {
+  const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
+  $("#modal").innerHTML = `
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel" style="max-width:480px">
+      <div class="modal__hd"><h3>${icon("trophy", 16)} ${t("Classificação")} · ${esc(subjName)}</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__body" id="lbBody"><p class="muted">${t("A carregar…")}</p></div>
+    </div>`;
+  $("#modal").classList.add("show");
+  $("#mClose").querySelector("svg").style.transform = "rotate(45deg)";
+  $("#mClose").onclick = closeModal; $("#modal .modal__backdrop").onclick = closeModal;
   let lb = [];
   try { lb = await api(`/leaderboards/${SUBJECT}?limit=10`); } catch {}
-  const box = $("#epLb");
-  if (!box || !lb.length) return;
-  const subjName = (SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT;
-  box.style.display = "";
+  const body = $("#lbBody"); if (!body) return;
+  if (!lb.length) { body.innerHTML = `<p class="muted">${t("Ainda sem classificação — responde a perguntas para entrar.")}</p>`; return; }
   const row = (r, pos, me) => `
       <div class="lbrow ${me ? "is-me" : ""}">
         <span class="lbrow__pos">${pos}</span>
@@ -981,9 +991,7 @@ async function renderEpLeaderboard() {
       if (me.position) html += `<div class="lbrow lbrow--gap">…</div>` + row({ ...me, display_name: USER.display_name }, me.position, true);
     } catch {}
   }
-  box.innerHTML = `
-    <h3 style="font-size:16px;margin-bottom:10px">${icon("trophy", 16)} ${t("Classificação")} · ${esc(subjName)}</h3>
-    <div class="lbrows">${html}</div>`;
+  body.innerHTML = `<div class="lbrows">${html}</div>`;
 }
 
 async function renderTests(teacher) {
