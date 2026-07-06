@@ -511,7 +511,9 @@ async function renderRail() {
     mountFriends(fr.querySelector(".frcard"));
     $("#logout").style.display = "";
   } else {
-    top.innerHTML = `<div class="rail__avatar" title="${esc(USER.display_name)}" style="position:relative">${rankLogo(p.rank, 44, USER.background)}<span class="nav__dot" id="railDm" ${!(window._unread || {}).total ? "hidden" : ""} style="top:-2px;right:-4px">✉</span></div>
+    top.innerHTML = `<div class="rail__avatar" title="${esc(USER.display_name)}" style="position:relative">
+        <span class="portrait portrait--mini">${userAvatar(USER, 44)}<span class="portrait__rank">${rankLogo(p.rank, 22, USER.background)}</span></span>
+        <span class="nav__dot" id="railDm" ${!(window._unread || {}).total ? "hidden" : ""} style="top:-2px;right:-4px">✉</span></div>
       ${p.streak ? `<div class="rail__streak" title="${t("Sequência: {n} certas seguidas", { n: p.streak })}">${p.streak}${icon("flame", 12)}</div>` : ""}`;
     let d = { friends: [] };
     try { d = await api("/friends"); } catch {}
