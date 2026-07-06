@@ -63,7 +63,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .rail:not(.open){cursor:pointer}
 .rail:not(.open):hover{border-left-color:var(--gold);box-shadow:-18px 0 50px -34px rgba(63,147,184,.7)}
 .rail.open{width:330px;max-width:92vw;padding:16px;overflow-y:auto}
-.rail__top{display:flex;justify-content:center}
+.rail__top{display:flex;flex-direction:column;align-items:center}
 .rail__avatar{display:grid;place-items:center}
 .rail__avatar .rlogo{filter:drop-shadow(0 6px 12px rgba(63,147,184,.4))}
 .rail__friends{display:flex;flex-direction:column;gap:8px;align-items:center;overflow-y:auto;flex:0 1 auto;margin:0 -11px;padding:6px 11px}
