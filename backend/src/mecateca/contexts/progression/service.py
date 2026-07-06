@@ -46,6 +46,48 @@ async def admin_set_ep(db: AsyncSession, user_id: uuid.UUID, subject_key: str, x
     return {"xp": prog.xp, "rank": prog.rank}
 
 
+async def enrollments(db: AsyncSession, user_id: uuid.UUID) -> list[dict]:
+    """Disciplines the user is enrolled in (has a progress row for), with rank/EP."""
+    from mecateca.contexts.catalog.models import Subject
+
+    season = await _all_time(db)
+    if season is None:
+        return []
+    rows = (
+        await db.execute(
+            select(UserSubjectProgress, Subject)
+            .join(Subject, Subject.id == UserSubjectProgress.subject_id)
+            .where(UserSubjectProgress.user_id == user_id, UserSubjectProgress.season_id == season.id)
+            .order_by(desc(UserSubjectProgress.xp))
+        )
+    ).all()
+    return [
+        {"key": s.key, "name": s.name, "icon": s.icon, "xp": p.xp, "rank": p.rank, "streak": p.streak}
+        for p, s in rows
+    ]
+
+
+async def enroll(db: AsyncSession, user_id: uuid.UUID, subject_key: str) -> dict:
+    """Explicit enrollment: create the progress row at 0 EP if it doesn't exist."""
+    from mecateca.contexts.catalog.models import SubjectVersion
+    from mecateca.contexts.progression import tiers as tiers_mod
+    from mecateca.contexts.progression.projector import _default_season
+
+    subject = await catalog_service.get_subject(db, subject_key)
+    sv = await db.get(SubjectVersion, subject.current_version_id) if subject.current_version_id else None
+    tiers = await tiers_mod.get_tiers(db, sv.progression_profile if sv else "standard")
+    season = await _default_season(db)
+    prog = await db.get(UserSubjectProgress, (user_id, subject.id, season.id))
+    if prog is None:
+        prog = UserSubjectProgress(
+            user_id=user_id, subject_id=subject.id, season_id=season.id, rank=tiers[0][0]
+        )
+        db.add(prog)
+        await db.flush()
+    return {"key": subject.key, "name": subject.name, "icon": subject.icon,
+            "xp": prog.xp, "rank": prog.rank, "streak": prog.streak}
+
+
 async def progress(db: AsyncSession, user_id: uuid.UUID, subject_key: str) -> dict:
     from mecateca.contexts.catalog.models import SubjectVersion
     from mecateca.contexts.progression import tiers as tiers_mod

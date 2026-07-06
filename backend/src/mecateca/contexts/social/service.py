@@ -185,9 +185,13 @@ async def public_profile(db: AsyncSession, me: User, other_id: uuid.UUID, subjec
         except Exception:  # unknown subject -> just omit
             prog = None
 
+    from mecateca.contexts.progression import service as prog_service2
+    subjects = await prog_service2.enrollments(db, other_id)
+
     rel = await status_between(db, me.id, other_id)
     return {
         "user_id": str(u.id),
+        "subjects": subjects,
         "display_name": u.display_name,
         "username": u.username,
         "avatar": u.avatar,

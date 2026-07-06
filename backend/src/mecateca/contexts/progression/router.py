@@ -47,6 +47,16 @@ async def class_topics(subject: str, db: AsyncSession = Depends(get_db)):
     return await service.class_weak_topics(db, subject)
 
 
+@router.get("/me/subjects")
+async def my_subjects(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.enrollments(db, user.id)
+
+
+@router.post("/me/subjects/{subject}")
+async def enroll_subject(subject: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.enroll(db, user.id, subject)
+
+
 @router.get("/me/achievements")
 async def my_achievements(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     from mecateca.contexts.progression import achievements

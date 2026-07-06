@@ -496,14 +496,16 @@ async function renderRail() {
   const p = window._prog || { rank: (RANKS[0] || ["Wood"])[0], xp: 0, streak: 0 };
   const top = $("#railTop"), fr = $("#railFriends");
   if (_railOpen) {
-    top.innerHTML = `<button class="umprofile" id="umProfileBtn">
-      ${rankLogo(p.rank, 52, USER.background)}
-      <span class="umprofile__info">
-        <b>${esc(USER.display_name)}</b>
-        <span class="muted" style="display:inline-flex;align-items:center;gap:5px;font-size:13px">${p.rank} · ${p.xp} EP · ${p.streak}${icon("flame", 13)}</span>
-        <span class="muted" style="font-size:12.5px" title="${t("Objetivo diário: 5 respostas")}">🎯 ${t("Hoje")}: ${Math.min(p.answers_today || 0, 5)}/5${(p.answers_today || 0) >= 5 ? " ✓" : ""}</span>
-        <span class="umprofile__link">${t("Ver perfil →")}</span>
-      </span></button>`;
+    top.innerHTML = `<button class="umprofile umprofile--big" id="umProfileBtn">
+      <span class="portrait">
+        ${userAvatar(USER, 96)}
+        <span class="portrait__rank">${rankLogo(p.rank, 42, USER.background)}</span>
+      </span>
+      <b class="umprofile__name">${esc(USER.display_name)}</b>
+      <span class="muted" style="display:inline-flex;align-items:center;gap:5px;font-size:13px">${p.rank} · ${p.xp} EP · ${p.streak}${icon("flame", 13)}</span>
+      <span class="muted" style="font-size:12.5px" title="${t("Objetivo diário: 5 respostas")}">🎯 ${t("Hoje")}: ${Math.min(p.answers_today || 0, 5)}/5${(p.answers_today || 0) >= 5 ? " ✓" : ""}</span>
+      <span class="umprofile__link">${t("Ver perfil →")}</span>
+    </button>`;
     $("#umProfileBtn").onclick = () => go("profile");
     fr.innerHTML = friendsCard();
     mountFriends(fr.querySelector(".frcard"));
@@ -536,24 +538,60 @@ async function boot() {
   go("tutor");
 }
 
+let MY_SUBJECTS = [];
 async function loadSubjects() {
   try { SUBJECTS = await api("/subjects"); } catch { SUBJECTS = []; }
-  if (SUBJECTS.length && !SUBJECTS.some((s) => s.key === SUBJECT)) SUBJECT = SUBJECTS[0].key;
+  try { MY_SUBJECTS = await api("/me/subjects"); } catch { MY_SUBJECTS = []; }
+  if (!MY_SUBJECTS.length && SUBJECTS.length) {
+    // first login: enroll into the first discipline so the switcher isn't empty
+    try { MY_SUBJECTS = [await api(`/me/subjects/${SUBJECTS[0].key}`, { method: "POST" })]; } catch {}
+  }
+  const mine = MY_SUBJECTS.length ? MY_SUBJECTS : SUBJECTS;
+  if (mine.length && !mine.some((s) => s.key === SUBJECT)) SUBJECT = mine[0].key;
   const sw = $("#subjSel");
-  const cur = SUBJECTS.find((s) => s.key === SUBJECT) || SUBJECTS[0] || { name: "—", icon: "" };
+  const cur = mine.find((s) => s.key === SUBJECT) || mine[0] || { name: "—", icon: "" };
+  const canEnroll = SUBJECTS.some((s) => !mine.some((m) => m.key === s.key));
   sw.innerHTML = `
     <button class="subjsw__btn" id="subjBtn">${subjectIcon(cur.icon, 16)}<span>${esc(cur.name)}</span>${icon("chevron", 14)}</button>
-    <div class="subjsw__menu" id="subjMenu" hidden>${SUBJECTS.map((s) => `<button class="subjsw__item ${s.key === SUBJECT ? "is-active" : ""}" data-key="${s.key}">${subjectIcon(s.icon, 16)}<span>${esc(s.name)}</span></button>`).join("")}</div>`;
+    <div class="subjsw__menu" id="subjMenu" hidden>${mine.map((s) => `<button class="subjsw__item ${s.key === SUBJECT ? "is-active" : ""}" data-key="${s.key}">${subjectIcon(s.icon, 16)}<span>${esc(s.name)}</span></button>`).join("")}
+      ${canEnroll ? `<button class="subjsw__item subjsw__item--enroll" id="subjEnroll">${icon("plus", 16)}<span>${t("Inscrever-me numa disciplina…")}</span></button>` : ""}</div>`;
   $("#subjBtn").onclick = (e) => { e.stopPropagation(); const m = $("#subjMenu"); m.hidden = !m.hidden; };
-  $("#subjMenu").querySelectorAll(".subjsw__item").forEach((b) => (b.onclick = () => {
+  $("#subjMenu").querySelectorAll(".subjsw__item[data-key]").forEach((b) => (b.onclick = () => {
     $("#subjMenu").hidden = true;
     if (b.dataset.key !== SUBJECT) { SUBJECT = b.dataset.key; localStorage.setItem("mt_subject", SUBJECT); tutorConcepts = []; CONCEPT_NAMES = {}; preloadConcepts(); }
     loadSubjects(); refreshChip(); go(CURRENT_VIEW);
   }));
+  if ($("#subjEnroll")) $("#subjEnroll").onclick = () => { $("#subjMenu").hidden = true; openEnrollModal(); };
   if (!window._subjOutsideWired) {
     document.addEventListener("click", () => { const m = $("#subjMenu"); if (m && !m.hidden) m.hidden = true; });
     window._subjOutsideWired = true;
   }
+}
+
+// enroll into more disciplines (creates the 0-EP progress row)
+function openEnrollModal() {
+  const enrolled = new Set(MY_SUBJECTS.map((s) => s.key));
+  const avail = SUBJECTS.filter((s) => !enrolled.has(s.key));
+  $("#modal").innerHTML = `
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel" style="max-width:400px">
+      <div class="modal__hd"><h3>${t("Inscrever-me numa disciplina")}</h3><button class="iconbtn" id="mClose">${icon("plus", 18)}</button></div>
+      <div class="modal__body"><div class="subjpick">
+        ${avail.map((s) => `<button class="subjpick__it" data-enroll="${s.key}">${subjectIcon(s.icon, 18)}<span>${esc(s.name)}</span><span class="muted" style="margin-left:auto;font-size:12.5px">${t("Inscrever")}</span></button>`).join("") || `<p class="muted">${t("Já estás inscrito em todas as disciplinas.")}</p>`}
+      </div></div>
+    </div>`;
+  $("#modal").classList.add("show");
+  $("#mClose").querySelector("svg").style.transform = "rotate(45deg)";
+  $("#mClose").onclick = closeModal; $("#modal .modal__backdrop").onclick = closeModal;
+  $("#modal").querySelectorAll("[data-enroll]").forEach((b) => (b.onclick = async () => {
+    try {
+      await api(`/me/subjects/${b.dataset.enroll}`, { method: "POST" });
+      closeModal();
+      SUBJECT = b.dataset.enroll; localStorage.setItem("mt_subject", SUBJECT);
+      toast(t("Inscrito!") + " 🎉");
+      await loadSubjects(); refreshChip(); go(CURRENT_VIEW);
+    } catch (e) { toast(e.message); }
+  }));
 }
 
 async function refreshChip() {
@@ -2346,11 +2384,21 @@ async function openUserProfile(uid) {
         <span class="row" style="margin-left:auto;gap:8px">${actions}</span>
       </div>
       <div class="stat" style="margin-top:16px">
-        ${p.rank != null ? `<div><span class="label">${esc((SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT)}</span><b style="display:inline-flex;align-items:center;gap:6px">${rankLogo(p.rank, 26)} ${p.rank} · ${p.xp} EP</b></div>` : ""}
         <div><span class="label">${t("Duelos")} ${t("V / D / E")}</span><b>${p.duel_wins} / ${p.duel_losses} / ${p.duel_draws}</b></div>
         <div><span class="label">👏 Kudos</span><b>${p.kudos}</b></div>
         <div><span class="label">${t("Conquistas")}</span><b>${p.achievements_unlocked}/${p.achievements_total}</b></div>
       </div>
+      <h3 style="margin:18px 0 8px;font-size:16px">${t("Disciplinas")}</h3>
+      ${(p.subjects || []).length
+        ? `<div class="lbrows">${p.subjects.map((s) => `
+            <div class="lbrow">
+              ${subjectIcon(s.icon, 18)}
+              <span class="lbrow__name">${esc(s.name)}</span>
+              ${rankLogo(s.rank, 26)}
+              <span class="muted" style="font-size:13px">${s.rank}</span>
+              <span class="lbrow__ep">${s.xp} EP</span>
+            </div>`).join("")}</div>`
+        : `<p class="muted">${t("Ainda não está inscrito em nenhuma disciplina.")}</p>`}
     </div>`;
   $("#upBack").onclick = () => go("duels");
   if ($("#upAdd")) $("#upAdd").onclick = async () => {
