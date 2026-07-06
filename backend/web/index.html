@@ -7,11 +7,11 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#3f93b8" />
-<script src="/theme.js?v=1"></script>
+<script src="/theme.js?v=2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=40" />
+<link rel="stylesheet" href="/styles.css?v=41" />
 </head>
 <body>
 
@@ -42,6 +42,10 @@
 <!-- APP -->
 <div id="app" class="app" style="display:none">
   <header class="topbar">
+    <button id="themeToggle" class="theme-toggle" title="Tema" data-i18n-title="Tema" aria-label="Tema">
+      <svg class="tt-moon" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5A8 8 0 1 1 11.5 4a6.5 6.5 0 0 0 8.5 8.5Z"/></svg>
+      <svg class="tt-sun" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+    </button>
     <div class="brand"><svg class="ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13 L12 6 L19 13"/><path d="M5 18 L12 11 L19 18" opacity=".5"/></svg> RankUp</div>
     <div id="subjSel" class="subjsw" title="Disciplina"></div>
     <nav class="nav" id="nav">
