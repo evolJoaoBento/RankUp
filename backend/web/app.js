@@ -1224,8 +1224,20 @@ async function startTest(id) {
 async function startReviewSession() {
   try {
     const s = await api("/practice/review", { method: "POST", body: { subject: SUBJECT, count: 5 } });
-    renderRunSession(s, t("Revisão — erros anteriores"));
+    if (!s.items.length) { toast(t("Nada para rever — tudo em dia!")); return go("practice"); }
+    // review plays like the flashcard game — one card at a time, flip to see
+    // the verdict — but grades through the session endpoint (EP, review-clear)
+    startSessionFlashcards(s, t("Revisão — erros anteriores"));
   } catch (e) { toast(e.message); }
+}
+
+function startSessionFlashcards(s, title) {
+  const cards = s.items.map((it) => ({
+    session: true, id: it.id, kind: it.kind,
+    text: it.payload.stem || it.payload.prompt, options: it.payload.options,
+  }));
+  for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
+  mountDeck(cards, title, { session: true });
 }
 
 async function startFocusedPractice(concept) {
@@ -1293,11 +1305,16 @@ async function startFlashcards(testId, title) {
   try { cards = await api(`/tests/${testId}/cards`); } catch (e) { go("practice"); return toast(e.message); }
   if (!cards.length) { go("practice"); return toast(t("Sem perguntas")); }
   for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
-  _fc = { cards, i: 0, scoreSum: 0, answered: 0, title: title || t("Teste") };
+  mountDeck(cards, title || t("Teste"), {});
+}
+
+// shared deck runner — free flashcard practice AND review-session cards
+function mountDeck(cards, title, opts) {
+  _fc = { cards, i: 0, scoreSum: 0, answered: 0, title, session: !!opts.session, ep: 0, correct: 0 };
   const v = $("#view");
   v.innerHTML = `
     <div class="view__head" style="display:flex;align-items:center;justify-content:space-between">
-      <div><h1>${t("Flashcards")}</h1><p>${esc(_fc.title)}</p></div>
+      <div><h1>${_fc.session ? t("Revisão") : t("Flashcards")}</h1><p>${esc(_fc.title)}</p></div>
       <button class="btn btn--ghost btn--sm" id="fcExit">${t("← Voltar")}</button>
     </div>
     <div class="fc-wrap">
@@ -1307,7 +1324,13 @@ async function startFlashcards(testId, title) {
     </div>`;
   $("#fcExit").onclick = () => go("practice");
   $("#fcPrev").onclick = () => { if (_fc.i > 0) { _fc.i--; renderCard(); } };
-  $("#fcNext").onclick = () => { if (_fc.i < _fc.cards.length - 1) { _fc.i++; renderCard(); } else toast(t("Última carta")); };
+  $("#fcNext").onclick = () => {
+    if (_fc.i < _fc.cards.length - 1) { _fc.i++; renderCard(); return; }
+    if (!_fc.session) return toast(t("Última carta"));
+    if (_fc.answered >= _fc.cards.length) return deckSummary();
+    const j = _fc.cards.findIndex((c) => !c.done);
+    if (j >= 0) { _fc.i = j; renderCard(); toast(t("Ainda tens cartas por responder")); }
+  };
   // keyboard: arrows navigate, space/enter flips (single listener, rebound per deck)
   if (window._fcKeys) document.removeEventListener("keydown", window._fcKeys);
   window._fcKeys = (e) => {
@@ -1321,10 +1344,31 @@ async function startFlashcards(testId, title) {
   renderCard();
 }
 
+function deckSummary() {
+  const pct = Math.round((100 * _fc.correct) / _fc.cards.length);
+  $("#fcStage").innerHTML = `
+    <div class="card" style="text-align:center;padding:34px 24px">
+      <div class="fc-grade ${pct >= 50 ? "ok" : "no"}" style="margin:0 auto 10px">${pct}%</div>
+      <h3 style="margin-bottom:6px">${t("Revisão concluída!")}</h3>
+      <p style="margin-bottom:4px">${t("{c}/{n} certas ({p}%)", { c: _fc.correct, n: _fc.cards.length, p: pct })} · <b>${_fc.ep >= 0 ? "+" : ""}${_fc.ep} EP</b></p>
+      <p class="muted" style="font-size:13px;margin-bottom:16px">${t("As perguntas que acertaste saem da fila de revisão.")}</p>
+      <div class="row" style="justify-content:center">
+        <button class="btn btn--sm" id="fcAgain">${t("Rever mais")}</button>
+        <button class="btn btn--ghost btn--sm" id="fcDone">${t("← Voltar")}</button>
+      </div>
+    </div>`;
+  $("#fcAnswer")?.remove();
+  document.querySelector(".fc-nav")?.remove();
+  $("#fcAgain").onclick = () => startReviewSession();
+  $("#fcDone").onclick = () => go("practice");
+}
+
 function renderCard() {
   const c = _fc.cards[_fc.i];
   $("#fcProg").textContent = t("Carta {i} / {n}", { i: _fc.i + 1, n: _fc.cards.length });
-  $("#fcScore").textContent = _fc.answered ? t("Média {p}%", { p: Math.round(_fc.scoreSum / _fc.answered) }) : "—";
+  $("#fcScore").textContent = _fc.session
+    ? (_fc.answered ? `${_fc.correct}/${_fc.answered} · ${_fc.ep >= 0 ? "+" : ""}${_fc.ep} EP` : "—")
+    : (_fc.answered ? t("Média {p}%", { p: Math.round(_fc.scoreSum / _fc.answered) }) : "—");
   const mcq = c.kind === "mcq";
   const answerInput = mcq
     ? `<div class="fc-opts">${(c.options || []).map((o, i) => `<label class="opt"><input type="radio" name="fcopt" value="${i}"> ${esc(o)}</label>`).join("")}</div>`
@@ -1350,6 +1394,13 @@ function renderCard() {
   $("#fcCheck").onclick = () => checkCard(c);
   // click the card itself to flip between question and result, indefinitely
   $("#fcCard").onclick = () => $("#fcCard").classList.toggle("is-flipped");
+  // session cards answer once — revisiting shows the stored verdict, locked
+  if (c.done) {
+    $("#fcResult").innerHTML = c.done;
+    $("#fcCard").classList.add("is-flipped");
+    $("#fcAnswer").querySelectorAll("input,textarea,button").forEach((n) => (n.disabled = true));
+    $("#fcCheck").textContent = t("Respondido ✓");
+  }
 }
 
 async function checkCard(c) {
@@ -1366,6 +1417,35 @@ async function checkCard(c) {
   }
   $("#fcLoading").classList.add("show");
   $("#fcCheck").disabled = true;
+  if (c.session) {
+    try {
+      const r = await api(`/practice/items/${c.id}/answer`, { method: "POST", body: { raw } });
+      _fc.answered += 1; _fc.ep += r.xp_delta; if (r.correct) _fc.correct += 1;
+      const score = r.correct ? 100 : Math.round((r.reasoning_score || 0) * 100);
+      let detail = "";
+      if (r.answer_index != null && c.options) {
+        detail += `<p><b>${t("Resposta certa:")}</b> ${esc(c.options[r.answer_index] ?? "—")}</p>`;
+      }
+      if (r.why) detail += `<p class="muted">${esc(r.why)}</p>`;
+      if (r.feedback) detail += `<p>${esc(t(r.feedback))}</p>`;
+      c.done = `
+        <div class="fc-grade ${r.correct ? "ok" : "no"}">${score}%</div>
+        <div class="fc-verdict">${r.correct ? t("Certo!") : t("Rever")} · <b>${r.xp_delta >= 0 ? "+" : ""}${r.xp_delta} EP</b></div>
+        ${detail}`;
+      $("#fcResult").innerHTML = c.done;
+      $("#fcLoading").classList.remove("show");
+      $("#fcCard").classList.add("is-flipped");
+      $("#fcScore").textContent = `${_fc.correct}/${_fc.answered} · ${_fc.ep >= 0 ? "+" : ""}${_fc.ep} EP`;
+      $("#fcAnswer").querySelectorAll("input,textarea,button").forEach((n) => (n.disabled = true));
+      $("#fcCheck").textContent = t("Respondido ✓");
+      if (_fc.answered >= _fc.cards.length) $("#fcNext").textContent = t("Concluir ✓");
+      if (r.ranked_up) playRankUp(r.rank);
+      refreshChip();
+    } catch (e) {
+      toast(e.message); $("#fcLoading").classList.remove("show"); $("#fcCheck").disabled = false;
+    }
+    return;
+  }
   try {
     const r = await api(`/questions/${c.id}/grade`, { method: "POST", body: { raw } });
     const score = mcq ? (r.correct ? 100 : 0) : Math.round((r.reasoning_score || 0) * 100);
