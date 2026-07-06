@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import uuid
@@ -22,8 +22,8 @@ from mecateca.contexts.identity.schemas import (
     UserOut,
 )
 from mecateca.db.session import get_db
-from mecateca.deps import current_user, require_role
-from mecateca.shared.errors import Forbidden, NotFound
+from mecateca.deps import current_user, get_llm_provider, require_role
+from mecateca.shared.errors import AppError, Forbidden, NotFound
 
 router = APIRouter(tags=["identity"])
 
@@ -79,6 +79,74 @@ async def set_my_background(body: BackgroundIn, user: User = Depends(current_use
     user.background = body.background or None
     await db.flush()
     return user
+
+
+# ---- profile photo (uploaded, AI-moderated) ----
+_PHOTO_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+_PHOTO_MAX = 2 * 1024 * 1024  # 2 MB
+_PHOTO_MIME = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
+
+
+def _photo_dir():
+    from pathlib import Path
+
+    from mecateca.config import get_settings
+
+    d = Path(get_settings().upload_dir) / "avatars"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+@router.post("/me/photo", response_model=UserOut)
+async def upload_photo(
+    file: UploadFile,
+    user: User = Depends(current_user),
+    provider=Depends(get_llm_provider),
+    db: AsyncSession = Depends(get_db),
+):
+    ext = _PHOTO_TYPES.get(file.content_type or "")
+    if ext is None:
+        raise AppError("formato inválido — usa JPEG, PNG ou WebP")
+    data = await file.read()
+    if len(data) > _PHOTO_MAX:
+        raise AppError("imagem demasiado grande (máx. 2 MB)")
+    approved, reason = await provider.moderate_image(data, file.content_type)
+    if not approved:
+        raise AppError(f"foto recusada pela moderação: {reason}", code="moderation")
+    name = f"{user.id}.{ext}"
+    for old_ext in _PHOTO_TYPES.values():  # one photo per user, regardless of format
+        p = _photo_dir() / f"{user.id}.{old_ext}"
+        if p.exists():
+            p.unlink()
+    (_photo_dir() / name).write_bytes(data)
+    user.photo = name
+    await db.flush()
+    return user
+
+
+@router.delete("/me/photo", response_model=UserOut)
+async def delete_photo(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    if user.photo:
+        p = _photo_dir() / user.photo
+        if p.exists():
+            p.unlink()
+        user.photo = ""
+        await db.flush()
+    return user
+
+
+@router.get("/users/{user_id}/photo")
+async def get_photo(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    from fastapi.responses import FileResponse
+
+    u = await db.get(User, user_id)
+    if u is None or not u.photo:
+        raise NotFound("sem foto")
+    p = _photo_dir() / u.photo
+    if not p.exists():
+        raise NotFound("sem foto")
+    return FileResponse(p, media_type=_PHOTO_MIME.get(u.photo.rsplit(".", 1)[-1], "image/jpeg"),
+                        headers={"Cache-Control": "public, max-age=300"})
 
 
 # ---- admin: platform overview ----

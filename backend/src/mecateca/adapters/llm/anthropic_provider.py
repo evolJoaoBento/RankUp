@@ -60,3 +60,30 @@ class AnthropicProvider(LLMProvider):
         text = next((b.text for b in resp.content if b.type == "text"), "{}")
         usage = Usage(resp.usage.input_tokens, resp.usage.output_tokens, model)
         return json.loads(text), usage
+
+    async def moderate_image(self, data: bytes, media_type: str) -> tuple[bool, str]:
+        """Claude vision moderation. Fails CLOSED on any error."""
+        import base64
+
+        try:
+            resp = await self._client.messages.create(
+                model=model_for("grade_reasoning"),
+                max_tokens=200,
+                system=(
+                    "És um moderador de fotos de perfil de uma app escolar (alunos dos 10 aos 18). "
+                    "Aprova apenas imagens apropriadas: retratos, desenhos, animais, paisagens, objetos neutros. "
+                    "Rejeita: nudez/sugestivo, violência, armas, drogas/álcool/tabaco, símbolos de ódio, "
+                    "texto ofensivo, informação pessoal visível. Responde APENAS com JSON: "
+                    '{"approved": true|false, "reason": "curta"}'
+                ),
+                messages=[{"role": "user", "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": media_type,
+                                                 "data": base64.b64encode(data).decode()}},
+                    {"type": "text", "text": "Modera esta foto de perfil."},
+                ]}],
+            )
+            text = next((b.text for b in resp.content if b.type == "text"), "{}")
+            verdict = json.loads(text)
+            return bool(verdict.get("approved")), str(verdict.get("reason", ""))
+        except Exception:
+            return False, "moderação indisponível — tenta mais tarde"

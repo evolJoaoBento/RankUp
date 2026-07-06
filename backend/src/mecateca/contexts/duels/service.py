@@ -471,6 +471,7 @@ async def get_view(db: AsyncSession, provider: LLMProvider, user: User, duel_id:
             "opp_delta": r.opponent_delta if me_is_challenger else r.challenger_delta,
         })
 
+    opp_user = await db.get(User, _other(duel, user.id))
     result = None
     if duel.status in ("complete", "forfeited"):
         if duel.winner_id is None:
@@ -488,7 +489,8 @@ async def get_view(db: AsyncSession, provider: LLMProvider, user: User, duel_id:
         "my_role": "challenger" if me_is_challenger else "opponent",
         "opponent_name": names.get(_other(duel, user.id), "?"),
         "opponent_id": str(_other(duel, user.id)),
-        "opponent_avatar": getattr(await db.get(User, _other(duel, user.id)), "avatar", ""),
+        "opponent_avatar": getattr(opp_user, "avatar", ""),
+        "opponent_photo": getattr(opp_user, "photo", ""),
         "my_name": names.get(user.id, "?"),
         "my_points": my_points,
         "opp_points": opp_points,
@@ -638,7 +640,7 @@ async def leaderboard(db: AsyncSession, subject_key: str, top: int = 20) -> list
     subject = await catalog_service.get_subject(db, subject_key)
     rows = (
         await db.execute(
-            select(DuelRating, User.display_name, User.avatar)
+            select(DuelRating, User.display_name, User.avatar, User.photo)
             .join(User, User.id == DuelRating.user_id)
             .where(DuelRating.games > 0, DuelRating.subject_id == subject.id)
             .order_by(DuelRating.rating.desc())
@@ -646,8 +648,9 @@ async def leaderboard(db: AsyncSession, subject_key: str, top: int = 20) -> list
         )
     ).all()
     return [
-        {"name": n, "avatar": av, "rating": r.rating, "wins": r.wins, "losses": r.losses, "draws": r.draws}
-        for r, n, av in rows
+        {"name": n, "avatar": av, "photo": ph, "user_id": str(r.user_id),
+         "rating": r.rating, "wins": r.wins, "losses": r.losses, "draws": r.draws}
+        for r, n, av, ph in rows
     ]
 
 

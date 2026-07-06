@@ -6,7 +6,8 @@ from pydantic import BaseModel
 
 
 class FriendRequestIn(BaseModel):
-    identifier: str  # email or username of the target user
+    identifier: str | None = None   # email or username of the target user…
+    user_id: uuid.UUID | None = None  # …or their id (from search results)
 
 
 class FriendOut(BaseModel):
@@ -14,6 +15,7 @@ class FriendOut(BaseModel):
     display_name: str
     username: str | None = None
     avatar: str = ""
+    photo: str = ""
 
 
 class MessageIn(BaseModel):

@@ -57,3 +57,9 @@ class FakeProvider(LLMProvider):
         }
         model = model_for(req.task)
         return data, Usage(_est(req.system) + _est(ans), 20, model)
+
+    async def moderate_image(self, data: bytes, media_type: str) -> tuple[bool, str]:
+        # deterministic for tests: any payload containing UNSAFE is rejected
+        if b"UNSAFE" in data:
+            return False, "conteudo impróprio (simulado)"
+        return True, "ok (simulado)"

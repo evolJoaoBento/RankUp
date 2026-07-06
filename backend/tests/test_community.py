@@ -47,6 +47,64 @@ async def test_direct_messages_friends_only(client):
 
 
 @pytest.mark.asyncio
+async def test_user_search_and_public_profile(client):
+    a, _ = await _make_user(client, "Xavier")
+    b, _ = await _make_user(client, "Xenia")
+
+    rows = (await client.get(f"{API}/users/search?q=Xen", headers=a)).json()
+    assert any(r["display_name"] == "Xenia" for r in rows)
+    target = next(r for r in rows if r["display_name"] == "Xenia")
+    assert target["status"] == "none"
+
+    # add straight from a search result (by id)
+    r = await client.post(f"{API}/friends/requests", headers=a, json={"user_id": target["user_id"]})
+    assert r.status_code == 200
+    rows = (await client.get(f"{API}/users/search?q=Xen", headers=a)).json()
+    assert next(r2 for r2 in rows if r2["display_name"] == "Xenia")["status"] == "outgoing"
+
+    prof = (await client.get(f"{API}/users/{target['user_id']}/profile?subject=philosophy", headers=a)).json()
+    assert prof["display_name"] == "Xenia"
+    assert prof["status"] == "outgoing"
+    assert {"kudos", "achievements_unlocked", "duel_wins", "member_since"} <= set(prof)
+
+
+@pytest.mark.asyncio
+async def test_photo_upload_is_ai_moderated(client):
+    a, _ = await _make_user(client, "Yara")
+
+    # FakeProvider rejects anything containing UNSAFE — fail-closed moderation path
+    r = await client.post(
+        f"{API}/me/photo", headers=a,
+        files={"file": ("x.png", b"\x89PNG UNSAFE bytes", "image/png")},
+    )
+    assert r.status_code == 400
+    assert "modera" in r.json()["error"]["message"]
+
+    # clean image is approved and stored
+    r = await client.post(
+        f"{API}/me/photo", headers=a,
+        files={"file": ("x.png", b"\x89PNG nice classroom portrait", "image/png")},
+    )
+    assert r.status_code == 200
+    photo = r.json()["photo"]
+    assert photo.endswith(".png")
+
+    me = (await client.get(f"{API}/me", headers=a)).json()
+    img = await client.get(f"{API}/users/{me['id']}/photo")
+    assert img.status_code == 200
+
+    r = await client.delete(f"{API}/me/photo", headers=a)
+    assert r.json()["photo"] == ""
+
+    # wrong content types bounce before moderation
+    r = await client.post(
+        f"{API}/me/photo", headers=a,
+        files={"file": ("x.gif", b"GIF89a", "image/gif")},
+    )
+    assert r.status_code == 400
+
+
+@pytest.mark.asyncio
 async def test_announcements_teacher_only(client, auth):
     # plain student cannot post
     r = await client.post(f"{API}/subjects/philosophy/announcements", headers=auth, json={"text": "olá"})

@@ -103,3 +103,48 @@ class GatewayProvider(LLMProvider):
             data = resp.json()
         content = (data.get("choices") or [{}])[0].get("message", {}).get("content", "{}")
         return _extract_json(content), _usage(self._model or "claude-gateway", data)
+
+    async def moderate_image(self, data: bytes, media_type: str) -> tuple[bool, str]:
+        """Vision moderation via the LOCAL gateway: the OpenAI-compat endpoint is
+        text-only, but the Claude CLI behind it can Read files — so we hand it a
+        temp file path on this same machine. Fails CLOSED on any doubt."""
+        import os
+        import tempfile
+
+        ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}.get(media_type, ".img")
+        fd, path = tempfile.mkstemp(suffix=ext, prefix="rankup_moderate_")
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+            body: dict = {
+                "messages": [
+                    {"role": "system", "content": (
+                        "És um moderador de fotos de perfil de uma app escolar (alunos dos 10 aos 18). "
+                        "Aprova apenas imagens apropriadas: retratos, desenhos, animais, paisagens, objetos neutros. "
+                        "Rejeita: nudez/sugestivo, violência, armas, drogas/álcool/tabaco, símbolos de ódio, "
+                        "texto ofensivo, informação pessoal visível. Se não conseguires ver a imagem, "
+                        'rejeita. Responde APENAS com JSON: {"approved": true|false, "reason": "curta"}'
+                    )},
+                    {"role": "user", "content": (
+                        f"Lê a imagem no ficheiro {path} (usa a ferramenta Read) e modera-a como foto de perfil. "
+                        "Responde só com o JSON."
+                    )},
+                ],
+                "stream": False,
+            }
+            if self._model:
+                body["model"] = self._model
+            async with httpx.AsyncClient(timeout=180) as client:
+                resp = await client.post(f"{self._base}/chat/completions", json=body,
+                                         headers={"authorization": "Bearer local"})
+                resp.raise_for_status()
+                content = (resp.json().get("choices") or [{}])[0].get("message", {}).get("content", "")
+            verdict = _extract_json(content)
+            return bool(verdict.get("approved")), str(verdict.get("reason", ""))
+        except Exception:
+            return False, "moderação indisponível — tenta mais tarde"
+        finally:
+            try:
+                os.unlink(path)
+            except OSError:
+                pass

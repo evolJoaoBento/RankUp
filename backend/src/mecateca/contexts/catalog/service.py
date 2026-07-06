@@ -633,6 +633,7 @@ async def list_announcements(db: AsyncSession, subject_key: str, limit: int = 10
             "author": u.display_name if u else "?",
             "author_id": str(a.author_id) if a.author_id else None,
             "avatar": u.avatar if u else "",
+            "photo": u.photo if u else "",
         }
         for a, u in rows
     ]

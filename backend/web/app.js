@@ -75,6 +75,7 @@ const ICONS = {
   shield: '<path d="M12 3 19 6v5c0 4-3 7-7 9-4-2-7-5-7-9V6Z"/>',
   swords: '<polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/><line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/>',
   chat: '<path d="M21 12a8 8 0 0 1-8 8H4l2.5-2.5A8 8 0 1 1 21 12Z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="13.5" x2="13" y2="13.5"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><line x1="16" y1="16" x2="21" y2="21"/>',
   crown: '<path d="M4 17 3 7l5 4 4-6 4 6 5-4-1 10Z"/><path d="M5 20h14"/>',
   ghost: '<path d="M12 3a7 7 0 0 0-7 7v10l2.5-2 2.5 2 2.5-2 2.5 2 2.5-2 2.5 2V10a7 7 0 0 0-7-7Z"/><circle cx="9.5" cy="11" r=".8" fill="currentColor"/><circle cx="14.5" cy="11" r=".8" fill="currentColor"/>',
   gamepad: '<path d="M6 8h12a4 4 0 0 1 4 4v3a3 3 0 0 1-5.5 1.7L15 15H9l-1.5 1.7A3 3 0 0 1 2 15v-3a4 4 0 0 1 4-4Z"/><line x1="7.5" y1="11" x2="7.5" y2="14"/><line x1="6" y1="12.5" x2="9" y2="12.5"/><circle cx="16" cy="11.5" r=".8" fill="currentColor"/><circle cx="18" cy="13.5" r=".8" fill="currentColor"/>',
@@ -1642,6 +1643,14 @@ async function vProfile() {
       <div class="mgbox" style="max-width:460px">
         <label class="fld"><span class="label">${t("Nome")}</span><input id="accName" maxlength="60" value="${esc(USER.display_name)}"></label>
         <label class="fld"><span class="label">${t("Utilizador (para login e amigos)")}</span><input id="accUser" maxlength="20" placeholder="ex: joao_b" value="${esc(USER.username || "")}"></label>
+        <span class="label" style="margin-top:6px">${t("Foto de perfil (verificada por IA)")}</span>
+        <div class="row" style="align-items:center;gap:12px">
+          ${userAvatar(USER, 56)}
+          <label class="btn btn--ghost btn--sm" style="cursor:pointer">${icon("plus", 14)} ${t("Carregar foto")}
+            <input id="accPhoto" type="file" accept="image/jpeg,image/png,image/webp" style="display:none"></label>
+          ${USER.photo ? `<button class="btn btn--ghost btn--sm" id="accPhotoDel">${icon("trash", 14)} ${t("Remover foto")}</button>` : ""}
+          <span class="muted" id="accPhotoStatus" style="font-size:12.5px"></span>
+        </div>
         <span class="label" style="margin-top:6px">${t("Avatar")}</span>
         <div class="av-pick" id="avPick">
           <button type="button" class="av-sw ${!USER.avatar ? "on" : ""}" data-av="">${esc((USER.display_name || "?").charAt(0).toUpperCase())}</button>
@@ -1668,6 +1677,23 @@ async function vProfile() {
     </div>
     ${friendsCard()}`;
   mountFriends(document.querySelector("#view .frcard"));
+  $("#accPhoto").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    $("#accPhotoStatus").textContent = t("A verificar com IA…");
+    const fd = new FormData(); fd.append("file", f);
+    try {
+      const res = await fetch(`${API}/me/photo`, { method: "POST", headers: TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}, body: fd });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error?.message || t("erro"));
+      USER = body;
+      toast(t("Foto aprovada e publicada") + " ✓");
+      renderRail(); vProfile();
+    } catch (err) { $("#accPhotoStatus").textContent = ""; toast(t(err.message)); }
+  };
+  if ($("#accPhotoDel")) $("#accPhotoDel").onclick = async () => {
+    try { USER = await api("/me/photo", { method: "DELETE" }); toast(t("Foto removida")); renderRail(); vProfile(); }
+    catch (e) { toast(e.message); }
+  };
   let _pickedAv = USER.avatar || "";
   $("#avPick").querySelectorAll(".av-sw").forEach((b) => (b.onclick = () => {
     _pickedAv = b.dataset.av;
@@ -1784,10 +1810,14 @@ async function vProfile() {
 // preset avatars (line-art, school-safe — no uploads)
 const AVATAR_KEYS = ["cat", "owl", "ghost", "gamepad", "wand", "crown", "swords", "flame", "star", "atom", "planet", "brain", "music", "palette", "code", "compass"];
 function userAvatar(u, size = 32) {
+  const uid = (u && (u.user_id || u.id)) || "";
+  const photo = (u && u.photo) || "";
   const av = (u && u.avatar) || "";
   const initial = ((u && u.display_name) || "?").trim().charAt(0).toUpperCase() || "?";
-  return `<span class="uav" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.44)}px">${
-    av && AVATAR_KEYS.includes(av) ? icon(av, Math.round(size * 0.62)) : esc(initial)}</span>`;
+  const inner = photo && uid
+    ? `<img src="${API}/users/${uid}/photo?v=${encodeURIComponent(photo)}" alt="" loading="lazy">`
+    : av && AVATAR_KEYS.includes(av) ? icon(av, Math.round(size * 0.62)) : esc(initial);
+  return `<span class="uav" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.44)}px">${inner}</span>`;
 }
 
 // achievement metadata: key -> [icon, title, description] (titles translate via t())
@@ -2187,8 +2217,9 @@ function friendsCard() {
   return `<div class="card frcard">
     <h3 style="font-size:16px;margin-bottom:10px">${icon("user", 16)} ${t("Amigos")}</h3>
     <div class="row" style="margin-bottom:12px">
-      <input class="fr-id" placeholder="${t("email ou utilizador do amigo")}" autocomplete="off">
-      <button class="btn btn--sm fr-add">${icon("plus", 14)} ${t("Adicionar")}</button>
+      <input class="fr-id" placeholder="${t("nome, utilizador ou email")}" autocomplete="off">
+      <button class="btn btn--ghost btn--sm fr-search" title="${t("Procurar pessoas")}">${icon("search", 14)} ${t("Procurar")}</button>
+      <button class="btn btn--ghost btn--sm fr-add" title="${t("Adicionar por email/utilizador")}">${icon("plus", 14)} ${t("Adicionar")}</button>
     </div>
     <div class="fr-box">…</div>
   </div>`;
@@ -2203,6 +2234,8 @@ function mountFriends(card) {
     try { await api("/friends/requests", { method: "POST", body: { identifier: id } }); input.value = ""; toast(t("Pedido enviado")); renderFriends(card); }
     catch (e) { toast(e.message); }
   };
+  card.querySelector(".fr-search").onclick = () => openUserSearch(input.value.trim());
+  input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); openUserSearch(input.value.trim()); } };
   renderFriends(card);
 }
 
@@ -2222,8 +2255,9 @@ async function renderFriends(card) {
   const frRow = (f) => `<div class="fr-row">
     <span style="display:inline-flex;align-items:center;gap:8px">${userAvatar(f, 30)} <b>${esc(f.display_name)}</b> <span class="muted" style="font-size:12px">${esc(f.username || "")}</span></span>
     <span class="row" style="gap:6px">
+      <button class="btn btn--ghost btn--sm" data-prof="${f.user_id}" title="${t("Ver perfil")}">${icon("user", 14)} ${t("Perfil")}</button>
       <button class="btn btn--ghost btn--sm frmsg" data-msg="${f.user_id}" data-name="${esc(f.display_name)}" title="${t("Mensagens")}">${icon("chat", 14)}${unreadBy[f.user_id] ? `<span class="frmsg__n">${unreadBy[f.user_id]}</span>` : ""}</button>
-      <button class="btn btn--sm" data-duel="${f.user_id}">${icon("trophy", 13)} ${t("Desafiar")}</button>
+      <button class="btn btn--ghost btn--sm" data-duel="${f.user_id}" title="${t("Desafiar")}">${icon("trophy", 14)} ${t("Desafiar")}</button>
       <button class="btn btn--ghost btn--sm" data-unfr="${f.user_id}" title="${t("Remover")}">✕</button>
     </span></div>`;
   box.innerHTML =
@@ -2235,6 +2269,100 @@ async function renderFriends(card) {
   box.querySelectorAll("[data-unfr]").forEach((b) => (b.onclick = async () => { if (!confirm(t("Remover este amigo?"))) return; try { await api(`/friends/${b.dataset.unfr}`, { method: "DELETE" }); renderFriends(card); } catch (e) { toast(e.message); } }));
   box.querySelectorAll("[data-duel]").forEach((b) => (b.onclick = () => challengeFriend(b.dataset.duel)));
   box.querySelectorAll("[data-msg]").forEach((b) => (b.onclick = () => openThread(b.dataset.msg, b.dataset.name)));
+  box.querySelectorAll("[data-prof]").forEach((b) => (b.onclick = () => openUserProfile(b.dataset.prof)));
+}
+
+/* ---- people search (full page) ---- */
+async function openUserSearch(q = "") {
+  stopDuelPolling(); stopMatchmaking(); stopDmPolling();
+  document.querySelectorAll(".nav__i").forEach((b) => b.classList.remove("is-active"));
+  $("#view").innerHTML = `
+    <div class="view__head"><h1>${t("Pessoas")}</h1><p>${t("Procura colegas pelo nome ou utilizador.")}</p></div>
+    <div class="card">
+      <form class="row" id="usForm" style="margin-bottom:12px">
+        <input id="usQ" class="searchbar" style="flex:1;max-width:420px" placeholder="${t("nome ou utilizador…")}" value="${esc(q)}" autocomplete="off">
+        <button class="btn btn--sm">${icon("search", 14)} ${t("Procurar")}</button>
+      </form>
+      <div id="usResults"><p class="muted">${t("Escreve pelo menos 2 letras.")}</p></div>
+    </div>`;
+  $("#usForm").onsubmit = (e) => { e.preventDefault(); runUserSearch(); };
+  $("#usQ").focus();
+  if (q.trim().length >= 2) runUserSearch();
+}
+
+async function runUserSearch() {
+  const q = $("#usQ").value.trim();
+  if (q.length < 2) { $("#usResults").innerHTML = `<p class="muted">${t("Escreve pelo menos 2 letras.")}</p>`; return; }
+  let rows = [];
+  try { rows = await api(`/users/search?q=${encodeURIComponent(q)}`); } catch (e) { return toast(e.message); }
+  const relBadge = (r) =>
+    r.status === "friends" ? `<span class="badge-ok">${t("Amigos")}</span>`
+    : r.status === "outgoing" ? `<span class="badge-pend">${t("pendente…")}</span>`
+    : r.status === "incoming" ? `<button class="btn btn--ghost btn--sm" data-acc2="${r.request_id}">${icon("check", 14)} ${t("Aceitar")}</button>`
+    : `<button class="btn btn--ghost btn--sm" data-add="${r.user_id}">${icon("plus", 14)} ${t("Adicionar")}</button>`;
+  $("#usResults").innerHTML = rows.length ? rows.map((r) => `<div class="fr-row">
+      <span style="display:inline-flex;align-items:center;gap:8px">${userAvatar(r, 30)} <b>${esc(r.display_name)}</b> <span class="muted" style="font-size:12px">${esc(r.username || "")}</span>${r.role !== "student" ? ` <span class="tag">${esc(r.role)}</span>` : ""}</span>
+      <span class="row" style="gap:6px">
+        <button class="btn btn--ghost btn--sm" data-prof="${r.user_id}" title="${t("Ver perfil")}">${icon("user", 14)} ${t("Perfil")}</button>
+        ${relBadge(r)}
+      </span></div>`).join("")
+    : `<p class="muted">${t("Ninguém encontrado.")}</p>`;
+  $("#usResults").querySelectorAll("[data-prof]").forEach((b) => (b.onclick = () => openUserProfile(b.dataset.prof)));
+  $("#usResults").querySelectorAll("[data-add]").forEach((b) => (b.onclick = async () => {
+    try { await api("/friends/requests", { method: "POST", body: { user_id: b.dataset.add } }); toast(t("Pedido enviado")); runUserSearch(); }
+    catch (e) { toast(e.message); }
+  }));
+  $("#usResults").querySelectorAll("[data-acc2]").forEach((b) => (b.onclick = async () => {
+    try { await api(`/friends/requests/${b.dataset.acc2}/accept`, { method: "POST" }); toast(t("Pedido aceite")); runUserSearch(); }
+    catch (e) { toast(e.message); }
+  }));
+}
+
+/* ---- public profile page ---- */
+async function openUserProfile(uid) {
+  stopDuelPolling(); stopMatchmaking(); stopDmPolling();
+  document.querySelectorAll(".nav__i").forEach((b) => b.classList.remove("is-active"));
+  let p;
+  try { p = await api(`/users/${uid}/profile?subject=${SUBJECT}`); } catch (e) { return toast(e.message); }
+  const dfmt = (iso) => new Date(iso).toLocaleDateString(I18N.lang === "pt" ? "pt-PT" : I18N.lang);
+  const actions = p.status === "friends"
+    ? `<button class="btn btn--ghost btn--sm" id="upMsg">${icon("chat", 14)} ${t("Mensagem")}</button>
+       <button class="btn btn--ghost btn--sm" id="upDuel">${icon("trophy", 14)} ${t("Desafiar")}</button>`
+    : p.status === "outgoing" ? `<span class="badge-pend">${t("pendente…")}</span>`
+    : p.status === "incoming" ? `<button class="btn btn--ghost btn--sm" id="upAcc">${icon("check", 14)} ${t("Aceitar pedido")}</button>`
+    : `<button class="btn btn--ghost btn--sm" id="upAdd">${icon("plus", 14)} ${t("Adicionar amigo")}</button>`;
+  $("#view").innerHTML = `
+    <div class="view__head" style="display:flex;align-items:center;justify-content:space-between">
+      <h1>${t("Perfil")}</h1>
+      <button class="btn btn--ghost btn--sm" id="upBack">${t("← Voltar")}</button>
+    </div>
+    <div class="card">
+      <div class="uphead">
+        ${userAvatar(p, 72)}
+        <div>
+          <h2 style="font-family:'Century Gothic','Jost',sans-serif">${esc(p.display_name)}</h2>
+          <p class="muted">${p.username ? "@" + esc(p.username) + " · " : ""}${p.role !== "student" ? esc(p.role) + " · " : ""}${t("membro desde")} ${dfmt(p.member_since)}</p>
+        </div>
+        <span class="row" style="margin-left:auto;gap:8px">${actions}</span>
+      </div>
+      <div class="stat" style="margin-top:16px">
+        ${p.rank != null ? `<div><span class="label">${esc((SUBJECTS.find((s) => s.key === SUBJECT) || {}).name || SUBJECT)}</span><b style="display:inline-flex;align-items:center;gap:6px">${rankLogo(p.rank, 26)} ${p.rank} · ${p.xp} EP</b></div>` : ""}
+        <div><span class="label">${t("Duelos")} ${t("V / D / E")}</span><b>${p.duel_wins} / ${p.duel_losses} / ${p.duel_draws}</b></div>
+        <div><span class="label">👏 Kudos</span><b>${p.kudos}</b></div>
+        <div><span class="label">${t("Conquistas")}</span><b>${p.achievements_unlocked}/${p.achievements_total}</b></div>
+      </div>
+    </div>`;
+  $("#upBack").onclick = () => go("duels");
+  if ($("#upAdd")) $("#upAdd").onclick = async () => {
+    try { await api("/friends/requests", { method: "POST", body: { user_id: uid } }); toast(t("Pedido enviado")); openUserProfile(uid); }
+    catch (e) { toast(e.message); }
+  };
+  if ($("#upAcc")) $("#upAcc").onclick = async () => {
+    try { await api(`/friends/requests/${p.request_id}/accept`, { method: "POST" }); toast(t("Pedido aceite")); openUserProfile(uid); }
+    catch (e) { toast(e.message); }
+  };
+  if ($("#upMsg")) $("#upMsg").onclick = () => openThread(uid, p.display_name);
+  if ($("#upDuel")) $("#upDuel").onclick = () => challengeFriend(uid);
 }
 
 /* ---- direct messages: modal thread, polls while open ---- */
@@ -2376,7 +2504,7 @@ async function pollDuel() {
 function renderDuelArena(d) {
   $("#duelSub").textContent = `${esc(d.my_name)} vs ${esc(d.opponent_name)} · ${esc(d.subject_name)}`;
   const arena = $("#duelArena");
-  const score = `<div class="du-score"><div class="du-score__me"><span class="label">${t("Tu")}</span><b>${d.my_points}</b></div><div class="du-score__x">–</div><div class="du-score__opp"><span class="label" style="display:inline-flex;align-items:center;gap:6px">${userAvatar({ avatar: d.opponent_avatar, display_name: d.opponent_name }, 22)} ${esc(d.opponent_name)}</span><b>${d.opp_points}</b></div></div>`;
+  const score = `<div class="du-score"><div class="du-score__me"><span class="label">${t("Tu")}</span><b>${d.my_points}</b></div><div class="du-score__x">–</div><div class="du-score__opp"><span class="label" style="display:inline-flex;align-items:center;gap:6px">${userAvatar({ avatar: d.opponent_avatar, photo: d.opponent_photo, user_id: d.opponent_id, display_name: d.opponent_name }, 22)} ${esc(d.opponent_name)}</span><b>${d.opp_points}</b></div></div>`;
   const timer = (lbl) => `<div class="du-timer"><span class="label">${lbl}</span><span id="duelTimer" class="du-timer__v">${fmtClock(_duelSecs)}</span></div>`;
   const forfeitBtn = `<button class="btn btn--ghost btn--sm" id="duForfeit" style="color:var(--red)">${t("Desistir")}</button>`;
   const hist = historyHtml(d);

@@ -21,7 +21,7 @@ async def list_friends(user: User = Depends(current_user), db: AsyncSession = De
 
 @router.post("/friends/requests", response_model=FriendsView)
 async def send_request(body: FriendRequestIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
-    await service.send_request(db, user, body.identifier)
+    await service.send_request(db, user, body.identifier, body.user_id)
     return await service.overview(db, user)
 
 
@@ -35,6 +35,20 @@ async def accept(req_id: uuid.UUID, user: User = Depends(current_user), db: Asyn
 async def decline(req_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     await service.decline(db, user, req_id)
     return await service.overview(db, user)
+
+
+# ---- people: search + public profiles ----
+@router.get("/users/search")
+async def search_users(q: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    return await service.search_users(db, user, q)
+
+
+@router.get("/users/{other_id}/profile")
+async def public_profile(
+    other_id: uuid.UUID, subject: str | None = None,
+    user: User = Depends(current_user), db: AsyncSession = Depends(get_db),
+):
+    return await service.public_profile(db, user, other_id, subject)
 
 
 # ---- direct messages (friends only) ----

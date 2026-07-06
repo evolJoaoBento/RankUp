@@ -21,6 +21,7 @@ class User(PkMixin, TimestampMixin, Base):
     plan: Mapped[str] = mapped_column(String(16), default="free")  # free|pro
     background: Mapped[str | None] = mapped_column(String(32), default=None)  # chosen rank-colour theme
     avatar: Mapped[str] = mapped_column(String(24), default="")  # preset SVG avatar key ("" = initial)
+    photo: Mapped[str] = mapped_column(String(40), default="")   # AI-moderated uploaded photo filename ("" = none)
 
 
 class RefreshToken(PkMixin, TimestampMixin, Base):

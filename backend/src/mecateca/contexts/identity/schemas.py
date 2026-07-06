@@ -41,6 +41,7 @@ class UserOut(BaseModel):
     locale: str
     background: str | None = None
     avatar: str = ""
+    photo: str = ""
 
 
 class UpdateMeIn(BaseModel):

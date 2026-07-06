@@ -83,6 +83,10 @@ class OllamaProvider(LLMProvider):
     async def stream(self, req: LLMRequest) -> _OllamaStream:
         return _OllamaStream(self._base, self._model, req, self._think, self._num_ctx, self._num_gpu)
 
+    async def moderate_image(self, data: bytes, media_type: str) -> tuple[bool, str]:
+        # text-only local models can't judge images — FAIL CLOSED, never approve blindly
+        return False, "moderação de imagens indisponível neste modelo"
+
     async def parse(self, req: LLMRequest, json_schema: dict) -> tuple[dict, Usage]:
         body = {
             "model": self._model,

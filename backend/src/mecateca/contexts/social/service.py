@@ -29,8 +29,8 @@ async def are_friends(db: AsyncSession, a: uuid.UUID, b: uuid.UUID) -> bool:
     return f is not None and f.status == "accepted"
 
 
-async def send_request(db: AsyncSession, me: User, identifier: str) -> Friendship:
-    target = await identity_service.get_by_identifier(db, identifier)
+async def send_request(db: AsyncSession, me: User, identifier: str | None, user_id: uuid.UUID | None = None) -> Friendship:
+    target = (await db.get(User, user_id)) if user_id else await identity_service.get_by_identifier(db, identifier or "")
     if target is None:
         raise NotFound("utilizador não encontrado")
     if target.id == me.id:
@@ -105,7 +105,7 @@ async def overview(db: AsyncSession, me: User) -> dict:
             continue
         if r.status == "accepted":
             friends.append({"user_id": u.id, "display_name": u.display_name,
-                            "username": u.username, "avatar": u.avatar})
+                            "username": u.username, "avatar": u.avatar, "photo": u.photo})
         elif r.addressee_id == me.id:
             incoming.append({"id": r.id, "user_id": u.id, "display_name": u.display_name,
                              "username": u.username, "direction": "incoming"})
@@ -114,6 +114,94 @@ async def overview(db: AsyncSession, me: User) -> dict:
                              "username": u.username, "direction": "outgoing"})
     friends.sort(key=lambda f: f["display_name"].lower())
     return {"friends": friends, "incoming": incoming, "outgoing": outgoing}
+
+
+async def status_between(db: AsyncSession, me_id: uuid.UUID, other_id: uuid.UUID) -> dict:
+    """Relationship from my point of view: none | outgoing | incoming | friends."""
+    f = await _between(db, me_id, other_id)
+    if f is None:
+        return {"status": "none", "request_id": None}
+    if f.status == "accepted":
+        return {"status": "friends", "request_id": str(f.id)}
+    return {"status": "incoming" if f.addressee_id == me_id else "outgoing", "request_id": str(f.id)}
+
+
+async def search_users(db: AsyncSession, me: User, q: str, limit: int = 20) -> list[dict]:
+    """Find people by name or username (never by email — school-safe)."""
+    q = (q or "").strip()
+    if len(q) < 2:
+        return []
+    like = f"%{q}%"
+    rows = list(
+        (
+            await db.execute(
+                select(User)
+                .where(
+                    or_(User.display_name.ilike(like), User.username.ilike(like)),
+                    User.id != me.id,
+                )
+                .order_by(User.display_name)
+                .limit(limit)
+            )
+        ).scalars()
+    )
+    out = []
+    for u in rows:
+        rel = await status_between(db, me.id, u.id)
+        out.append({
+            "user_id": str(u.id), "display_name": u.display_name,
+            "username": u.username, "avatar": u.avatar, "photo": u.photo, "role": u.role, **rel,
+        })
+    return out
+
+
+async def public_profile(db: AsyncSession, me: User, other_id: uuid.UUID, subject_key: str | None) -> dict:
+    from mecateca.contexts.duels import service as duels_service
+    from mecateca.contexts.duels.models import DuelRating
+    from mecateca.contexts.progression import achievements as ach_mod
+
+    u = await db.get(User, other_id)
+    if u is None:
+        raise NotFound("utilizador não encontrado")
+
+    # duel record: summed across disciplines (the person's overall arena footprint)
+    from sqlalchemy import func
+    wins, losses, draws = (
+        await db.execute(
+            select(
+                func.coalesce(func.sum(DuelRating.wins), 0),
+                func.coalesce(func.sum(DuelRating.losses), 0),
+                func.coalesce(func.sum(DuelRating.draws), 0),
+            ).where(DuelRating.user_id == other_id)
+        )
+    ).one()
+
+    ach = await ach_mod.compute(db, other_id)
+    prog = None
+    if subject_key:
+        from mecateca.contexts.progression import service as prog_service
+        try:
+            prog = await prog_service.progress(db, other_id, subject_key)
+        except Exception:  # unknown subject -> just omit
+            prog = None
+
+    rel = await status_between(db, me.id, other_id)
+    return {
+        "user_id": str(u.id),
+        "display_name": u.display_name,
+        "username": u.username,
+        "avatar": u.avatar,
+        "photo": u.photo,
+        "role": u.role,
+        "member_since": u.created_at.isoformat(),
+        "kudos": await duels_service.kudos_received(db, other_id),
+        "achievements_unlocked": sum(1 for a in ach if a["unlocked"]),
+        "achievements_total": len(ach),
+        "duel_wins": int(wins), "duel_losses": int(losses), "duel_draws": int(draws),
+        "xp": prog["xp"] if prog else None,
+        "rank": prog["rank"] if prog else None,
+        **rel,
+    }
 
 
 # --------------------------------------------------------------------------- #

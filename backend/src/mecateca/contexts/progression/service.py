@@ -106,7 +106,7 @@ async def leaderboard(db: AsyncSession, subject_key: str, limit: int = 20) -> li
         return []
     rows = (
         await db.execute(
-            select(UserSubjectProgress, User.display_name, User.avatar)
+            select(UserSubjectProgress, User.display_name, User.avatar, User.photo, User.id)
             .join(User, User.id == UserSubjectProgress.user_id)
             .where(
                 UserSubjectProgress.subject_id == subject.id,
@@ -117,8 +117,9 @@ async def leaderboard(db: AsyncSession, subject_key: str, limit: int = 20) -> li
         )
     ).all()
     return [
-        {"display_name": name, "avatar": avatar, "xp": p.xp, "rank": p.rank, "streak": p.streak}
-        for p, name, avatar in rows
+        {"display_name": name, "avatar": avatar, "photo": photo, "user_id": str(uid),
+         "xp": p.xp, "rank": p.rank, "streak": p.streak}
+        for p, name, avatar, photo, uid in rows
     ]
 
 
