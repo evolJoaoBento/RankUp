@@ -2253,12 +2253,12 @@ async function renderFriends(card) {
     </span></div>`;
   const unreadBy = (window._unread || {}).by_user || {};
   const frRow = (f) => `<div class="fr-row">
-    <span style="display:inline-flex;align-items:center;gap:8px">${userAvatar(f, 30)} <b>${esc(f.display_name)}</b> <span class="muted" style="font-size:12px">${esc(f.username || "")}</span></span>
-    <span class="row" style="gap:6px">
-      <button class="btn btn--ghost btn--sm" data-prof="${f.user_id}" title="${t("Ver perfil")}">${icon("user", 14)} ${t("Perfil")}</button>
-      <button class="btn btn--ghost btn--sm frmsg" data-msg="${f.user_id}" data-name="${esc(f.display_name)}" title="${t("Mensagens")}">${icon("chat", 14)}${unreadBy[f.user_id] ? `<span class="frmsg__n">${unreadBy[f.user_id]}</span>` : ""}</button>
-      <button class="btn btn--ghost btn--sm" data-duel="${f.user_id}" title="${t("Desafiar")}">${icon("trophy", 14)} ${t("Desafiar")}</button>
-      <button class="btn btn--ghost btn--sm" data-unfr="${f.user_id}" title="${t("Remover")}">✕</button>
+    <span class="fr-who">${userAvatar(f, 30)} <b>${esc(f.display_name)}</b> <span class="muted fr-user" style="font-size:12px">${esc(f.username || "")}</span></span>
+    <span class="fr-acts">
+      <button class="fr-act" data-prof="${f.user_id}" title="${t("Ver perfil")}">${icon("user", 15)}</button>
+      <button class="fr-act frmsg" data-msg="${f.user_id}" data-name="${esc(f.display_name)}" title="${t("Mensagens")}">${icon("chat", 15)}${unreadBy[f.user_id] ? `<span class="frmsg__n">${unreadBy[f.user_id]}</span>` : ""}</button>
+      <button class="fr-act" data-duel="${f.user_id}" title="${t("Desafiar")}">${icon("swords", 15)}</button>
+      <button class="fr-act fr-act--danger" data-unfr="${f.user_id}" title="${t("Remover")}">✕</button>
     </span></div>`;
   box.innerHTML =
     (d.incoming.length ? `<div class="fr-sec"><span class="label">${t("Pedidos recebidos")}</span>${d.incoming.map(reqRow).join("")}</div>` : "") +
