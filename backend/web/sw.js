@@ -3,7 +3,7 @@
    the last good copy serves when the network is gone. API calls
    are never intercepted. */
 const CACHE = "rankup-shell-v1";
-const SHELL = ["/", "/styles.css", "/app.js", "/i18n.js", "/manifest.json", "/favicon.svg"];
+const SHELL = ["/", "/styles.css", "/app.js", "/i18n.js", "/theme.js", "/manifest.json", "/favicon.svg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

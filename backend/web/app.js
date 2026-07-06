@@ -1705,6 +1705,12 @@ async function vProfile() {
       <div class="row" id="langPick">${Object.entries(I18N.LANGS).map(([k, n]) => `<button class="btn ${k === I18N.lang ? "" : "btn--ghost"} btn--sm" data-lang="${k}">${n}</button>`).join("")}</div>
     </div>
     <div class="card">
+      <h3 style="font-size:16px;margin-bottom:4px">${t("Tema")}</h3>
+      <p class="muted" style="font-size:13px;margin-bottom:10px">${t("Claro, escuro ou automático (segue o sistema).")}</p>
+      <div class="row" id="themePick">${[["light", t("Claro")], ["dark", t("Escuro")], ["auto", t("Automático")]].map(([k, n]) =>
+        `<button class="btn ${k === (localStorage.getItem("mt_theme") || "auto") ? "" : "btn--ghost"} btn--sm" data-theme="${k}">${n}</button>`).join("")}</div>
+    </div>
+    <div class="card">
       <h3 style="font-size:16px;margin-bottom:4px">${t("Segurança")}</h3>
       <p class="muted" style="font-size:13px;margin-bottom:12px">${icon("lock", 13)} ${t("Palavra-passe protegida com Argon2. Alterá-la termina as outras sessões.")}</p>
       <div class="mgbox" style="max-width:420px">
@@ -1760,6 +1766,11 @@ async function vProfile() {
     } catch (e) { toast(e.message); }
   };
   $("#langPick").querySelectorAll("[data-lang]").forEach((b) => (b.onclick = () => I18N.set(b.dataset.lang)));
+  $("#themePick").querySelectorAll("[data-theme]").forEach((b) => (b.onclick = () => {
+    localStorage.setItem("mt_theme", b.dataset.theme);
+    window.__applyTheme();
+    $("#themePick").querySelectorAll("[data-theme]").forEach((x) => x.classList.toggle("btn--ghost", x !== b));
+  }));
   $("#pwSave").onclick = async () => {
     const cur = $("#pwCur").value, n = $("#pwNew").value, n2 = $("#pwNew2").value;
     if (n.length < 8) return toast(t("Nova palavra-passe: mínimo 8 caracteres"));

@@ -578,3 +578,42 @@ th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5p
 .opt{transition:.13s}
 .opt:hover{border-color:var(--gold);background:var(--panel2)}
 .q{transition:.13s}
+
+/* ===================================================================== */
+/* DARK THEME — html[data-theme="dark"], set pre-paint by the boot       */
+/* script in index.html (mt_theme: light | dark | auto).                 */
+/* ===================================================================== */
+html[data-theme="dark"]{
+  --bg:#10171d; --bg2:#0b1116; --panel:#171f26; --panel2:#1e2933;
+  --line:#2b3844; --ink:#e6edf2; --muted:#8fa0ab;
+  --gold:#4da3c9; --gold-soft:#4e8f8b; --celest:#6199c8; --violet:#9184cd;
+  --green:#55a877; --red:#d0728b;
+  color-scheme:dark;
+}
+html[data-theme="dark"] .topbar{background:linear-gradient(180deg,rgba(23,31,38,.96),rgba(16,23,29,.92))}
+html[data-theme="dark"] .card{background:linear-gradient(180deg,#171f26,#141b21)}
+html[data-theme="dark"] .mkt-card{background:linear-gradient(180deg,#171f26,#151e26)}
+html[data-theme="dark"] .msg__b pre{background:#0b1116;color:#d9e2e8}
+html[data-theme="dark"] .toast{color:#10171d}
+html[data-theme="dark"] .rail__streak{color:#e09a52}
+html[data-theme="dark"] .lbrow:nth-child(1) .lbrow__pos{color:#e3b341}
+html[data-theme="dark"] .revcard{border-color:#5a4b23;background:linear-gradient(110deg,#2b2413,var(--panel))}
+html[data-theme="dark"] .stattile--warn{border-color:#5a4b23;background:#2b2413}
+html[data-theme="dark"] .badge-ok,
+html[data-theme="dark"] .du-badge.win{color:#82d6a4;background:#163725;border-color:#2c5d41}
+html[data-theme="dark"] .badge-pend,
+html[data-theme="dark"] .du-badge--act{color:#e0c069;background:#332a13;border-color:#5a4b23}
+html[data-theme="dark"] .badge-no,
+html[data-theme="dark"] .du-badge.loss{color:#e895ad;background:#3a1a24;border-color:#6b3247}
+html[data-theme="dark"] .tag--ai,
+html[data-theme="dark"] .du-badge--ranked,
+html[data-theme="dark"] .du-ranked-tag{color:#c4b2ee;background:#2a2142;border-color:#4b3b74}
+html[data-theme="dark"] .tag--author{color:#dfc98e;background:#332a13;border-color:#5a4b23}
+html[data-theme="dark"] .iconbtn.star.on{background:#332a13}
+html[data-theme="dark"] .fc-loading{background:rgba(16,23,29,.78)}
+html[data-theme="dark"] .rk{background:
+  radial-gradient(circle at 20% 0%,rgba(77,163,201,.14),transparent 45%),
+  radial-gradient(circle at 90% 10%,rgba(145,132,205,.12),transparent 40%),
+  linear-gradient(135deg,#15232b 0%,#17222e 55%,#1a2130 100%)}
+html[data-theme="dark"] .rk__disc{background:rgba(23,31,38,.7)}
+html[data-theme="dark"] .rk__lbrow:nth-child(even){background:rgba(255,255,255,.05)}
