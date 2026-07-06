@@ -1719,16 +1719,26 @@ async function vProfile() {
   mountFriends(document.querySelector("#view .frcard"));
   $("#accPhoto").onchange = async (e) => {
     const f = e.target.files[0]; if (!f) return;
-    $("#accPhotoStatus").textContent = t("A verificar com IA…");
-    const fd = new FormData(); fd.append("file", f);
+    const status = (msg, bad) => { const s = $("#accPhotoStatus"); if (s) { s.textContent = msg; s.style.color = bad ? "var(--red)" : ""; } };
     try {
+      status(t("A preparar a imagem…"));
+      // phone photos are 3-8 MB — downscale client-side so uploads are small and fast
+      const bmp = await createImageBitmap(f).catch(() => { throw new Error(t("formato inválido — usa JPEG, PNG ou WebP")); });
+      const scale = Math.min(1, 512 / Math.max(bmp.width, bmp.height));
+      const cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(bmp.width * scale));
+      cv.height = Math.max(1, Math.round(bmp.height * scale));
+      cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+      const blob = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.85));
+      status(t("A verificar com IA… (pode demorar um minuto)"));
+      const fd = new FormData(); fd.append("file", new File([blob], "avatar.jpg", { type: "image/jpeg" }));
       const res = await fetch(`${API}/me/photo`, { method: "POST", headers: TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}, body: fd });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error?.message || t("erro"));
       USER = body;
       toast(t("Foto aprovada e publicada") + " ✓");
       renderRail(); vProfile();
-    } catch (err) { $("#accPhotoStatus").textContent = ""; toast(t(err.message)); }
+    } catch (err) { status(t(err.message), true); toast(t(err.message)); e.target.value = ""; }
   };
   if ($("#accPhotoDel")) $("#accPhotoDel").onclick = async () => {
     try { USER = await api("/me/photo", { method: "DELETE" }); toast(t("Foto removida")); renderRail(); vProfile(); }

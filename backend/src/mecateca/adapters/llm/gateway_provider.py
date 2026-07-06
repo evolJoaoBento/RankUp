@@ -132,16 +132,28 @@ class GatewayProvider(LLMProvider):
                 ],
                 "stream": False,
             }
-            if self._model:
-                body["model"] = self._model
-            async with httpx.AsyncClient(timeout=180) as client:
-                resp = await client.post(f"{self._base}/chat/completions", json=body,
-                                         headers={"authorization": "Bearer local"})
-                resp.raise_for_status()
-                content = (resp.json().get("choices") or [{}])[0].get("message", {}).get("content", "")
-            verdict = _extract_json(content)
-            return bool(verdict.get("approved")), str(verdict.get("reason", ""))
-        except Exception:
+            # STREAMING, not one-shot: the model must call the Read tool to see the
+            # image, and the gateway's non-stream path returns that first tool-call
+            # turn (content=null) instead of the final verdict. The stream follows
+            # the whole CLI run, so the closing JSON arrives as ordinary text.
+            from mecateca.adapters.llm.base import LLMMessage as _Msg, LLMRequest as _Req
+
+            req = _Req(task="grade_reasoning", system=body["messages"][0]["content"],
+                       messages=[_Msg("user", body["messages"][1]["content"])], max_tokens=400)
+            last_exc: Exception | None = None
+            for _attempt in range(2):
+                try:
+                    text = ""
+                    async for chunk in _GatewayStream(self._base, self._model, req):
+                        text += chunk
+                    if not text.strip():
+                        raise ValueError("empty moderation reply")
+                    verdict = _extract_json(text)
+                    return bool(verdict.get("approved")), str(verdict.get("reason", ""))
+                except Exception as exc:  # noqa: BLE001
+                    last_exc = exc
+            import structlog
+            structlog.get_logger().warning("image moderation failed", error=repr(last_exc))
             return False, "moderação indisponível — tenta mais tarde"
         finally:
             try:

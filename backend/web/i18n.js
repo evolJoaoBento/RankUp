@@ -394,6 +394,8 @@ window.I18N = (() => {
       "Carregar foto": "Upload photo",
       "Remover foto": "Remove photo",
       "A verificar com IA…": "Checking with AI…",
+      "A preparar a imagem…": "Preparing the image…",
+      "A verificar com IA… (pode demorar um minuto)": "Checking with AI… (can take a minute)",
       "Foto aprovada e publicada": "Photo approved and published",
       "Foto removida": "Photo removed",
       "formato inválido — usa JPEG, PNG ou WebP": "invalid format — use JPEG, PNG or WebP",
