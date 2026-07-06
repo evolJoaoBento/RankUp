@@ -1338,10 +1338,19 @@ function mountDeck(cards, title, opts) {
     if (e.target.matches("input,textarea,select")) return;
     if (e.key === "ArrowLeft") $("#fcPrev")?.click();
     else if (e.key === "ArrowRight") $("#fcNext")?.click();
-    else if (e.key === " " || e.key === "Enter") { e.preventDefault(); $("#fcCard")?.classList.toggle("is-flipped"); }
+    else if (e.key === " " || e.key === "Enter") { e.preventDefault(); tryFlip(); }
   };
   document.addEventListener("keydown", window._fcKeys);
   renderCard();
+}
+
+// no peeking: the back only unlocks after the card is answered — a blocked
+// flip teases the turn and wiggles back
+function tryFlip() {
+  const c = _fc && _fc.cards[_fc.i], card = $("#fcCard");
+  if (!c || !card) return;
+  if (c.done || c.revealed) { card.classList.remove("fc-deny"); card.classList.toggle("is-flipped"); return; }
+  card.classList.remove("fc-deny"); void card.offsetWidth; card.classList.add("fc-deny");
 }
 
 function deckSummary() {
@@ -1392,8 +1401,8 @@ function renderCard() {
       <button class="btn btn--sm" id="fcCheck" style="align-self:flex-start">${t("Verificar")}</button>
     </div>`;
   $("#fcCheck").onclick = () => checkCard(c);
-  // click the card itself to flip between question and result, indefinitely
-  $("#fcCard").onclick = () => $("#fcCard").classList.toggle("is-flipped");
+  // click the card to flip — locked (with a wiggle) until it is answered
+  $("#fcCard").onclick = () => tryFlip();
   // session cards answer once — revisiting shows the stored verdict, locked
   if (c.done) {
     $("#fcResult").innerHTML = c.done;
@@ -1457,6 +1466,7 @@ async function checkCard(c) {
     } else {
       detail = (r.feedback ? `<p>${esc(t(r.feedback))}</p>` : "") + (r.answer.reference ? `<p class="muted" style="font-size:13px"><b>${t("Referência:")}</b> ${esc(r.answer.reference.slice(0, 400))}…</p>` : "");
     }
+    c.revealed = true;
     $("#fcResult").innerHTML = `
       <div class="fc-grade ${score >= 60 ? "ok" : "no"}">${score}%</div>
       <div class="fc-verdict">${mcq ? (r.correct ? t("Certo!") : t("Rever")) : t("Avaliação do raciocínio")}</div>
