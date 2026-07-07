@@ -17,12 +17,13 @@ A chat tutor that never gives the answer — it guides the student towards it. C
 Getting a question wrong is where RankUp works hardest:
 
 - Wrong MCQs **reveal the correct option and explain why** on the spot
-- **Review mode** resurfaces the questions whose *latest* attempt was wrong (oldest gap first) — a banner on Learn and Ranked launches a 5-question review run
+- **Review mode** resurfaces the questions whose *latest* attempt was wrong (oldest gap first) — a banner on Learn and Ranked launches a 5-card review deck
+- Review plays like the **flashcard game**: one card at a time, answer on the front, flip to the verdict (score, EP, correct option, explanation). Cards refuse to flip before you answer — they tease the turn and wiggle back — and a summary screen closes each run
 - Weak topics on the profile have a **one-click focused practice** button
 - A **daily goal** ("Hoje: n/5") and correct-answer **streaks** keep the habit going
 
 ### 🏆 Ranked test marketplace
-Teachers (or the AI) create tests; students take them and earn EP for their reasoning. Tests are linked to the materials that ground them, searchable, and show who submitted and who approved each one. Test runs shuffle question order per attempt, show a live progress bar and completion summary, and can be retaken in one click; every subject has an EP ladder that always shows your own position. Flashcard decks flip on click (or spacebar) with full keyboard navigation. Teachers can **print any test** as a paper sheet with an optional answer key.
+Teachers (or the AI) create tests; students take them and earn EP for their reasoning. Tests are linked to the materials that ground them, searchable, and show who submitted and who approved each one. Test runs shuffle question order per attempt, show a live progress bar and completion summary, and can be retaken in one click; every subject has an EP ladder — one click on "Classificação" opens it as a modal with the top 10 plus your own position. Flashcard decks flip on click (or spacebar) with full keyboard navigation, and only after answering. Teachers can **print any test** as a paper sheet with an optional answer key.
 
 ![Ranked](docs/screenshots/practice.png)
 
@@ -40,7 +41,9 @@ Two players pick one material each from the same discipline and take turns autho
 ### 🧑‍🤝‍🧑 Community
 Learning sticks better together — and everything social is **friends-only**, which keeps it school-safe:
 
-- **Profiles with personality**: pick one of 16 line-art avatars (no uploads to moderate), change your display name and claim a unique username
+- **Profiles with personality**: upload a real profile photo — **AI-moderated** before it goes live (school rubric, fails closed) — or pick one of 16 line-art avatars; change your display name and claim a unique username
+- **Portrait-first profiles**: the account rail leads with a big portrait, rank badge tucked under the chin; collapsed, friends show as mini portraits with their rank in the active discipline
+- **People search**: find any student by name or username, open their public profile (per-subject ranks, duel record, kudos, achievements) and add, message or challenge from there
 - **Direct messages** between friends: chat threads with unread badges on the friends list and the account rail
 - **Kudos** 👏: one sportsmanship clap per player after every duel, counted on the profile
 - **Teacher announcements** 📣: per-discipline notices at the top of every student's Learn view
@@ -53,9 +56,12 @@ Study references that feed the tutor and ground the tests. Students can submit m
 ![Materials](docs/screenshots/materials.png)
 
 ### 📈 Progression & profile
-Per-subject EP, rank badges with unlockable background colours, streaks, weak-topic detection, a 14-day EP chart, recent test results, achievements, kudos, duel history and per-discipline Elo record. Teachers get a class-wide weak-topic radar and per-test stats (attempts, students, % correct).
+Per-subject EP, rank badges with unlockable background colours, streaks, weak-topic detection, a 14-day EP chart, recent test results, achievements, kudos, duel history and per-discipline Elo record. Students **enroll in disciplines** from the subject switcher (first one auto-enrolls) and carry a separate rank in each. Teachers get a class-wide weak-topic radar and per-test stats (attempts, students, % correct).
 
 ![Profile](docs/screenshots/profile.png)
+
+### 🌙 Dark mode
+Light, dark or automatic (follows the OS, switches live). A sun/moon button on the top bar flips it with an animated crossfade; the full picker lives on the profile. The theme applies before first paint — no flash — and the browser chrome colour follows.
 
 ### 🌍 Localizable
 The whole interface runs through a tiny i18n layer (`web/i18n.js`): the Portuguese source strings are the translation keys (gettext-style), so adding a language is **one dictionary** — missing entries safely fall back to Portuguese. English ships out of the box; users switch language on their profile (or it follows the browser). Ambiguous strings support `"texto|contexto"` disambiguation. The AI follows too: tutor replies and grading feedback are prompted in the student's language, and known API error messages translate in both directions.
@@ -88,6 +94,7 @@ backend/
 
 - **Stack:** FastAPI · SQLAlchemy 2 (async) · PostgreSQL 16 · Alembic · vanilla JS SPA (installable PWA with an offline app shell)
 - **LLM backends** (`MECATECA_LLM_BACKEND`): `gateway` (OpenAI-compatible, e.g. a Claude Code gateway), `anthropic`, `ollama` (local), or `fake` (deterministic, for tests)
+- **Photo moderation** goes through the same provider interface (`moderate_image`) and **fails closed**: if the model can't see or judge the image, the upload is rejected
 - Multi-instance safe: startup migrations serialized with a Postgres advisory lock; DB-backed rate limiting on login *and* registration (a successful login clears the shared-IP window, so a classroom NAT never locks out); atomic row-claims prevent double-judging duels; a background sweeper resolves abandoned duel deadlines
 - Fully subject-agnostic — disciplines are created in the admin panel or imported as YAML packs; the Philosophy demo seed can be disabled (`MECATECA_SEED_DEMO=0`)
 
