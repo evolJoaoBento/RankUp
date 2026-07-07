@@ -16,6 +16,7 @@ class FriendOut(BaseModel):
     username: str | None = None
     avatar: str = ""
     photo: str = ""
+    rank: str | None = None   # rank in the requested subject (see ?subject=)
 
 
 class MessageIn(BaseModel):

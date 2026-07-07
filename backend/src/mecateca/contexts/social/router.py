@@ -15,8 +15,9 @@ router = APIRouter(tags=["social"])
 
 
 @router.get("/friends", response_model=FriendsView)
-async def list_friends(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
-    return await service.overview(db, user)
+async def list_friends(subject: str | None = None, user: User = Depends(current_user),
+                       db: AsyncSession = Depends(get_db)):
+    return await service.overview(db, user, subject)
 
 
 @router.post("/friends/requests", response_model=FriendsView)

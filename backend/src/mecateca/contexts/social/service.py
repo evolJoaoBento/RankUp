@@ -84,7 +84,26 @@ async def _users(db: AsyncSession, ids: list[uuid.UUID]) -> dict[uuid.UUID, User
     return {u.id: u for u in rows}
 
 
-async def overview(db: AsyncSession, me: User) -> dict:
+async def _ranks_for(db: AsyncSession, user_ids: list[uuid.UUID], subject_key: str) -> dict[uuid.UUID, str]:
+    """Rank of each user in one subject (missing = not enrolled)."""
+    if not user_ids:
+        return {}
+    from mecateca.contexts.catalog.models import Subject
+    from mecateca.contexts.progression.models import UserSubjectProgress
+
+    subj_id = (await db.execute(select(Subject.id).where(Subject.key == subject_key))).scalar_one_or_none()
+    if subj_id is None:
+        return {}
+    rows = await db.execute(
+        select(UserSubjectProgress.user_id, UserSubjectProgress.rank).where(
+            UserSubjectProgress.subject_id == subj_id,
+            UserSubjectProgress.user_id.in_(user_ids),
+        )
+    )
+    return {r.user_id: r.rank for r in rows}
+
+
+async def overview(db: AsyncSession, me: User, subject: str | None = None) -> dict:
     rows = list(
         (
             await db.execute(
@@ -96,6 +115,7 @@ async def overview(db: AsyncSession, me: User) -> dict:
     )
     other_ids = [r.requester_id if r.addressee_id == me.id else r.addressee_id for r in rows]
     users = await _users(db, other_ids)
+    ranks = await _ranks_for(db, other_ids, subject) if subject else {}
 
     friends, incoming, outgoing = [], [], []
     for r in rows:
@@ -105,7 +125,8 @@ async def overview(db: AsyncSession, me: User) -> dict:
             continue
         if r.status == "accepted":
             friends.append({"user_id": u.id, "display_name": u.display_name,
-                            "username": u.username, "avatar": u.avatar, "photo": u.photo})
+                            "username": u.username, "avatar": u.avatar, "photo": u.photo,
+                            "rank": ranks.get(u.id)})
         elif r.addressee_id == me.id:
             incoming.append({"id": r.id, "user_id": u.id, "display_name": u.display_name,
                              "username": u.username, "direction": "incoming"})

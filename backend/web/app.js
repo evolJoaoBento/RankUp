@@ -516,9 +516,13 @@ async function renderRail() {
         <span class="nav__dot" id="railDm" ${!(window._unread || {}).total ? "hidden" : ""} style="top:-2px;right:-4px">✉</span></div>
       ${p.streak ? `<div class="rail__streak" title="${t("Sequência: {n} certas seguidas", { n: p.streak })}">${p.streak}${icon("flame", 12)}</div>` : ""}`;
     let d = { friends: [] };
-    try { d = await api("/friends"); } catch {}
+    try { d = await api(`/friends?subject=${SUBJECT}`); } catch {}
+    // friends as mini portraits — photo/avatar with their rank in this subject
     fr.innerHTML = d.friends.length
-      ? d.friends.map((f) => `<span class="rail__friend" title="${esc(f.display_name)}">${f.avatar && AVATAR_KEYS.includes(f.avatar) ? icon(f.avatar, 22) : esc(_initial(f.display_name))}</span>`).join("")
+      ? d.friends.map((f) => `<span class="portrait portrait--mini rail__friend" title="${esc(f.display_name)}${f.rank ? ` · ${f.rank}` : ""}">
+          ${userAvatar(f, 40)}
+          ${f.rank ? `<span class="portrait__rank">${rankLogo(f.rank, 18)}</span>` : ""}
+        </span>`).join("")
       : `<div class="rail__noav" title="${t("Sem amigos")}">${icon("user", 18)}</div>`;
     $("#logout").style.display = "none";
   }

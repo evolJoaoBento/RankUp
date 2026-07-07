@@ -68,9 +68,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .rail__avatar .rlogo{filter:drop-shadow(0 6px 12px rgba(63,147,184,.4))}
 .rail__friends{display:flex;flex-direction:column;gap:8px;align-items:center;overflow-y:auto;flex:0 1 auto;margin:0 -11px;padding:6px 11px}
 .rail.open .rail__friends{align-items:stretch}
-.rail__friend{width:46px;height:46px;border-radius:50%;border:1px solid var(--gold-soft);cursor:pointer;display:grid;place-items:center;
-  background:linear-gradient(135deg,var(--panel),var(--panel2));font-family:'Century Gothic','Jost',sans-serif;font-weight:700;font-size:17px;color:var(--gold);transition:.15s}
-.rail__friend:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 8px 16px -10px rgba(63,147,184,.7)}
+.rail__friend{cursor:pointer;transition:.15s}
+.rail__friend:hover{transform:translateY(-1px);filter:drop-shadow(0 8px 16px rgba(63,147,184,.45))}
 .rail__noav{width:46px;height:46px;display:grid;place-items:center;color:var(--muted);opacity:.5}
 .rail__foot{margin-top:auto;display:flex;flex-direction:column;gap:10px;align-items:center}
 .rail.open .rail__foot{align-items:stretch}
@@ -104,7 +103,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
   .rail{width:56px;padding:10px 6px;gap:10px}
   .rail.open{width:300px;padding:14px}
   .rail__avatar .rlogo{width:36px;height:36px}
-  .rail__friend{width:38px;height:38px;font-size:14px}
+  .rail__friend .uav{width:34px !important;height:34px !important;font-size:14px}
   .rail__noav{width:38px;height:38px}
   /* wide tables scroll horizontally instead of being clipped by the card */
   .card table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
